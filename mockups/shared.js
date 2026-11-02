@@ -26,7 +26,7 @@
     var sf=st/(1+sh/100),sw=st-sf;           // meel/water in de starter
     var tf=meel+sf,tw=water+sw;               // totaal meel en water
     set('o-hyd',tf?f1(tw/tf*100)+'%':'-');
-    set('o-st',meel?f1(st/meel*100)+'%':'-');
+    set('o-st',tf?f1(st/tf*100)+'%':'-');
     set('o-zout',tf?f1(zout/tf*100)+'%':'-');
     set('o-tot',Math.round(meel+water+st+zout)+' g');
     set('o-meel2',Math.round(tf)+' g');

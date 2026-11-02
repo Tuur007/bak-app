@@ -49,35 +49,35 @@ D = {}
 D[1] = dict(
  naam="Zusjes Recepten", sfeer="Dezelfde warme keuken als de Recepten-app: terracotta, zachte kaarten, rustig en bekend.",
  fonts='<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Oswald:wght@600&display=swap" rel="stylesheet">',
- sw=[("Warm wit","#FFFBF8"),("Terracotta","#A94F37"),("Roze vlak","#F8DDD4"),("Tekst (mijn keuze)","#3A2620"),("Gedempt","#7A5A50")],
- contrast=[("Tekst op warm wit","13,8"),("Terracotta op warm wit","5,3"),("Wit op terracotta (knop)","5,4"),("Terracotta op roze","4,2 (enkel groot/vet)"),("Gedempt op warm wit","6,0")],
- letters="Oswald 600 in hoofdletters voor schermtitels, Nunito voor al de rest. Geen gradients, geen harde schaduwen. Kaarten radius 16, knoppen radius 12. De tekstkleur #3A2620 is mijn aanname; jouw echte tekstkleur uit de Recepten-app moet ik nog kennen.",
+ sw=[("Warm wit","#FFFBF8"),("Terracotta","#A94F37"),("Roze vlak","#F8DDD4"),("Tekst (inkt uit Recepten-app)","#2B2420"),("Gedempt (textLight)","#625C58"),("Donkere terracotta","#8C3D29")],
+ contrast=[("Tekst op warm wit","14,8"),("Terracotta op warm wit","5,3"),("Wit op terracotta (knop)","5,4"),("Donkere terracotta #8C3D29 op roze","5,8"),("Gedempt op warm wit","6,4")],
+ letters="Oswald 600 in hoofdletters voor schermtitels, Nunito voor al de rest. Geen gradients, geen harde schaduwen. Kaarten radius 16, knoppen radius 12. Kleuren overgenomen uit constants/Designsystem.ts van de Recepten-app (inkt #2B2420, textLight ca. 74% inkt, primaryDark #8C3D29 voor tekst op roze).",
  waarom="Je zus kent de look al, dus nul leercurve. Eén codebasis en één set componenten voor beide apps. Rustig en hoog contrast.",
  plus=["Herkenbaar, snel te bouwen: bestaande componenten hergebruiken","Zacht, rustig en goed leesbaar (contrast 5 tot 14)"],
  min=["Het voelt als 'nog een receptenapp' en niet als iets voor brood","Terracotta op roze haalt 4,2: alleen voor grote of vette tekst"],
  css="""
-.screenbox{background:#FFFBF8;color:#3A2620;font-family:Nunito,system-ui,sans-serif}
-.statusbar{color:#3A2620}.homebar{background:#3A2620}
+.screenbox{background:#FFFBF8;color:#2B2420;font-family:Nunito,system-ui,sans-serif}
+.statusbar{color:#2B2420}.homebar{background:#2B2420}
 h2.t{font:600 28px/1.1 Oswald,sans-serif;text-transform:uppercase;letter-spacing:.02em;margin:0 0 16px}
 .card{background:#fff;border:1px solid #F0DDD5;border-radius:16px;padding:16px;margin-bottom:16px}
 .card.pink{background:#F8DDD4;border-color:#F8DDD4}
-.lbl{font-size:13px;font-weight:700;color:#7A5A50;text-transform:uppercase;letter-spacing:.05em}
+.lbl{font-size:13px;font-weight:700;color:#625C58;text-transform:uppercase;letter-spacing:.05em}
 .big{font:600 44px/1 Oswald,sans-serif;color:#A94F37;letter-spacing:.02em}
 .btn{display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:12px;background:#A94F37;color:#fff;font:800 16px Nunito;border:0;width:100%;cursor:pointer}
 .btn.ghost{background:#fff;color:#A94F37;border:2px solid #A94F37}
 .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.pill{background:#F8DDD4;color:#7a2f1c;border-radius:12px;padding:4px 8px;font-weight:700;font-size:13px}
-.tabbar{background:#fff;border-top:1px solid #F0DDD5}.tabbar button{color:#7A5A50;font-weight:700;font-size:13px}.tabbar button.on{color:#A94F37}
-.field{margin-bottom:8px}.field label{display:block;font-size:13px;font-weight:700;color:#7A5A50;margin-bottom:4px}
-.field input{width:100%;height:48px;border:2px solid #F0DDD5;border-radius:12px;padding:0 16px;font:700 18px Nunito;background:#fff;color:#3A2620}
+.pill{background:#F8DDD4;color:#8C3D29;border-radius:12px;padding:4px 8px;font-weight:700;font-size:13px}
+.tabbar{background:#fff;border-top:1px solid #F0DDD5}.tabbar button{color:#625C58;font-weight:700;font-size:13px}.tabbar button.on{color:#A94F37}
+.field{margin-bottom:8px}.field label{display:block;font-size:13px;font-weight:700;color:#625C58;margin-bottom:4px}
+.field input{width:100%;height:48px;border:2px solid #F0DDD5;border-radius:12px;padding:0 16px;font:700 18px Nunito;background:#fff;color:#2B2420}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.ratio{text-align:center;background:#F8DDD4;border-radius:16px;padding:12px 8px}.ratio b{display:block;font:600 26px Oswald;color:#A94F37}.ratio span{font-size:12px;font-weight:700;color:#7a2f1c}
+.ratio{text-align:center;background:#F8DDD4;border-radius:16px;padding:12px 8px}.ratio b{display:block;font:600 26px Oswald;color:#A94F37}.ratio span{font-size:12px;font-weight:700;color:#8C3D29}
 .step{display:flex;gap:16px;align-items:center;min-height:56px;padding:8px 0;border-bottom:1px solid #F0DDD5;cursor:pointer}
-.step .tm{width:56px;font:600 16px Oswald;color:#7A5A50}.step .dot{width:24px;height:24px;border-radius:12px;border:2px solid #A94F37;flex:none}
-.step.done .dot{background:#A94F37}.step.done .nm{text-decoration:line-through;color:#7A5A50}
+.step .tm{width:56px;font:600 16px Oswald;color:#625C58}.step .dot{width:24px;height:24px;border-radius:12px;border:2px solid #A94F37;flex:none}
+.step.done .dot{background:#A94F37}.step.done .nm{text-decoration:line-through;color:#625C58}
 .step.now{background:#F8DDD4;border-radius:12px;padding:8px;border:0}
 .photo{width:64px;height:64px;border-radius:12px;background:#F8DDD4;flex:none;display:flex;align-items:center;justify-content:center;font:600 12px Oswald;color:#A94F37}
-.log{display:flex;gap:16px}.log h4{font-size:17px}.log p{font-size:14px;color:#7A5A50}
+.log{display:flex;gap:16px}.log h4{font-size:17px}.log p{font-size:14px;color:#625C58}
 .stars{color:#A94F37;font-weight:800;letter-spacing:2px}
 """,
  screens="""
@@ -85,7 +85,7 @@ h2.t{font:600 28px/1.1 Oswald,sans-serif;text-transform:uppercase;letter-spacing
 <h2 class="t">Vandaag</h2>
 <div class="card pink"><div class="lbl">Lopende bak</div><div class="row" style="margin:8px 0"><div><h3 style="font-size:20px">Landbrood</h3><p style="font-size:14px">Vouwen 3 van 4</p></div><div class="big" data-sec="760"></div></div>
 <button class="btn" data-s="2">Naar de tijdlijn</button></div>
-<div class="card"><div class="lbl">Starter</div><div class="row" style="margin-top:8px"><div><h3 style="font-size:18px">Oma-starter</h3><p style="font-size:14px;color:#7A5A50">Gevoed om 06:30, 1:5:5</p></div><span class="pill">Op piek</span></div></div>
+<div class="card"><div class="lbl">Starter</div><div class="row" style="margin-top:8px"><div><h3 style="font-size:18px">Oma-starter</h3><p style="font-size:14px;color:#625C58">Gevoed om 06:30, 1:5:5</p></div><span class="pill">Op piek</span></div></div>
 <div class="card"><div class="lbl">Vandaag in de oven</div><p style="margin-top:8px"><b>Zaterdag 10:00</b> oven aan, <b>10:45</b> bakken. Klaar om <b>12:00</b>.</p></div>
 <button class="btn ghost" data-s="1">Nieuwe bak plannen</button>
 </div>%%TABS%%</div>
@@ -108,7 +108,7 @@ h2.t{font:600 28px/1.1 Oswald,sans-serif;text-transform:uppercase;letter-spacing
 
 <div class="scr"><div class="body">
 <h2 class="t">Tijdlijn</h2>
-<p style="margin-bottom:8px;font-size:14px;color:#7A5A50">Landbrood, klaar zaterdag 12:00</p>
+<p style="margin-bottom:8px;font-size:14px;color:#625C58">Landbrood, klaar zaterdag 12:00</p>
 <div class="step done" data-step><span class="tm">06:30</span><span class="dot"></span><span class="nm">Starter voeden</span></div>
 <div class="step done" data-step><span class="tm">14:00</span><span class="dot"></span><span class="nm">Mengen, zout erbij</span></div>
 <div class="step done" data-step><span class="tm">15:15</span><span class="dot"></span><span class="nm">Vouwen 2</span></div>
@@ -118,7 +118,7 @@ h2.t{font:600 28px/1.1 Oswald,sans-serif;text-transform:uppercase;letter-spacing
 <div class="step" data-step><span class="tm">20:00</span><span class="dot"></span><span class="nm">Koelkast (koude rijs)</span></div>
 <div class="step" data-step><span class="tm">za 10:00</span><span class="dot"></span><span class="nm">Oven aan, 240 graden</span></div>
 <div class="step" data-step><span class="tm">za 10:45</span><span class="dot"></span><span class="nm">Bakken, 40 min</span></div>
-<p style="font-size:13px;color:#7A5A50;margin-top:16px">Meldingen komen van de server; de tijden blijven kloppen ook als de app dicht was.</p>
+<p style="font-size:13px;color:#625C58;margin-top:16px">Meldingen komen van de server; de tijden blijven kloppen ook als de app dicht was.</p>
 </div>%%TABS%%</div>
 
 <div class="scr"><div class="body">

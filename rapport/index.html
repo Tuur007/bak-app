@@ -170,7 +170,7 @@ code{background:#f3e9e4;border-radius:4px;padding:0 4px}
 <p>Klikbaar in <a href="../mockups/index.html">de mockups</a>. Bij elke richting vind je palet, contrast, lettertypes, sterke en zwakke punten.</p>
 <div class="tbl"><table>
 <tr><th>Richting</th><th>Sfeer</th><th>Past bij handen vol deeg omdat ...</th><th>Zwak</th></tr>
-<tr><td><a href="../mockups/r1.html">1. Zusjes Recepten</a><br><small>Terracotta, Oswald, Nunito</small></td><td>Warm, bekend</td><td>Grote knoppen (48 px), rustig, hoog contrast</td><td>Voelt niet als brood; roze/terracotta 4,2 voor kleine tekst te laag</td></tr>
+<tr><td><a href="../mockups/r1.html">1. Zusjes Recepten</a><br><small>Terracotta, Oswald, Nunito</small></td><td>Warm, bekend</td><td>Grote knoppen (48 px), rustig, hoog contrast</td><td>Voelt niet als brood</td></tr>
 <tr><td><a href="../mockups/r2.html">2. Bakschrift</a><br><small>Papier, kantlijn, handschrift</small></td><td>Persoonlijk, schrift</td><td>Weinig kaders, cijfers in typemachineletter</td><td>Handschrift vermoeit; druk bij veel inhoud</td></tr>
 <tr><td><a href="../mockups/r3.html">3. Labo</a><br><small>Mono, raster, grafiekjes</small></td><td>Strak, technisch</td><td>Cijfers in kolommen, hoogste contrast (16,9)</td><td>Kil; grafieken pas nuttig na veel bakken</td></tr>
 <tr><td><a href="../mockups/r4.html">4. Nachtbak</a><br><small>Donker, amber</small></td><td>Zacht 's nachts</td><td>Tikvlakken 56 tot 64 px, grote timer</td><td>Overdag minder leesbaar; foto's ogen donker</td></tr>
@@ -178,7 +178,7 @@ code{background:#f3e9e4;border-radius:4px;padding:0 4px}
 </table></div>
 <h3>Aanbeveling</h3>
 <p><b>Richting 5 (Ambachtelijke bakkerij)</b> voor de eerste versie. Redenen: de korstkleurschaal is een echte meerwaarde (sneller en preciezer dan sterren), de etiketten maken het logboek herkenbaar als brood, en contrast en tikgrootte zijn goed (alle tekstparen 5,9 of hoger). Hergebruik de afmetingen van je Recepten-app (radius, knopmaten) zodat het bouwen niet veel duurder is. Als je zus vooral dezelfde look wil als je Recepten-app, is <b>richting 1</b> de goedkoopste keuze. De donkere modus van richting 4 is een goed <i>later</i> toevoegsel als thema. Laat haar kiezen: de mockups kosten haar vijf minuten.</p>
-<p class="s">Contrastcijfers zijn berekend volgens WCAG. De tekstkleur in richting 1 (#3A2620) is mijn aanname; de echte kleur uit je Recepten-app ken ik niet.</p>
+<p class="s">Contrastcijfers zijn berekend volgens WCAG. Richting 1 gebruikt nu de echte kleuren uit je Recepten-app (zie hoofdstuk 11).</p>
 
 <h2>8. Naam voor de app</h2>
 <div class="tbl"><table>
@@ -212,20 +212,27 @@ code{background:#f3e9e4;border-radius:4px;padding:0 4px}
 <p>Supabase: eigen tabellen, enkel toegang voor haar. Foto's in een eigen opslag. Geen databankcode in dit stadium.</p>
 
 <h3>Wat ik nog van jou en je zus nodig heb</h3>
-<h4>Van je zus</h4>
+<h4>Nog van je zus</h4>
+<ul><li>De 5 vragen hierboven, haar iPhone en iOS-versie, en welke richting en naam ze kiest.</li></ul>
+<h4>Door jou beantwoord (2 november)</h4>
 <ul>
-<li>De 5 vragen hierboven.</li>
-<li>Welke iPhone en iOS-versie; zet ze de app straks op het beginscherm?</li>
-<li>Kiest ze liever richting 5, 1 of een andere? Welke naam?</li>
+<li>Kleuren en maten: uit je Recepten-app genomen (hoofdstuk 11).</li>
+<li>Inloggen: zoals in je andere apps, e-mail en wachtwoord via Supabase.</li>
+<li>Meldingen in versie 1: ja (ik las "Je" als "Ja"; zeg het als dat niet klopt). Let op: je Recepten-app heeft nog geen push, dit is dus nieuw en moet eerst op haar iPhone getest worden.</li>
+<li>Rekenconventie: "geen idee", dus ik kies de gangbare: alles op het <b>totale meel</b> (meel in het recept plus het meel uit de starter). Hydratatie telt het water uit de starter mee. Zout% en starter% idem op het totale meel. De mockup rekent nu zo.</li>
+<li>Offline: ja (hoofdstuk 11 toont hoe).</li>
 </ul>
-<h4>Van jou</h4>
+<h2>11. Wat ik in je Recepten-app (GitHub) vond en hergebruik</h2>
 <ul>
-<li>De echte tekstkleur en componentmaten van je Recepten-app (ik gebruikte #3A2620).</li>
-<li>Inloggen: gewoon e-mail met magic link, of vast ingelogd op haar toestel?</li>
-<li>Wil je meldingen echt in v1, of eerst enkel de tijdlijn met eindtijden?</li>
-<li>Rekenconventie: starter% op basis van het <b>meel in het recept</b> (zoals nu in de mockup) of op het <b>totale meel</b>, en hydratatie <b>inclusief</b> het water in de starter?</li>
-<li>Offline gebruik (keuken zonder wifi) nodig?</li>
+<li><b>Echte kleuren</b> (Designsystem.ts, look N2): warm wit #FFFBF8, terracotta #A94F37, primaryDark #8C3D29 voor tekst op roze, roze #F8DDD4, inkt #2B2420, textLight 74% inkt, hairlines 0,5 px. Richting 1 is hiermee bijgewerkt.</li>
+<li><b>Inloggen:</b> Supabase met e-mail en wachtwoord, sessie in AsyncStorage (<code>services/supabase.ts</code>, <code>store/authStore.ts</code>). Voor de bak-app eenvoudiger: geen gezin, enkel haar account met row-level security.</li>
+<li><b>Offline:</b> je Recepten-app is local-first (SQLite lokaal als bron van waarheid, Supabase als spiegel via een uitgaande wachtrij) met een service worker die de app-schil cachet. Datzelfde patroon past hier en dekt "offline voor de zekerheid".</li>
+<li><b>Timers:</b> je <code>CookTimer</code> rekent met een eindtijd (Date-verschil), niet met tellen. Dat is precies het principe dat ik aanraad. De kookmodus gebruikt ook wake lock.</li>
+<li><b>Terugrekenen vanaf een uur:</b> <code>features/cook/schedule.ts</code> doet dit al voor etenstijd. Het idee kan hergebruikt worden voor bak-stappen.</li>
+<li><b>Meldingen:</b> daar vond ik geen push-code. Dit is het enige echt nieuwe, riskante onderdeel.</li>
+<li><b>Werkafspraak:</b> in je CLAUDE.md staat dat elke wijziging via een PR en een Vercel-preview gaat, en dat er enkel op jouw "merge" wordt samengevoegd. Dat volg ik ook voor de bak-app.</li>
 </ul>
+<p class="s">Ik las enkel de Recepten-app (colors, design system, login, timer, sw.js, manifest). De andere repos heb ik niet bekeken.</p>
 
 <h2>Bronnen</h2>
 <ul class="s">
