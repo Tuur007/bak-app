@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="nl-BE"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bakschrift - richting 2</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Source+Serif+4:wght@400;600;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+.screenbox{background:#F5ECD9;color:#26283A;font-family:'Source Serif 4',Georgia,serif}
+.statusbar{color:#26283A}.homebar{background:#26283A}
+.paper{background:repeating-linear-gradient(#F5ECD9 0,#F5ECD9 31px,#C5D3E6 31px,#C5D3E6 32px);background-position:0 -9px}
+.scr .body{background:repeating-linear-gradient(#F5ECD9 0,#F5ECD9 31px,#C5D3E6 31px,#C5D3E6 32px);background-position:0 8px;padding-left:48px;border-left:2px solid #B03A2E;margin-left:32px;padding-left:16px}
+h2.t{font:700 44px/1 Caveat,cursive;color:#B03A2E;margin:0 0 16px;transform:rotate(-1deg)}
+.hand{font:700 26px/32px Caveat,cursive}
+.mono{font-family:'Courier Prime',monospace;font-weight:700}
+.hl{background:linear-gradient(transparent 20%,#F4D35E 20%,#F4D35E 90%,transparent 90%);padding:0 4px}
+.btn{display:flex;align-items:center;justify-content:center;min-height:48px;background:#26283A;color:#F5ECD9;font:700 24px Caveat;border:0;border-radius:4px;width:100%;cursor:pointer;margin-top:16px;transform:rotate(-.5deg)}
+.btn.ghost{background:transparent;color:#26283A;border:2px solid #26283A}
+.tabbar{background:#EBDFC6;border-top:2px solid #26283A}.tabbar button{font:700 22px Caveat;color:#5E5A66}.tabbar button.on{color:#B03A2E;text-decoration:underline wavy}
+.line{min-height:32px;line-height:32px;font-size:17px}
+.frow{display:flex;align-items:baseline;gap:8px;min-height:48px}.frow label{flex:1;font:700 22px Caveat}
+.frow input{width:112px;height:44px;border:0;border-bottom:2px solid #26283A;background:transparent;font:700 22px 'Courier Prime';text-align:right;color:#26283A}
+.sum{display:flex;gap:8px;margin:16px 0}.sum div{flex:1;border:2px solid #26283A;border-radius:4px;text-align:center;padding:4px;background:#F5ECD9}
+.sum b{display:block;font:700 26px 'Courier Prime'}.sum span{font:700 18px Caveat;color:#B03A2E}
+.step{display:flex;gap:8px;align-items:center;min-height:44px;cursor:pointer;font-size:17px}
+.step .tm{font:700 16px 'Courier Prime';width:64px}.step .dot{width:24px;height:24px;border:2px solid #26283A;border-radius:4px;flex:none}
+.step.done .dot{background:#26283A}.step.done .nm{text-decoration:line-through;color:#5E5A66}
+.step.now .nm{font-weight:700}
+.count{font:700 56px 'Courier Prime';color:#B03A2E;display:inline-block;transform:rotate(-1deg)}
+.photo{width:72px;height:72px;background:#fff;padding:4px 4px 12px;box-shadow:0 1px 0 #999;transform:rotate(-3deg);flex:none}.photo i{display:block;height:100%;background:#C7925A}
+.entry{display:flex;gap:16px;padding:8px 0;margin-bottom:8px}
+.stars{font:700 22px Caveat;color:#B03A2E}
+.note{font:700 22px/1.1 Caveat;margin-top:4px}
+</style></head>
+<body><div class="page">
+<div class="top"><a href="index.html">Overzicht</a><a href="r1.html">Richting 1</a><a href="r2.html" class="on">Richting 2</a><a href="r3.html">Richting 3</a><a href="r4.html">Richting 4</a><a href="r5.html">Richting 5</a><a href="../rapport/index.html">Rapport</a></div>
+<div class="layout">
+<div class="info">
+<h1>Richting 2: Bakschrift</h1>
+<p class="sfeer">Een oud schrift vol aantekeningen: lijntjes, een rode kantlijn, geel markeerstift en een beetje handschrift.</p>
+<div class="jump"><button>Vandaag</button><button>Nieuwe bak</button><button>Tijdlijn</button><button>Logboek</button></div>
+<h2>Kleurpalet en contrast</h2>
+<div class="sw"><div><i style="background:#F5ECD9"></i><span><b>Papier</b><br>#F5ECD9</span></div><div><i style="background:#26283A"></i><span><b>Inkt</b><br>#26283A</span></div><div><i style="background:#B03A2E"></i><span><b>Kantlijn rood</b><br>#B03A2E</span></div><div><i style="background:#F4D35E"></i><span><b>Markeerstift</b><br>#F4D35E</span></div><div><i style="background:#5E5A66"></i><span><b>Gedempt</b><br>#5E5A66</span></div></div>
+<h2>Contrast (WCAG)</h2>
+<table class="c"><tr><td>Inkt op papier</td><td>12,4</td></tr><tr><td>Rood op papier</td><td>5,1</td></tr><tr><td>Gedempt op papier</td><td>5,7</td></tr><tr><td>Papier op inkt (knop)</td><td>12,4</td></tr></table>
+<h2>Lettertypes</h2><p>Caveat 700 voor titels en notities (handschrift, alleen groot gebruikt), Source Serif 4 voor lopende tekst, Courier Prime voor cijfers en gram. Handschrift nooit voor kleine tekst of getallen: dat leest slecht.</p>
+<h2>Waarom dit bij brood past</h2><p>Een bakker schrijft al eeuwen op papier; het voelt als haar eigen schrift. Lijnen en kantlijn geven structuur zonder dozen. Cijfers in typemachine-letter blijven helder.</p>
+<h2>Sterk</h2><ul class="plus"><li>Warm, persoonlijk en onderscheidend; past bij 'wat deed ik, wat vond ik'</li><li>Weinig kaders: schermen voelen licht en rustig</li></ul>
+<h2>Zwak</h2><ul class="min"><li>Handschriftfont kan bij veel tekst vermoeien; strikte regels nodig</li><li>Lijnenpapier-achtergrond is druk als er veel inhoud is</li></ul>
+<p class="note">Alle cijfers in de mockup zijn voorbeelden. Tik op de knoppen, de tabbalk, de stappen en de timer; de velden in &quot;Nieuwe bak&quot; rekenen live mee.</p>
+</div>
+<div class="phonewrap"><div class="phone"><div class="screenbox">
+<div class="notch"></div><div class="statusbar"><span>9:41</span><span>5G 87%</span></div>
+
+<div class="scr on"><div class="body">
+<h2 class="t">Vandaag</h2>
+<p class="line mono">vr 6 nov - landbrood</p>
+<p class="hand">Vouwen 3 van 4 <span class="hl">nog</span></p>
+<div class="count" data-sec="760"></div>
+<p class="line" style="margin-top:8px">Starter: gevoed 06:30, piekt rond 13:00 <span class="hl">klaar</span></p>
+<p class="hand" style="margin-top:16px">In de oven:</p>
+<p class="line mono">za 10:00 oven aan / 10:45 bakken / 12:00 eten</p>
+<p class="hand" style="margin-top:16px;color:#B03A2E">Vorige keer: bulk 30 min langer!</p>
+<button class="btn" data-s="2">Open de tijdlijn</button><button class="btn ghost" data-s="1">Nieuwe bak</button>
+</div><div class="tabbar"><button data-s="0">Vandaag</button><button data-s="1">Nieuw</button><button data-s="2">Tijdlijn</button><button data-s="3">Schrift</button></div></div>
+
+<div class="scr"><div class="body">
+<h2 class="t">Nieuwe bak</h2>
+<div class="frow"><label>meel</label><input class="calc" id="f-meel" inputmode="decimal" value="500"><span class="mono">g</span></div>
+<div class="frow"><label>water</label><input class="calc" id="f-water" inputmode="decimal" value="350"><span class="mono">g</span></div>
+<div class="frow"><label>starter</label><input class="calc" id="f-starter" inputmode="decimal" value="100"><span class="mono">g</span></div>
+<div class="frow"><label>starter hydr.</label><input class="calc" id="f-sthyd" inputmode="decimal" value="100"><span class="mono">%</span></div>
+<div class="frow"><label>zout</label><input class="calc" id="f-zout" inputmode="decimal" value="10"><span class="mono">g</span></div>
+<div class="frow"><label>keuken</label><input id="f-temp" inputmode="decimal" value="21"><span class="mono">C</span></div>
+<div class="sum"><div><b id="o-hyd"></b><span>hydratatie</span></div><div><b id="o-st"></b><span>starter</span></div><div><b id="o-zout"></b><span>zout</span></div></div>
+<p class="hand">klaar tegen: <span class="hl">za 12:00</span></p>
+<p class="line">bij 21 graden bulk 45 min langer</p>
+<button class="btn" data-s="2">Reken terug</button>
+</div><div class="tabbar"><button data-s="0">Vandaag</button><button data-s="1">Nieuw</button><button data-s="2">Tijdlijn</button><button data-s="3">Schrift</button></div></div>
+
+<div class="scr"><div class="body">
+<h2 class="t">Tijdlijn</h2>
+<div class="step done" data-step><span class="tm">06:30</span><span class="dot"></span><span class="nm">starter voeden</span></div>
+<div class="step done" data-step><span class="tm">14:00</span><span class="dot"></span><span class="nm">mengen, zout erbij</span></div>
+<div class="step done" data-step><span class="tm">15:15</span><span class="dot"></span><span class="nm">vouwen 2</span></div>
+<div class="step now" data-step><span class="tm">16:00</span><span class="dot"></span><span class="nm">vouwen 3 <span class="count" style="font-size:30px" data-sec="760"></span></span></div>
+<div class="step" data-step><span class="tm">16:45</span><span class="dot"></span><span class="nm">vouwen 4</span></div>
+<div class="step" data-step><span class="tm">19:30</span><span class="dot"></span><span class="nm">vormen</span></div>
+<div class="step" data-step><span class="tm">20:00</span><span class="dot"></span><span class="nm">koelkast</span></div>
+<div class="step" data-step><span class="tm">za 10:00</span><span class="dot"></span><span class="nm">oven aan 240</span></div>
+<div class="step" data-step><span class="tm">za 10:45</span><span class="dot"></span><span class="nm">bakken 40 min</span></div>
+<p class="hand" style="margin-top:8px">Aantekening: dag 2 ruikt fruitig.</p>
+</div><div class="tabbar"><button data-s="0">Vandaag</button><button data-s="1">Nieuw</button><button data-s="2">Tijdlijn</button><button data-s="3">Schrift</button></div></div>
+
+<div class="scr"><div class="body">
+<h2 class="t">Logboek</h2>
+<div class="entry"><div class="photo"><i></i></div><div><b class="mono">31 okt</b> landbrood<br><span class="mono">73% / 20% / 1,8%</span><div class="stars">4 van 5</div><div class="note">bulk 30 min langer!</div></div></div>
+<div class="entry"><div class="photo"><i></i></div><div><b class="mono">24 okt</b> volkoren 30%<br><span class="mono">78% / 20% / 1,8%</span><div class="stars">3 van 5</div><div class="note">korst te donker, oven -10</div></div></div>
+<div class="entry"><div class="photo"><i></i></div><div><b class="mono">17 okt</b> landbrood<br><span class="mono">72% / 18% / 1,8%</span><div class="stars">5 van 5</div><div class="note">zo houden</div></div></div>
+</div><div class="tabbar"><button data-s="0">Vandaag</button><button data-s="1">Nieuw</button><button data-s="2">Tijdlijn</button><button data-s="3">Schrift</button></div></div>
+
+<div class="homebar"></div>
+</div></div></div>
+</div></div>
+<script src="shared.js"></script>
+</body></html>

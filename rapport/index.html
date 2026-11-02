@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="nl-BE"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zuurdesem-app: onderzoeksrapport</title>
+<style>
+:root{--bg:#FFFBF8;--tx:#3A2620;--mu:#6b5046;--ac:#A94F37;--pk:#F8DDD4;--ln:#EAD6CD}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:17px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+.w{max-width:860px;margin:0 auto;padding:24px 16px 80px}
+h1{font-size:32px;line-height:1.15;margin:8px 0}
+h2{font-size:24px;margin:48px 0 8px;border-bottom:2px solid var(--ac);padding-bottom:8px}
+h3{font-size:18px;margin:24px 0 8px}
+p,li{margin:8px 0}
+a{color:var(--ac)}
+.box{background:var(--pk);border-radius:16px;padding:16px 24px;margin:16px 0}
+.warn{background:#FFF1D6;border-radius:16px;padding:16px 24px;margin:16px 0}
+table{border-collapse:collapse;width:100%;font-size:15px;margin:16px 0}
+th,td{border:1px solid var(--ln);padding:8px;text-align:left;vertical-align:top}
+th{background:var(--pk)}
+.tbl{overflow-x:auto}
+.tag{display:inline-block;border-radius:8px;padding:0 8px;font-weight:700;font-size:13px;background:var(--ac);color:#fff}
+.tag.f{background:#8a6d3b}.tag.l{background:#6b6b6b}
+nav a{display:inline-flex;align-items:center;min-height:44px;margin-right:16px}
+small,.s{color:var(--mu);font-size:14px}
+code{background:#f3e9e4;border-radius:4px;padding:0 4px}
+</style></head><body><div class="w">
+<nav><a href="../mockups/index.html">Naar de mockups</a></nav>
+<h1>Zuurdesem-app voor mijn zus</h1>
+<p class="s">Onderzoeksrapport, stap 1 en 2. Opgesteld op 2 november 2026. Alle onderzoek is gedaan met webzoekopdrachten; wat ik niet kon controleren staat telkens apart vermeld.</p>
+
+<div class="box"><b>Kort samengevat</b>
+<ul>
+<li>Er bestaan veel nieuwe zuurdesem-apps voor iPhone (ik vond er meer dan 15). De meeste zijn jong, Engelstalig en werken met een abonnement of "Pro". Ik vond <b>geen Nederlands- of Vlaamstalige zuurdesem-app</b> (de App Store zelf kon ik niet doorzoeken).</li>
+<li>Thuisbakkers gebruiken nog veel Excel, schriftjes en Apple Notes. Hun grootste wens: <b>zien wat een aanpassing deed</b> (patronen over bakken heen) en dat opzoeken, met foto's.</li>
+<li>Voor de eerste versie raad ik aan: <b>bak invullen met live ratio's, logboek met foto + korstkleur + "volgende keer", een Vandaag-scherm en een eenvoudige tijdlijn met terugrekenen</b>. Meldingen en timers op de achtergrond eerst op haar eigen iPhone testen.</li>
+<li>Mijn designadvies: richting 5 (Ambachtelijke bakkerij), met richting 1 als alternatief als ze vooral de look van de Recepten-app wil.</li>
+<li>Naamvoorstel: <b>Kruim</b> (alternatief: Bakschrift).</li>
+</ul></div>
+
+<h2>1. Bestaande apps</h2>
+<div class="warn"><b>Belangrijk over betrouwbaarheid.</b> De informatie hieronder komt uit de App Store-beschrijvingen (marketing van de ontwikkelaar) en enkele aggregatiesites. Echte gebruikersreviews met tekst vond ik nauwelijks: veel apps zijn nieuw en hebben 0 tot enkele beoordelingen. Prijzen zijn momentopnames en verschillen per land. Ik heb geen enkele app zelf geïnstalleerd.</div>
+<div class="tbl"><table>
+<tr><th>App</th><th>Wat ze doet (volgens listing)</th><th>Prijsmodel (volgens listing)</th></tr>
+<tr><td>Crumb: Sourdough Tracker</td><td>Starter-tracking met "time to peak", voedingsherinneringen, schema aangepast aan temperatuur, timers, gratis calculators</td><td>Gratis; Pro (o.a. AI-scan van kruim, meerdere starters). Een listing toont 3,99 USD/maand. Vereist iOS 17.</td></tr>
+<tr><td>Sourflow</td><td>Baktimer met tot 8 fases, starter/levain-tracker, Live Activity op het vergrendelscherm</td><td>Gratis met in-app aankopen; proefperiode (28 dagen of 1 maand, bronnen verschillen). Een aggregator noemt 79,99 USD/jaar: niet bevestigd. Volgens dezelfde aggregator geen sync tussen toestellen.</td></tr>
+<tr><td>Doughwell</td><td>Voedingslog, baklogboek, proeftimer gratis; Pro: terugplannen vanaf een gewenst uur, calculator, receptenbibliotheek, temperatuur/rijstijd, iCloud-sync, widgets</td><td>Eenmalig 29,99 USD (lifetime), of maand/jaar</td></tr>
+<tr><td>Proof (Baking Log &amp; Journal)</td><td>Logboek met beoordeling, notities, aanpassingen; Pro: onbeperkte logs, statistieken, AI-adviseur, probleemgids</td><td>Gratis + Pro: 39,99 USD/jaar of 4,99/maand (Estland: 44,99 EUR/jaar). Vereist iOS 18.</td></tr>
+<tr><td>Yeasta</td><td>Meerdere starters, voedingslog, herinneringen</td><td>Zegt "100% privé": data blijft op het toestel (listing)</td></tr>
+<tr><td>BakeReady, Sourdough Starter Tracker, Sourdough Tracker: Crust</td><td>Starter-voeding, piekschatting, herinneringen</td><td>BakeReady gratis volgens listing; van de andere heb ik de prijs niet gecontroleerd. Een aggregator meldt bij één starter-app klachten over opdringerige schermvullende reclame (4,5/5 uit 32 reviews, klein aantal).</td></tr>
+<tr><td>Sourdough Journal, BakeMemo, Dough Maker, Sour &amp; Dough</td><td>Bakkerspercentages en hydratatie; BakeMemo ook stap-timers en baklog</td><td>Niet gecontroleerd (BakeMemo: gratis met in-app aankopen)</td></tr>
+<tr><td>Baker Percentage</td><td>Eenvoudige calculator met schaling</td><td>Gratis</td></tr>
+<tr><td>Bread Baker</td><td>Receptopslag; proces en meldingen</td><td>Receptopslag gratis, proces/meldingen enkel met abonnement (listing)</td></tr>
+<tr><td>Sourdough Companion: Bake AI</td><td>AI-gericht</td><td>Gratis + 3,99 USD/maand of 24,99 USD/jaar (aggregator AppGoblin)</td></tr>
+<tr><td>KneadNotes, Homebaker, Proof Lab, Loafer</td><td>Baklogs (KneadNotes: 10 gratis logs); Proof Lab: fotodagboek op iPad; Loafer: oudere app met timers en widgets</td><td>Loafer: onzeker of nog onderhouden</td></tr>
+</table></div>
+<h3>Wat gebruikers prijzen en ergert (wat ik echt kon vinden)</h3>
+<ul>
+<li><b>Ergernis, abonnement voor weinig:</b> een ontwikkelaar op The Fresh Loaf vatte App Store-reviews van populaire starter-apps samen: een abonnement voor "eigenlijk een voedlog" en AI-"gezondheidsscans". Dat is zijn eigen samenvatting, geen meting.</li>
+<li><b>Ergernis, reclame:</b> opdringerige schermvullende advertenties (enkel bij één aggregator-rapport, kleine steekproef).</li>
+<li><b>Gewenst op het forum:</b> een goede deegcalculator, een baklogboek met foto's, timing-aanwijzingen zonder dat de formule verandert, geen dataverkoop; AI zien sommigen als optioneel en gebruiken ze zelf niet.</li>
+<li><b>Gemist (forum):</b> patronen over bakken zien, aanpassingen koppelen aan wat goed of fout liep, jaren aan notities doorzoeken, foto's, delen.</li>
+<li><b>Niet gevonden:</b> echte reviewtekst uit de App Store per app. Dat zou je zus of jij best zelf nalezen voor Crumb, Sourflow en Doughwell.</li>
+</ul>
+
+<h2>2. Hoe thuisbakkers het nu doen</h2>
+<ul>
+<li><b>Excel/Sheets:</b> een werkboek per recept, of een nieuw blad per aanpassing voor een volledige geschiedenis. Nadeel: soms te stijf voor foto's.</li>
+<li><b>Papieren schrift:</b> voor foto's, notities en zoeken; rekenwerk apart in een calculator. Ontbrekend: live kopieerbare berekeningen.</li>
+<li><b>Notities-apps en receptenmanagers:</b> Apple Notes, Evernote, Paprika, met foto's per bak.</li>
+<li><b>Bakkerswerkbladen:</b> The Perfect Loaf heeft een bakworksheet (één blad per bak, met beoordeling bovenaan en notities per stap), The Sourdough Journey heeft er ook (gepland versus echt per stap, deegtemperatuur).</li>
+</ul>
+<h3>Wat ze bijhouden (consensus uit de bronnen)</h3>
+<ul>
+<li><b>Hydratatie</b> en of water achterhield bij het mengen.</li>
+<li><b>Temperaturen:</b> keuken, deeg na het mengen, soms starter.</li>
+<li><b>Bulk:</b> starttijd, duur, <b>percentage rijs</b> en waarom ze stopten (tijd, rijs of gevoel); volgens een gids is het stoppunt een van de belangrijkste beslissingen.</li>
+<li><b>Vouwen:</b> aantal rondes en wanneer.</li>
+<li><b>Rijs/proof, stoom, oven</b> en <b>korst en kruim</b>, plus wat anders moet de volgende keer.</li>
+<li><b>Bulk versus temperatuur:</b> The Sourdough Journey bepleit meten van deegtemperatuur en percentage rijs in plaats van de klok (warmere bulk, lagere doelrijs; koeler, hogere doelrijs). De exacte tabelcijfers heb ik niet gezien en gebruik ik daarom niet.</li>
+</ul>
+<div class="warn"><b>Niet gecontroleerd:</b> r/Sourdough zelf (de zoekopdracht leverde geen Reddit-threads op, enkel The Fresh Loaf), en YouTube-bakkers. Wat ik hierboven zeg over thuisbakkers komt uit forum- en bloggegevens, niet uit Reddit of video.</div>
+
+<h2>3. Functieoverzicht</h2>
+<div class="tbl"><table>
+<tr><th>#</th><th>Functie</th><th>Beginner</th><th>Gevorderd</th><th>Hoe goed doen bestaande apps het? (inschatting uit listings)</th></tr>
+<tr><td>1</td><td>Bakkerspercentages-calculator (hydratatie, starter%, zout%)</td><td>Hoog</td><td>Hoog</td><td>Overal aanwezig, vaak gratis. Weinig onderscheid.</td></tr>
+<tr><td>2</td><td>Starter voeden: log en herinnering</td><td>Hoog</td><td>Middel</td><td>Zeer veel apps. Verzadigde markt; piekschatting is meestal een gok.</td></tr>
+<tr><td>3</td><td>Stappen-timer en bakschema</td><td>Hoog</td><td>Middel</td><td>Veel, soms achter betaalmuur. Betrouwbaarheid op de achtergrond verschilt.</td></tr>
+<tr><td>4</td><td>Terugrekenen vanaf het gewenste uur</td><td>Hoog</td><td>Hoog</td><td>Doughwell (Pro), Sour &amp; Dough; zeldzamer.</td></tr>
+<tr><td>5</td><td>Rijstijd aanpassen aan temperatuur</td><td>Middel</td><td>Hoog</td><td>Crumb, Doughwell, Sourflow claimen iets; kwaliteit onbekend.</td></tr>
+<tr><td>6</td><td>Baklogboek met foto's</td><td>Middel</td><td>Hoog</td><td>Proof, KneadNotes, Proof Lab; vaak beperkt gratis.</td></tr>
+<tr><td>7</td><td>Beoordeling korst/kruim met notitie "volgende keer"</td><td>Middel</td><td>Hoog</td><td>Alleen in het forum als wens; geen app waar ik dit goed gedaan zag. Kans.</td></tr>
+<tr><td>8</td><td>Patronen en statistieken over bakken</td><td>Laag</td><td>Hoog</td><td>Proof Pro "statistieken"; forum wil het. Weinig data nodig om bruikbaar te zijn: kans.</td></tr>
+<tr><td>9</td><td>Recepten en import</td><td>Middel</td><td>Middel</td><td>Proofit, Bread Baker; zus bakt mogelijk vaste recepten.</td></tr>
+<tr><td>10</td><td>Meerdere starters</td><td>Laag</td><td>Middel</td><td>Yeasta, Crumb Pro.</td></tr>
+<tr><td>11</td><td>Probleemgids (te plat, te dicht, ...)</td><td>Hoog</td><td>Laag</td><td>Proof Pro. Niet echt nodig voor een ervaren bakker.</td></tr>
+<tr><td>12</td><td>Privacy, export, geen abonnement</td><td>Middel</td><td>Hoog</td><td>Yeasta zet privacy centraal. Eigen Supabase met enkel haar toegang is hier een voordeel.</td></tr>
+</table></div>
+<h3>Kansen: wat weinig apps goed doen (mijn inschatting)</h3>
+<ol>
+<li><b>Het "volgende keer"-briefje</b> dat bij de volgende bak vooraan terugkomt, zodat leren echt gebeurt.</li>
+<li><b>Aanpassingen koppelen aan uitkomst:</b> twee bakken naast elkaar, met de verschillen gemarkeerd.</li>
+<li><b>Betrouwbaar terugrekenen</b> vanaf het uur dat het brood klaar moet zijn, rekening houdend met de keukentemperatuur, zonder abonnement.</li>
+<li><b>Geen betaalmuur voor basiswerk</b> en privé gegevens. Past bij een app voor één persoon.</li>
+<li><b>Nederlands (Vlaams)</b> met eigen termen (desem, bakken, rijzen, vouwen).</li>
+</ol>
+<p class="s">Dit is gebaseerd op listings en forumberichten, niet op het testen van de apps. "Niemand doet het goed" is een inschatting; er kan een app zijn die ik gemist heb.</p>
+
+<h2>4. Prioriteiten (voorlopig)</h2>
+<h3><span class="tag">Moet</span> Eerste versie</h3>
+<ul>
+<li><b>Bak invullen met live ratio's</b> (hydratatie, starter%, zout%): dat is de kern van haar vraag.</li>
+<li><b>Logboek</b> met foto's, datum en de ratio's per bak.</li>
+<li><b>Resultaat vastleggen:</b> korstkleur, kruim, beoordeling en "volgende keer anders".</li>
+<li><b>Vandaag-scherm:</b> wat is nu aan de beurt, wat staat er vandaag in de oven.</li>
+<li><b>Eenvoudige tijdlijn</b> met vaste eindtijden (zie hieronder over iPhone).</li>
+</ul>
+<h3><span class="tag f">Fijn</span> Als ze erom vraagt</h3>
+<ul>
+<li>Terugrekenen vanaf het eetuur en aanpassing aan keukentemperatuur.</li>
+<li>Vouwschema met meldingen per stap (push; eerst testen).</li>
+<li>Starter voeden: log en herinnering.</li>
+<li>Vergelijk twee bakken naast elkaar.</li>
+<li>Vaste recepten opslaan en kopiëren naar een nieuwe bak.</li>
+</ul>
+<h3><span class="tag l">Later</span></h3>
+<ul>
+<li>Grafieken en trends (pas zinvol na ongeveer 10 bakken).</li>
+<li>Percentage-rijs-meting, meerdere starters, donkere modus, export.</li>
+</ul>
+
+<h3>5 vragen aan je zus</h3>
+<ol>
+<li>Hoeveel broden bak je per week, en bak je meestal hetzelfde of probeer je telkens iets anders?</li>
+<li>Bak je op gevoel of op de gram? Wil je een vast recept kunnen opslaan en kopiëren?</li>
+<li>Werk je met een wekker, of wil je een schema met tijdstippen dat je kunt volgen? Heb je meldingen nodig, of kijk je gewoon in de app?</li>
+<li>Wat schrijf je nu al op (op papier of in een app), en wat zou je willen opschrijven maar doe je niet omdat het te omslachtig is?</li>
+<li>Wil je grafieken, of volstaat een lijst met foto's en een korte notitie "volgende keer anders"? En: welke iPhone en welke iOS-versie heb je?</li>
+</ol>
+
+<h2>5. Slim ontwerpen rond de iPhone-webapp</h2>
+<h3>Wat ik kon bevestigen</h3>
+<ul>
+<li>Web Push werkt op iPhone <b>enkel voor een webapp die op het beginscherm staat</b> (iOS 16.4 of nieuwer), en de toestemming moet uit een tik komen. Bron: <a href="https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/">WebKit-blog</a>. Dezelfde blog meldt dat dit geen Apple-ontwikkelaarsaccount vereist.</li>
+<li><b>Europa (zus is waarschijnlijk in België):</b> Apple wilde in iOS 17.4 de beginscherm-webapps in de EU verwijderen, maar draaide dit terug (<a href="https://9to5mac.com/2024/03/01/apple-home-screen-web-apps-ios-17-eu/">9to5Mac</a>). Een gebruikersmelding in een WebKit-bugrapport zegt dat push en badges na 17.4 weer werkten. Dat is geen officiële Apple-bevestiging en geldt niet noodzakelijk voor de huidige iOS. <b>Test dus op haar eigen iPhone.</b></li>
+</ul>
+<h3>Wat ik niet kon bevestigen</h3>
+<ul>
+<li>Of timers (<code>setTimeout</code>) doorlopen als de app naar de achtergrond gaat. De bronnen die ik las zeggen er niets over; ik ga ervan uit dat ze <b>niet</b> betrouwbaar doorlopen.</li>
+<li>Hoe stabiel push-abonnementen zijn: een bron meldt dat abonnementen soms verdwijnen.</li>
+</ul>
+<div class="box"><b>Ontwerp dat hiermee om kan gaan</b>
+<ul>
+<li><b>Nooit aftellen met een lopende teller.</b> Bewaar per stap een <b>eindtijd</b> (tijdstempel) in de database; het scherm rekent bij elk openen opnieuw uit wat er nog rest. Dan klopt alles ook na een uur app dicht.</li>
+<li><b>Meldingen vanaf de server:</b> plan per stap een push-bericht (bijvoorbeeld via een geplande Supabase-taak). Behandel dat als bonus, niet als enige alarm.</li>
+<li><b>Vangnet:</b> naast de push een zichtbare "volgende stap om 16:45" in grote letters, zodat ze ook zonder melding weet wat komt. Eventueel een agenda-export (.ics) met herinneringen; of dit goed werkt op iPhone heb ik niet gecontroleerd.</li>
+<li>Scherm wakker houden bij een lopende timer kan helpen; of dat in een iPhone-webapp werkt heb ik niet gecontroleerd.</li>
+<li>Geen belofte van "precies op de seconde"; bakken met een marge van een paar minuten is oké, en dat zeg ik zo ook in de app.</li>
+</ul></div>
+
+<h2>6. Drie slimme ideeën die je niet vroeg</h2>
+<ol>
+<li><b>Het volgende-keer-briefje.</b> Wat ze na het snijden opschrijft ("bulk 30 min langer") staat bij de volgende bak vooraan op het startscherm. In de mockup te zien op het Vandaag-scherm van richting 2 (Bakschrift) en in het logboek van elke richting.</li>
+<li><b>Twee bakken naast elkaar.</b> Kies twee broden; de app toont foto's naast elkaar en markeert wat verschilde (hydratatie, bulk, oventemperatuur). <i>Niet getoond in de mockups</i>; het is een voorstel voor later.</li>
+<li><b>Nachtvriendelijk plannen.</b> Bij het terugrekenen mag de app stappen naar een redelijk uur schuiven (bijvoorbeeld de koude rijs langer maken) zodat ze niet om 3 uur 's nachts hoeft op te staan. <i>Niet getoond</i>; wel in het hoofd te houden voor de planning.</li>
+</ol>
+<p>Jouw eigen voorbeelden zitten wel in de mockups: <b>terugrekenen vanaf het gewenste uur</b> en <b>keukentemperatuur die de rijstijd aanpast</b> staan in het scherm "Nieuwe bak" van elke richting, en <b>"vandaag in de oven"</b> op het Vandaag-scherm. De cijfers (bijvoorbeeld "21 graden: 45 min langer") zijn <b>voorbeelden</b>; ik heb geen gecontroleerde tabel gebruikt.</p>
+
+<h2>7. De vijf designrichtingen</h2>
+<p>Klikbaar in <a href="../mockups/index.html">de mockups</a>. Bij elke richting vind je palet, contrast, lettertypes, sterke en zwakke punten.</p>
+<div class="tbl"><table>
+<tr><th>Richting</th><th>Sfeer</th><th>Past bij handen vol deeg omdat ...</th><th>Zwak</th></tr>
+<tr><td><a href="../mockups/r1.html">1. Zusjes Recepten</a><br><small>Terracotta, Oswald, Nunito</small></td><td>Warm, bekend</td><td>Grote knoppen (48 px), rustig, hoog contrast</td><td>Voelt niet als brood</td></tr>
+<tr><td><a href="../mockups/r2.html">2. Bakschrift</a><br><small>Papier, kantlijn, handschrift</small></td><td>Persoonlijk, schrift</td><td>Weinig kaders, cijfers in typemachineletter</td><td>Handschrift vermoeit; druk bij veel inhoud</td></tr>
+<tr><td><a href="../mockups/r3.html">3. Labo</a><br><small>Mono, raster, grafiekjes</small></td><td>Strak, technisch</td><td>Cijfers in kolommen, hoogste contrast (16,9)</td><td>Kil; grafieken pas nuttig na veel bakken</td></tr>
+<tr><td><a href="../mockups/r4.html">4. Nachtbak</a><br><small>Donker, amber</small></td><td>Zacht 's nachts</td><td>Tikvlakken 56 tot 64 px, grote timer</td><td>Overdag minder leesbaar; foto's ogen donker</td></tr>
+<tr><td><a href="../mockups/r5.html">5. Ambachtelijke bakkerij</a><br><small>Meelstof, korstkleuren</small></td><td>Dorpsbakker</td><td>Korstkleur tikken in plaats van sterren; grote etiketten</td><td>Meer eigen componenten te bouwen</td></tr>
+</table></div>
+<h3>Aanbeveling</h3>
+<p><b>Richting 5 (Ambachtelijke bakkerij)</b> voor de eerste versie. Redenen: de korstkleurschaal is een echte meerwaarde (sneller en preciezer dan sterren), de etiketten maken het logboek herkenbaar als brood, en contrast en tikgrootte zijn goed (alle tekstparen 5,9 of hoger). Hergebruik de afmetingen van je Recepten-app (radius, knopmaten) zodat het bouwen niet veel duurder is. Als je zus vooral dezelfde look wil als je Recepten-app, is <b>richting 1</b> de goedkoopste keuze. De donkere modus van richting 4 is een goed <i>later</i> toevoegsel als thema. Laat haar kiezen: de mockups kosten haar vijf minuten.</p>
+<p class="s">Contrastcijfers zijn berekend volgens WCAG. Richting 1 gebruikt nu de echte kleuren uit je Recepten-app (zie hoofdstuk 11).</p>
+
+<h2>8. Naam voor de app</h2>
+<div class="tbl"><table>
+<tr><th>Naam</th><th>Waarom</th><th>Opmerking (wat ik wel/niet controleerde)</th></tr>
+<tr><td><b>Kruim</b></td><td>Kort, Nederlands, past bij een logboek van korst en kruim</td><td>In een zoekopdracht naar App Store-apps vond ik geen app "Kruim". Wel bestaat er <i>Crumb: Sourdough Tracker</i> (Engelse tegenhanger), wat verwarring in zoekresultaten kan geven. Domein en merk niet gecontroleerd.</td></tr>
+<tr><td><b>Bakschrift</b></td><td>Bakschrift en schrift; bij richting 2 een perfecte match</td><td>Geen treffers voor een app met die naam. Domein niet gecontroleerd.</td></tr>
+<tr><td>Desemdagboek</td><td>Duidelijk, "desem" is vertrouwd in Vlaanderen</td><td>Lang. Geen app gevonden.</td></tr>
+<tr><td>Korstje</td><td>Lief, kort</td><td>Mogelijk te klein/speels. Niet gecontroleerd.</td></tr>
+<tr><td>Rijstijd</td><td>Grappige dubbele betekenis</td><td>Niet gecontroleerd.</td></tr>
+</table></div>
+<p>Voor een webapp op haar beginscherm hoeft er geen App Store-naam vrij te zijn; een eigen domein is niet nodig. Mijn voorkeur: <b>Kruim</b>, of <b>Bakschrift</b> als ze richting 2 kiest.</p>
+
+<h2>9. Wat ik niet kon controleren</h2>
+<ul>
+<li>Reviewtekst per app uit de App Store zelf; huidige prijzen buiten de listings.</li>
+<li>Reddit (r/Sourdough) en YouTube; mijn beeld van thuisbakkers komt uit The Fresh Loaf en baker-blogs.</li>
+<li>Of er Nederlandstalige zuurdesem-apps zijn in de Belgische of Nederlandse App Store.</li>
+<li>Gedrag van timers op de achtergrond, wake lock en stabiliteit van push-abonnementen op haar eigen iPhone en iOS-versie.</li>
+<li>Alle cijfers in de mockups (ratio's, rijstijden, 45 minuten per 3 graden) zijn voorbeelden.</li>
+<li>Beschikbaarheid van namen, domeinen en merken.</li>
+</ul>
+
+<h2>10. Advies voor de eerste versie</h2>
+<p><b>Klein houden:</b> vier schermen, geen starter-module, geen AI, geen grafieken.</p>
+<ol>
+<li>Vandaag (lopende bak, wat staat er in de oven, volgende-keer-briefje).</li>
+<li>Nieuwe bak met live ratio's, optioneel terugrekenen vanaf het uur.</li>
+<li>Tijdlijn met eindtijden (geen lopende timer); push als aparte, getest experiment.</li>
+<li>Logboek met foto's, korstkleur, kruim en "volgende keer anders".</li>
+</ol>
+<p>Supabase: eigen tabellen, enkel toegang voor haar. Foto's in een eigen opslag. Geen databankcode in dit stadium.</p>
+
+<h3>Wat ik nog van jou en je zus nodig heb</h3>
+<h4>Nog van je zus</h4>
+<ul><li>De 5 vragen hierboven, haar iPhone en iOS-versie, en welke richting en naam ze kiest.</li></ul>
+<h4>Door jou beantwoord (2 november)</h4>
+<ul>
+<li>Kleuren en maten: uit je Recepten-app genomen (hoofdstuk 11).</li>
+<li>Inloggen: zoals in je andere apps, e-mail en wachtwoord via Supabase.</li>
+<li>Meldingen in versie 1: ja (ik las "Je" als "Ja"; zeg het als dat niet klopt). Let op: je Recepten-app heeft nog geen push, dit is dus nieuw en moet eerst op haar iPhone getest worden.</li>
+<li>Rekenconventie: "geen idee", dus ik kies de gangbare: alles op het <b>totale meel</b> (meel in het recept plus het meel uit de starter). Hydratatie telt het water uit de starter mee. Zout% en starter% idem op het totale meel. De mockup rekent nu zo.</li>
+<li>Offline: ja (hoofdstuk 11 toont hoe).</li>
+</ul>
+<h2>11. Wat ik in je Recepten-app (GitHub) vond en hergebruik</h2>
+<ul>
+<li><b>Echte kleuren</b> (Designsystem.ts, look N2): warm wit #FFFBF8, terracotta #A94F37, primaryDark #8C3D29 voor tekst op roze, roze #F8DDD4, inkt #2B2420, textLight 74% inkt, hairlines 0,5 px. Richting 1 is hiermee bijgewerkt.</li>
+<li><b>Inloggen:</b> Supabase met e-mail en wachtwoord, sessie in AsyncStorage (<code>services/supabase.ts</code>, <code>store/authStore.ts</code>). Voor de bak-app eenvoudiger: geen gezin, enkel haar account met row-level security.</li>
+<li><b>Offline:</b> je Recepten-app is local-first (SQLite lokaal als bron van waarheid, Supabase als spiegel via een uitgaande wachtrij) met een service worker die de app-schil cachet. Datzelfde patroon past hier en dekt "offline voor de zekerheid".</li>
+<li><b>Timers:</b> je <code>CookTimer</code> rekent met een eindtijd (Date-verschil), niet met tellen. Dat is precies het principe dat ik aanraad. De kookmodus gebruikt ook wake lock.</li>
+<li><b>Terugrekenen vanaf een uur:</b> <code>features/cook/schedule.ts</code> doet dit al voor etenstijd. Het idee kan hergebruikt worden voor bak-stappen.</li>
+<li><b>Meldingen:</b> daar vond ik geen push-code. Dit is het enige echt nieuwe, riskante onderdeel.</li>
+<li><b>Werkafspraak:</b> in je CLAUDE.md staat dat elke wijziging via een PR en een Vercel-preview gaat, en dat er enkel op jouw "merge" wordt samengevoegd. Dat volg ik ook voor de bak-app.</li>
+</ul>
+<p class="s">Ik las enkel de Recepten-app (colors, design system, login, timer, sw.js, manifest). De andere repos heb ik niet bekeken.</p>
+
+<h2>Bronnen</h2>
+<ul class="s">
+<li><a href="https://apps.apple.com/us/app/id6777510093">Crumb: Sourdough Tracker (App Store)</a></li>
+<li><a href="https://apps.apple.com/bn/app/id6758458552">Sourflow (App Store)</a></li>
+<li><a href="https://apps.apple.com/app/id6779931291">Doughwell (App Store)</a></li>
+<li><a href="https://apps.apple.com/app/id6760323315">Proof, Baking Log &amp; Journal (App Store)</a></li>
+<li><a href="https://apps.apple.com/us/app/-/id6748180011">Yeasta (App Store)</a></li>
+<li><a href="https://apps.apple.com/app/id6785357199">BakeReady (App Store)</a></li>
+<li><a href="https://apps.apple.com/app/id6792324050">BakeMemo (App Store)</a></li>
+<li><a href="https://apps.apple.com/app/id1343381132">Baker Percentage (App Store)</a></li>
+<li><a href="https://apps.apple.com/app/id1204826885">Bread Baker (App Store)</a></li>
+<li><a href="https://appgoblin.info/apps/6785401801">Sourdough Companion: Bake AI (AppGoblin)</a></li>
+<li><a href="https://marlvel.ai/apps/sourdough-starter-tracker">Marlvel-rapport Sourdough Starter Tracker (aggregator)</a></li>
+<li><a href="https://www.thefreshloaf.com/comment/554052">The Fresh Loaf: starter log zonder abonnement</a></li>
+<li><a href="https://www.thefreshloaf.com/comment/550678">The Fresh Loaf: Building a bread baking app</a></li>
+<li><a href="https://www.thefreshloaf.com/comment/273684">The Fresh Loaf: baking journal/diary</a></li>
+<li><a href="https://www.theperfectloaf.com/the-simplest-way-i-improved-my-baking-using-this-baking-notes-worksheet/">The Perfect Loaf: baking notes worksheet</a></li>
+<li><a href="https://thesourdoughjourney.com/the-mystery-of-percentage-rise-in-bulk-fermentation/">The Sourdough Journey: percentage rise in bulk</a></li>
+<li><a href="https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/">WebKit: Web Push for Web Apps on iOS</a></li>
+<li><a href="https://9to5mac.com/2024/03/01/apple-home-screen-web-apps-ios-17-eu/">9to5Mac: web apps in the EU</a></li>
+<li><a href="https://bugs.webkit.org/show_bug.cgi?id=268643">WebKit bugrapport 268643</a></li>
+</ul>
+</div></body></html>

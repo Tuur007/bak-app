@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="nl-BE"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nachtbak - richting 4</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+.screenbox{background:#12100E;color:#F4EADD;font-family:Manrope,system-ui,sans-serif}
+.statusbar{color:#F4EADD}.homebar{background:#F4EADD}
+h2.t{font:800 30px/1.1 Manrope;margin:0 0 16px}
+.card{background:#1F1915;border-radius:24px;padding:24px;margin-bottom:16px}
+.lbl{font-size:14px;font-weight:600;color:#B3A596}
+.big{font:800 72px/1 Manrope;color:#F2A541;letter-spacing:-.03em}
+.btn{display:flex;align-items:center;justify-content:center;min-height:64px;border-radius:24px;background:#F2A541;color:#12100E;font:800 20px Manrope;border:0;width:100%;cursor:pointer;margin-bottom:16px}
+.btn.ghost{background:#2B231D;color:#F4EADD}
+.tabbar{background:#1F1915}.tabbar button{color:#B3A596;font:600 14px Manrope}.tabbar button.on{color:#F2A541}
+.field{background:#1F1915;border-radius:16px;padding:8px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;min-height:64px}
+.field label{font-size:18px;font-weight:600}.field input{width:120px;height:48px;background:#2B231D;border:0;border-radius:12px;color:#F4EADD;font:800 24px Manrope;text-align:right;padding:0 16px}
+.res{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}.res div{background:#2B231D;border-radius:16px;padding:16px 8px;text-align:center}.res b{display:block;font:800 26px Manrope;color:#F2A541}.res span{font-size:13px;color:#B3A596}
+.step{display:flex;gap:16px;align-items:center;min-height:64px;padding:8px 16px;background:#1F1915;border-radius:16px;margin-bottom:8px;cursor:pointer;font-size:18px;font-weight:600}
+.step .tm{width:60px;color:#B3A596;font-size:16px}.step.done{opacity:.45}.step.done .nm{text-decoration:line-through}
+.step.now{background:#F2A541;color:#12100E}.step.now .tm{color:#12100E}
+.photo{width:80px;height:80px;border-radius:16px;background:#4A3426;flex:none}
+.log{display:flex;gap:16px;align-items:center}.log h4{font-size:20px}.log p{font-size:15px;color:#B3A596}
+.stars{color:#F2A541;font-weight:800;font-size:18px}
+</style></head>
+<body><div class="page">
+<div class="top"><a href="index.html">Overzicht</a><a href="r1.html">Richting 1</a><a href="r2.html">Richting 2</a><a href="r3.html">Richting 3</a><a href="r4.html" class="on">Richting 4</a><a href="r5.html">Richting 5</a><a href="../rapport/index.html">Rapport</a></div>
+<div class="layout">
+<div class="info">
+<h1>Richting 4: Nachtbak</h1>
+<p class="sfeer">Donker en zacht voor 5 uur 's ochtends of laat op de avond, met enorme knoppen en cijfers.</p>
+<div class="jump"><button>Vandaag</button><button>Nieuwe bak</button><button>Tijdlijn</button><button>Logboek</button></div>
+<h2>Kleurpalet en contrast</h2>
+<div class="sw"><div><i style="background:#12100E"></i><span><b>Nacht</b><br>#12100E</span></div><div><i style="background:#1F1915"></i><span><b>Vlak</b><br>#1F1915</span></div><div><i style="background:#2B231D"></i><span><b>Vlak hoog</b><br>#2B231D</span></div><div><i style="background:#F4EADD"></i><span><b>Tekst</b><br>#F4EADD</span></div><div><i style="background:#F2A541"></i><span><b>Amber</b><br>#F2A541</span></div><div><i style="background:#B3A596"></i><span><b>Gedempt</b><br>#B3A596</span></div></div>
+<h2>Contrast (WCAG)</h2>
+<table class="c"><tr><td>Tekst op nacht</td><td>16,0</td></tr><tr><td>Amber op nacht</td><td>9,3</td></tr><tr><td>Nacht op amber (knop)</td><td>9,3</td></tr><tr><td>Gedempt op nacht</td><td>7,9</td></tr><tr><td>Tekst op vlak</td><td>14,6</td></tr></table>
+<h2>Lettertypes</h2><p>Manrope 600 en 800, bewust grote groottes: 20 px lopende tekst, 64 px timer. Weinig lettertypes, geen dunne gewichten.</p>
+<h2>Waarom dit bij brood past</h2><p>Bij vroeg of laat bakken verblindt een wit scherm. Amber is zacht voor de ogen en doet aan ovenlicht denken. Grote tikvlakken (56 px) werken met meel aan de vingers en een kleine pauze.</p>
+<h2>Sterk</h2><ul class="plus"><li>Zeer goed bij weinig licht; aangenaam voor de ogen; grote tikdoelen</li><li>Eén ding per scherm: de volgende handeling vooraan</li></ul>
+<h2>Zwak</h2><ul class="min"><li>Overdag in een zonnige keuken minder goed leesbaar (reflectie)</li><li>Foto's van korst en kruim ogen donker in een donker scherm</li></ul>
+<p class="note">Alle cijfers in de mockup zijn voorbeelden. Tik op de knoppen, de tabbalk, de stappen en de timer; de velden in &quot;Nieuwe bak&quot; rekenen live mee.</p>
+</div>
+<div class="phonewrap"><div class="phone"><div class="screenbox">
+<div class="notch"></div><div class="statusbar"><span>9:41</span><span>5G 87%</span></div>
+
+<div class="scr on"><div class="body">
+<h2 class="t">Goeiemorgen</h2>
+<div class="card"><div class="lbl">Nu: vouwen 3 van 4</div><div class="big" data-sec="760"></div><p style="margin-top:8px;color:#B3A596">Landbrood, klaar za 12:00</p></div>
+<button class="btn" data-s="2">Open tijdlijn</button>
+<div class="card"><div class="lbl">Starter</div><p style="font-size:22px;font-weight:800;margin-top:4px">Op piek, vandaag voeden niet nodig</p></div>
+<div class="card"><div class="lbl">Vandaag in de oven</div><p style="font-size:22px;font-weight:800;margin-top:4px">Za 10:45 bakken</p></div>
+<button class="btn ghost" data-s="1">Nieuwe bak</button>
+</div><div class="tabbar"><button data-s="0">Vandaag</button><button data-s="1">Nieuw</button><button data-s="2">Tijdlijn</button><button data-s="3">Logboek</button></div></div>
+
+<div class="scr"><div class="body">
+<h2 class="t">Nieuwe bak</h2>
+<div class="field"><label>Meel (g)</label><input class="calc" id="f-meel" inputmode="decimal" value="500"></div>
+<div class="field"><label>Water (g)</label><input class="calc" id="f-water" inputmode="decimal" value="350"></div>
+<div class="field"><label>Starter (g)</label><input class="calc" id="f-starter" inputmode="decimal" value="100"></div>
+<div class="field"><label>Starter hydratatie %</label><input class="calc" id="f-sthyd" inputmode="decimal" value="100"></div>
+<div class="field"><label>Zout (g)</label><input class="calc" id="f-zout" inputmode="decimal" value="10"></div>
+<div class="field"><label>Keuken (graden)</label><input id="f-temp" inputmode="decimal" value="21"></div>
+<div class="res"><div><b id="o-hyd"></b><span>Hydratatie</span></div><div><b id="o-st"></b><span>Starter</span></div><div><b id="o-zout"></b><span>Zout</span></div></div>
+<div class="card"><div class="lbl">Klaar tegen</div><p style="font-size:26px;font-weight:800">Za 12:00</p><p style="color:#B3A596;margin-top:4px">Keuken 21 graden: bulk 45 min langer</p></div>
+<button class="btn" data-s="2">Maak tijdlijn</button>
+</div><div class="tabbar"><button data-s="0">Vandaag</button><button data-s="1">Nieuw</button><button data-s="2">Tijdlijn</button><button data-s="3">Logboek</button></div></div>
+
+<div class="scr"><div class="body">
+<h2 class="t">Tijdlijn</h2>
+<div class="step done" data-step><span class="tm">14:00</span><span class="nm">Mengen, zout erbij</span></div>
+<div class="step done" data-step><span class="tm">15:15</span><span class="nm">Vouwen 2</span></div>
+<div class="step now" data-step><span class="tm">16:00</span><span class="nm">Vouwen 3<br><span style="font:800 40px Manrope" data-sec="760"></span></span></div>
+<div class="step" data-step><span class="tm">16:45</span><span class="nm">Vouwen 4</span></div>
+<div class="step" data-step><span class="tm">19:30</span><span class="nm">Vormen</span></div>
+<div class="step" data-step><span class="tm">20:00</span><span class="nm">Koelkast</span></div>
+<div class="step" data-step><span class="tm">10:00</span><span class="nm">Oven aan 240</span></div>
+<div class="step" data-step><span class="tm">10:45</span><span class="nm">Bakken</span></div>
+</div><div class="tabbar"><button data-s="0">Vandaag</button><button data-s="1">Nieuw</button><button data-s="2">Tijdlijn</button><button data-s="3">Logboek</button></div></div>
+
+<div class="scr"><div class="body">
+<h2 class="t">Logboek</h2>
+<div class="card log"><div class="photo"></div><div><h4>Landbrood</h4><p>31 okt, 73%</p><div class="stars">4 van 5</div><p>Bulk 30 min langer</p></div></div>
+<div class="card log"><div class="photo"></div><div><h4>Volkoren 30%</h4><p>24 okt, 78%</p><div class="stars">3 van 5</div><p>Oven 10 graden lager</p></div></div>
+<div class="card log"><div class="photo"></div><div><h4>Landbrood</h4><p>17 okt, 72%</p><div class="stars">5 van 5</div><p>Zo houden</p></div></div>
+</div><div class="tabbar"><button data-s="0">Vandaag</button><button data-s="1">Nieuw</button><button data-s="2">Tijdlijn</button><button data-s="3">Logboek</button></div></div>
+
+<div class="homebar"></div>
+</div></div></div>
+</div></div>
+<script src="shared.js"></script>
+</body></html>
