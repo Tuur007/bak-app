@@ -16,7 +16,7 @@ PAGE = """<!doctype html>
 <div class="info">
 <h1>Richting %%NR%%: %%NAAM%%</h1>
 <p class="sfeer">%%SFEER%%</p>
-<div class="jump"><button>Vandaag</button><button>Nieuwe bak</button><button>Tijdlijn</button><button>Logboek</button></div>
+<div class="jump">%%JUMP%%</div>
 <h2>Kleurpalet en contrast</h2>
 <div class="sw">%%SW%%</div>
 <h2>Contrast (WCAG)</h2>
@@ -37,7 +37,7 @@ PAGE = """<!doctype html>
 </body></html>"""
 
 def nav(cur):
-    items = [("index.html", "Overzicht")] + [("r%d.html" % i, "Richting %d" % i) for i in range(1, 6)] + [("../rapport/index.html", "Rapport")]
+    items = [("index.html", "Overzicht")] + [("r%d.html" % i, "Richting %d" % i) for i in range(1, 9)] + [("../rapport/index.html", "Rapport")]
     return "".join('<a href="%s"%s>%s</a>' % (h, ' class="on"' if h == "r%d.html" % cur else "", t) for h, t in items)
 
 def tabs(labels):
@@ -459,6 +459,252 @@ h2.t{font:800 34px/1.05 Fraunces,serif;margin:0 0 4px;color:#3F2410}
 """, tabs_labels=["Vandaag","Nieuw","Bakplan","Broden"],
 )
 
+# ---------------------------------------------------------------- 6 HAVER EN SALIE (uit de ChatGPT-briefing)
+D[6] = dict(
+ naam="Haver en salie", sfeer="Rustig en ambachtelijk met echte foto's van haar broden en starter: crème, haver, salie en aarde, naar de projectbriefing.",
+ fonts='<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">',
+ sw=[("Crème","#F5F0E7"),("Haver","#E8DDCC"),("Salie (vlak)","#A7AD91"),("Aarde (vlak)","#A96F50"),("Donker","#302E29"),("Aarde donker (tekst/knop)","#8A5236"),("Salie donker (tekst)","#566043"),("Gedempt","#625C54")],
+ contrast=[("Donker op crème","11,9"),("Aarde donker #8A5236 op crème","5,5"),("Wit op aarde donker (knop)","6,3"),("Aarde donker op haver","4,7"),("Salie donker op crème","5,9"),("Gedempt op crème","5,8"),("Briefingkleuren zelf: aarde #A96F50 op crème 3,6 en wit op aarde 4,1 (te laag voor kleine tekst), salie op crème 2,0 (enkel vlak). Daarom twee donkere varianten toegevoegd.","")],
+ letters="DM Serif Display voor titels (zacht, kookboekachtig), DM Sans voor de rest. Echte foto's als hoofdrolspeler; hier getoond als tonale vlakken met het label FOTO.",
+ waarom="Dit is het palet uit de briefing (van ChatGPT), bijgesteld voor leesbaarheid. De foto's van haar eigen broden en starter maken de app persoonlijk. Vijf tabs, zoals de briefing vraagt, en een bakmodus die vraagt of het deeg echt klaar is.",
+ plus=["Foto's centraal: logboek en starter voelen als haar eigen kookboek","Bakmodus met controlepunten ('is het volume +30%?') past bij de eerlijke schatting van fermentatie"],
+ min=["Vraagt goede foto's; zonder foto's ogen de schermen leeg","Meer schermen (starter erbij) dus meer bouwwerk dan richting 5"],
+ css="""
+.screenbox{background:#F5F0E7;color:#302E29;font-family:'DM Sans',system-ui,sans-serif}
+.statusbar{color:#302E29}.homebar{background:#302E29}
+h2.t{font:400 32px/1.1 'DM Serif Display',serif;margin:0 0 16px}
+.card{background:#E8DDCC;border-radius:16px;padding:16px;margin-bottom:16px}
+.card.w{background:#FBF8F2}
+.lbl{font:700 12px 'DM Sans';text-transform:uppercase;letter-spacing:.08em;color:#566043}
+.big{font:400 56px/1 'DM Serif Display',serif}
+.btn{display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:12px;background:#8A5236;color:#fff;font:700 16px 'DM Sans';border:0;width:100%;cursor:pointer;margin-bottom:8px}
+.btn.ghost{background:transparent;color:#8A5236;border:2px solid #8A5236}
+.btn.sage{background:#566043}
+.tabbar{background:#FBF8F2;border-top:1px solid #E8DDCC;padding:8px 4px 24px}.tabbar button{color:#625C54;font:600 11px 'DM Sans'}.tabbar button.on{color:#8A5236;font-weight:700}
+.photo{border-radius:12px;background:#A7AD91;display:flex;align-items:center;justify-content:center;font:700 12px 'DM Sans';color:#302E29;letter-spacing:.1em}
+.photo.a{background:#A96F50;color:#fff}
+.field{margin-bottom:8px}.field label{display:block;font:700 12px 'DM Sans';text-transform:uppercase;letter-spacing:.06em;color:#566043;margin-bottom:4px}
+.field input{width:100%;height:48px;border:1px solid #C9BBA3;border-radius:12px;background:#FBF8F2;padding:0 16px;font:600 20px 'DM Sans';color:#302E29}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.res{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 16px}.res div{background:#E8DDCC;border-radius:12px;padding:12px 8px;text-align:center}.res b{display:block;font:400 26px 'DM Serif Display'}.res span{font-size:12px;color:#625C54;font-weight:600}
+.step{display:flex;gap:16px;align-items:center;min-height:52px;padding:8px 0;border-bottom:1px solid #E8DDCC;cursor:pointer}
+.step .tm{width:64px;font:700 14px 'DM Sans';color:#8A5236}.step .dot{width:24px;height:24px;border-radius:12px;border:2px solid #566043;flex:none}
+.step.done .dot{background:#566043}.step.done .nm{color:#625C54;text-decoration:line-through}
+.step.now{background:#E8DDCC;border-radius:12px;padding:8px;border:0}
+.row{display:flex;gap:16px;align-items:center}
+.log p{font-size:14px;color:#625C54}.log h4{font:400 20px 'DM Serif Display'}
+.msg{font-size:14px;color:#566043;font-weight:700;margin-top:8px;min-height:20px}
+""",
+ screens="""
+<div class="scr on"><div class="body">
+<p class="lbl">Goeiemorgen, vrijdag 6 november</p><h2 class="t">Vandaag</h2>
+<div class="card"><div class="row"><div class="photo" style="width:72px;height:72px;flex:none">FOTO</div><div><p class="lbl">Starter</p><h3 style="font:400 22px 'DM Serif Display'">Oma-starter</h3><p style="font-size:14px;color:#625C54">Op piek, gevoed om 06:30</p></div></div></div>
+<div class="card w"><p class="lbl">Volgende actie</p><h3 style="font:400 24px 'DM Serif Display';margin:4px 0">Vouwen 3 van 4</h3><div class="big" data-sec="760" style="margin:8px 0"></div><button class="btn" data-s="3">Open bakmodus</button></div>
+<div class="card"><p class="lbl">Vandaag in de oven</p><p style="margin-top:4px">Za <b>10:00</b> aan, <b>10:45</b> bakken, <b>12:00</b> klaar.</p></div>
+<div class="card w"><p class="lbl">Vorige keer</p><p style="margin-top:4px">Kruim iets dicht: bulk 30 min langer.</p></div>
+</div>%%TABS%%</div>
+
+<div class="scr"><div class="body">
+<h2 class="t">Starter</h2>
+<div class="photo" style="height:140px;margin-bottom:16px">FOTO VAN DE POT</div>
+<div class="card"><h3 style="font:400 22px 'DM Serif Display'">Oma-starter</h3><p style="font-size:14px;color:#625C54">Roggemeel 20%, tarwe 80%, hydratatie 100%, bewaard op 21 graden</p><button class="btn" style="margin-top:16px">Voeding noteren</button></div>
+<div class="card w"><p class="lbl">Rijs na laatste voeding (voorbeeldgegevens)</p>
+<svg viewBox="0 0 240 64" style="width:100%;height:64px"><g fill="#566043"><rect x="8" y="48" width="20" height="12"/><rect x="40" y="40" width="20" height="20"/><rect x="72" y="28" width="20" height="32"/><rect x="104" y="14" width="20" height="46"/><rect x="136" y="8" width="20" height="52"/><rect x="168" y="18" width="20" height="42"/><rect x="200" y="32" width="20" height="28"/></g></svg>
+<p style="font-size:13px;color:#625C54">Piek na ongeveer 4 tot 5 uur (schatting op basis van eigen metingen).</p></div>
+<div class="card w"><p class="lbl">Voedingslog</p>
+<p style="margin-top:8px;font-size:15px"><b>vr 06:30</b> 1:5:5 (20 / 100 / 100 g), 22 C</p>
+<p style="margin-top:8px;font-size:15px"><b>do 06:30</b> 1:5:5, 21 C</p></div>
+</div>%%TABS%%</div>
+
+<div class="scr"><div class="body">
+<h2 class="t">Nieuwe bak</h2>
+<div class="two">
+<div class="field"><label>Meel (g)</label><input class="calc" id="f-meel" inputmode="decimal" value="500"></div>
+<div class="field"><label>Water (g)</label><input class="calc" id="f-water" inputmode="decimal" value="350"></div>
+<div class="field"><label>Starter (g)</label><input class="calc" id="f-starter" inputmode="decimal" value="100"></div>
+<div class="field"><label>Starter hydr. %</label><input class="calc" id="f-sthyd" inputmode="decimal" value="100"></div>
+<div class="field"><label>Zout (g)</label><input class="calc" id="f-zout" inputmode="decimal" value="10"></div>
+<div class="field"><label>Keuken (graden)</label><input id="f-temp" inputmode="decimal" value="21"></div></div>
+<div class="res"><div><b id="o-hyd"></b><span>Hydratatie</span></div><div><b id="o-st"></b><span>Starter</span></div><div><b id="o-zout"></b><span>Zout</span></div></div>
+<p style="font-size:13px;color:#625C54;margin:-8px 0 16px">Totaal deeg <b id="o-tot"></b>, totaal meel <b id="o-meel2"></b>. Alles op het totale meel gerekend.</p>
+<div class="card"><p class="lbl">Klaar tegen</p><p style="font:400 26px 'DM Serif Display'">Zaterdag 12:00</p><p style="font-size:14px;color:#625C54;margin-top:4px">Keuken 21 graden: bulk 45 min langer. Schatting, bevestig het deeg zelf.</p></div>
+<button class="btn" data-s="3">Plan deze bak</button>
+</div>%%TABS%%</div>
+
+<div class="scr"><div class="body">
+<h2 class="t">Bakmodus</h2>
+<div class="card w" style="text-align:center;padding:24px 16px"><p class="lbl">Nu</p><h3 style="font:400 30px 'DM Serif Display';margin:4px 0">Vouwen 3 van 4</h3><div class="big" data-sec="760"></div></div>
+<div class="card"><p class="lbl">Controle: is het deeg klaar?</p><p style="font-size:15px;margin:4px 0 16px">Volume +30%? Bellen aan de rand? Deeg gespannen?</p>
+<button class="btn sage" onclick="document.getElementById('m6').textContent='Genoteerd. Planning blijft staan.'">Ja, volgende stap</button>
+<button class="btn ghost" data-bump="1800" onclick="document.getElementById('m6').textContent='Nog niet: planning schuift 30 min op.'">Nog niet, +30 min</button><p class="msg" id="m6"></p></div>
+<div class="step done" data-step><span class="tm">15:15</span><span class="dot"></span><span class="nm">Vouwen 2</span></div>
+<div class="step now" data-step><span class="tm">16:00</span><span class="dot"></span><span class="nm"><b>Vouwen 3</b></span></div>
+<div class="step" data-step><span class="tm">16:45</span><span class="dot"></span><span class="nm">Vouwen 4</span></div>
+<div class="step" data-step><span class="tm">19:30</span><span class="dot"></span><span class="nm">Vormen, koelkast</span></div>
+<div class="step" data-step><span class="tm">za 10:45</span><span class="dot"></span><span class="nm">Bakken, 40 min</span></div>
+</div>%%TABS%%</div>
+
+<div class="scr"><div class="body">
+<h2 class="t">Mijn broden</h2>
+<div class="card w log"><div class="photo a" style="height:120px;margin-bottom:8px">FOTO KRUIM</div><h4>Landbrood</h4><p>31 okt, hydratatie 73%, 4 van 5</p><p>Volgende keer: bulk 30 min langer.</p></div>
+<div class="card w log"><div class="photo" style="height:120px;margin-bottom:8px">FOTO KRUIM</div><h4>Volkoren 30%</h4><p>24 okt, hydratatie 78%, 3 van 5</p><p>Oven 10 graden lager.</p></div>
+<button class="btn ghost">Vergelijk twee broden</button>
+</div>%%TABS%%</div>
+""", tabs_labels=["Vandaag","Starter","Nieuwe bak","Bakmodus","Broden"],
+)
+
+# ---------------------------------------------------------------- 7 en 8: SCANDI, op basis van de antwoorden van zus
+SCANDI_CSS = """
+.screenbox{background:var(--bg);color:var(--ink);font-family:Figtree,system-ui,sans-serif}
+.statusbar{color:var(--ink)}.homebar{background:var(--ink)}
+h2.t{font:400 30px/1.1 'Young Serif',serif;margin:0 0 4px;color:var(--grn)}
+.folio{font:700 11px Figtree;text-transform:uppercase;letter-spacing:.12em;color:var(--mut);margin-bottom:4px}
+.sub{font-size:14px;color:var(--mut);margin-bottom:16px}
+.card{background:var(--card);border-radius:20px;padding:16px;margin-bottom:12px;border:1px solid var(--line)}
+.card.b{background:var(--blush);border-color:var(--blush)}
+.card.p{background:var(--bor);border-color:var(--bor);color:#F6F0E6}
+.card.p .folio,.card.p .sub{color:#EBD2C4}
+.arch{background:var(--blush);border-radius:999px 999px 20px 20px;padding:40px 24px 20px;text-align:center;margin-bottom:12px;position:relative;overflow:hidden}
+.arch h3{font:400 30px 'Young Serif',serif;color:var(--grn)}
+.arch .bub{position:absolute;border-radius:50%;background:var(--card);opacity:.7}
+.btn{display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:999px;background:var(--ter);color:var(--btxt);font:700 16px Figtree;border:0;width:100%;cursor:pointer;margin-bottom:8px}
+.btn.g{background:var(--grn);color:var(--bg)}.btn.o{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+.chip{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid var(--line);background:var(--card);font:600 14px Figtree;margin:0 8px 8px 0;cursor:pointer}
+.chip.on{background:var(--grn);color:var(--bg);border-color:var(--grn)}
+.tabbar{background:var(--card);border-top:1px solid var(--line);padding:8px 4px 24px}.tabbar button{color:var(--mut);font:700 12px Figtree}.tabbar button.on{color:var(--ter)}.tabbar button.on::before{content:"";display:block;width:24px;height:4px;border-radius:2px;background:var(--bor);margin:0 auto 4px}
+.dots{display:flex;gap:8px;margin:8px 0}.dots i{flex:1;height:8px;border-radius:4px;background:var(--line)}.dots i.f{background:var(--grn)}
+.lbl{font:700 11px Figtree;text-transform:uppercase;letter-spacing:.1em;color:var(--mut)}
+.field{margin-bottom:8px}.field label{display:block;font:700 12px Figtree;color:var(--mut);margin-bottom:4px}
+.field input{width:100%;height:48px;border:1.5px solid var(--line);border-radius:14px;background:var(--card);padding:0 16px;font:700 18px Figtree;color:var(--ink)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.res{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 12px}.res div{background:var(--blush);border-radius:16px;padding:12px 4px;text-align:center;color:var(--ink)}.res b{display:block;font:400 24px 'Young Serif';color:var(--grn)}.res span{font-size:12px;font-weight:700}
+.st{display:grid;grid-template-columns:56px 1fr auto;gap:8px;align-items:center;min-height:56px;border-bottom:1px solid var(--line);padding:4px 0}
+.st .tm{font:700 15px Figtree;color:var(--ter)}.st small{display:block;font-size:12px;color:var(--mut)}
+.st .nm{font-weight:700}.st.wait .nm{font-weight:500;color:var(--mut)}
+.bell{width:44px;height:44px;border-radius:22px;border:1.5px solid var(--line);background:var(--card);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--mut)}
+.bell.on{background:var(--bor);border-color:var(--bor);color:#F6F0E6}
+.day{display:flex;height:24px;border-radius:12px;overflow:hidden;margin:8px 0;background:var(--line)}.day i{display:block;height:100%}
+.hours{display:flex;justify-content:space-between;font-size:11px;color:var(--mut)}
+.seg{display:flex;background:var(--line);border-radius:999px;padding:4px;margin-bottom:12px}.seg button{flex:1;min-height:44px;border:0;border-radius:999px;background:transparent;font:700 14px Figtree;color:var(--ink);cursor:pointer}.seg button.on{background:var(--card)}
+.swt{display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:56px;border-bottom:1px solid var(--line);padding:8px 0}.swt p{font-size:14px;color:var(--mut)}
+.tg{width:52px;height:32px;border-radius:16px;background:var(--line);position:relative;flex:none;cursor:pointer;border:0}.tg::after{content:"";position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:12px;background:var(--card);transition:left .15s}.tg.on{background:var(--grn)}.tg.on::after{left:24px}
+.crust{display:flex;gap:8px;margin:8px 0}.crust i{flex:1;height:44px;border-radius:12px;border:2px solid transparent}.crust i.sel{border-color:var(--ink)}
+.tagx{display:inline-block;background:var(--blush);color:var(--ink);border-radius:999px;padding:2px 12px;font:700 11px Figtree;letter-spacing:.06em}
+.note2{font-size:12px;color:var(--mut);margin-top:4px}
+"""
+
+def scandi_screens():
+    bell = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 17h12l-1.5-2V10a4.5 4.5 0 0 0-9 0v5z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>'
+    def st(tm, nm, sub, on, wait=False):
+        return '<div class="st%s"><span class="tm">%s</span><span><span class="nm">%s</span><small>%s</small></span><button class="bell%s" onclick="this.classList.toggle(\'on\')" aria-label="wekker">%s</button></div>' % (" wait" if wait else "", tm, nm, sub, " on" if on else "", bell)
+    steps = "".join([
+        st("17:30","Mengen","15 min handwerk",True),
+        st("18:00","Zout erbij en vouwen 1","5 min",True),
+        st("18:45","Vouwen 2","5 min",True),
+        st("19:30","Vouwen 3","5 min",False),
+        st("20:15","Vouwen 4","5 min",False),
+        st("20:20","Bulk","wacht tot ongeveer 22:30",False,True),
+        st("22:30","Vormen","10 min",True),
+        st("23:00","Koelkast","koude rijs, wacht 12 uur",False,True),
+        st("za 10:45","Oven aan, 240 graden","5 min",True),
+        st("za 11:30","Bakken","45 min",True),
+        st("za 13:00","Klaar","afkoelen, dan aansnijden",False,True)])
+    return """
+<div class="scr on"><div class="body">
+<p class="folio">Dag 17 · maandag 2 november</p><h2 class="t">Dag 17 met Jean</h2><p class="sub">Je starter is aan het aansterken.</p>
+<div class="arch"><span class="bub" style="width:18px;height:18px;left:14%;top:30px"></span><span class="bub" style="width:10px;height:10px;left:84%;top:26px"></span><span class="bub" style="width:14px;height:14px;left:90%;top:62px"></span>
+<p class="lbl">Klaar om te bakken?</p><h3>Nog niet helemaal</h3><div class="dots"><i class="f"></i><i class="f"></i><i></i></div><p class="sub" style="margin:0">2 van 3 dagen op rij verdubbeld binnen 6 uur. Nog 1 dag.</p></div>
+<div class="card"><p class="lbl">Volgende</p><p style="font:400 22px 'Young Serif';margin:4px 0 12px">Vanavond 18:00 voeden</p><button class="btn">Jean is gevoed</button><p class="note2">Eén tik. Zelfde verhouding als altijd (1:5:5).</p></div>
+<div class="card b"><p class="lbl">Eerste brood</p><p style="margin-top:4px">Meestal pas na 2 tot 4 weken écht stabiel. Op zijn vroegst rond <b>zaterdag 7 november</b>, maar jij ziet het aan Jean. Dit is een schatting.</p></div>
+</div>%%TABS%%</div>
+
+<div class="scr"><div class="body">
+<p class="folio">Starter</p><h2 class="t">Jean</h2><p class="sub">Gestart op 16 oktober, dag 17.</p>
+<div class="two"><button class="btn">Gevoed</button><button class="btn g">Piek bereikt</button></div>
+<div class="card"><p class="lbl">Uren tot verdubbeling</p>
+<svg viewBox="0 0 260 120" style="width:100%;height:120px;margin-top:8px">
+<line x1="12" y1="72" x2="252" y2="72" stroke="var(--warn)" stroke-width="1.5" stroke-dasharray="4 4"/>
+<text x="14" y="66" text-anchor="start" font-size="10" fill="var(--warn)" font-family="Figtree" font-weight="700">doel: onder 6 uur</text>
+<polyline fill="none" stroke="var(--grn)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="16,22 56,32 96,48 136,58 176,66 216,74 244,80"/>
+<g fill="var(--grn)"><circle cx="16" cy="22" r="4"/><circle cx="56" cy="32" r="4"/><circle cx="96" cy="48" r="4"/><circle cx="136" cy="58" r="4"/><circle cx="176" cy="66" r="4"/><circle cx="216" cy="74" r="4"/><circle cx="244" cy="80" r="4"/></g>
+<text x="16" y="112" font-size="10" fill="var(--mut)" font-family="Figtree">dag 10</text><text x="244" y="112" text-anchor="end" font-size="10" fill="var(--mut)" font-family="Figtree">dag 17</text></svg>
+<p class="note2">Voorbeeldgegevens. Korter = sterker. De grafiek verschijnt pas na 3 metingen.</p></div>
+<div class="card"><p class="lbl">Laatste voedingen</p>
+<div class="st" style="grid-template-columns:90px 1fr"><span class="tm">vandaag</span><span class="nm">1:5:5 · piek na 5 u 30</span></div>
+<div class="st" style="grid-template-columns:90px 1fr;border:0"><span class="tm">gisteren</span><span class="nm">1:5:5 · piek na 5 u 45</span></div></div>
+</div>%%TABS%%</div>
+
+<div class="scr"><div class="body">
+<p class="folio">Mijn recepten</p><h2 class="t">Recepten</h2><p class="sub">Gewoon je eigen recept intikken, op de gram.</p>
+<div class="card"><span class="tagx">Eigen recept</span><h3 style="font:400 22px 'Young Serif';margin:8px 0 4px;color:var(--grn)">Klassieke bâtard</h3><p class="sub" style="margin-bottom:12px">Uit Kometen Brood (voorbeeldcijfers)</p>
+<div class="two"><div class="field"><label>Meel (g)</label><input class="calc" id="f-meel" inputmode="decimal" value="500"></div><div class="field"><label>Water (g)</label><input class="calc" id="f-water" inputmode="decimal" value="350"></div>
+<div class="field"><label>Starter (g)</label><input class="calc" id="f-starter" inputmode="decimal" value="100"></div><div class="field"><label>Zout (g)</label><input class="calc" id="f-zout" inputmode="decimal" value="10"></div></div>
+<input type="hidden" class="calc" id="f-sthyd" value="100">
+<div class="res"><div><b id="o-hyd"></b><span>Hydratatie</span></div><div><b id="o-st"></b><span>Starter</span></div><div><b id="o-zout"></b><span>Zout</span></div></div>
+<button class="btn" data-s="3">Plan deze bak</button></div>
+<button class="btn o">Recept toevoegen</button><p class="note2" style="text-align:center">Intikken of een foto van de bladzijde nemen.</p>
+</div>%%TABS%%</div>
+
+<div class="scr"><div class="body">
+<p class="folio">Bak plannen</p><h2 class="t">Klassieke bâtard</h2>
+<p class="sub">Klaar tegen zaterdag 13:00 · keuken 21 graden</p>
+<p class="lbl">Ik ben thuis</p>
+<div class="day"><i style="width:30%;background:var(--line)"></i><i style="width:3%;background:var(--ter)"></i><i style="width:36%;background:var(--line)"></i><i style="width:31%;background:var(--grn)"></i></div>
+<div class="hours"><span>6u</span><span>12u</span><span>18u</span><span>24u</span></div>
+<p class="note2" style="margin-bottom:12px">Vrijdag: thuis vanaf 17:30. Alle handwerk valt op een moment dat je er bent.</p>
+<div class="card" style="padding:4px 16px">%%STEPS%%</div>
+<p class="note2" style="margin-bottom:12px">De bel zet een wekker voor die stap. Binnen een schatting van een paar minuten.</p>
+<button class="btn o" data-s="5">Ik ben weg en kan niet kneden</button>
+</div>%%TABS%%</div>
+
+<div class="scr"><div class="body">
+<p class="folio">Mijn broden</p><h2 class="t">Broden</h2><p class="sub">Na het snijden: 3 tikken en klaar.</p>
+<div class="card"><p class="lbl">Korstkleur</p><div class="crust" data-pick="one"><i style="background:#E3B97E"></i><i style="background:#C98A45"></i><i class="sel" style="background:#9A5B25"></i><i style="background:#6A3A17"></i></div>
+<p class="lbl" style="margin-top:8px">Kruim</p><div><span class="chip">Dicht</span><span class="chip on">Gelijkmatig</span><span class="chip">Open</span></div>
+<p class="lbl">Volgende keer</p><div class="field" style="margin:4px 0 0"><input value="Bulk 30 min langer"></div></div>
+<div class="card b"><span class="tagx">Voorbeeld</span><h3 style="font:400 20px 'Young Serif';margin:8px 0 4px;color:var(--grn)">Klassieke bâtard</h3><p class="sub" style="margin:0">za 7 nov · hydratatie 73% · gelijkmatig kruim</p><p style="margin-top:8px">Volgende keer: bulk 30 min langer.</p></div>
+<p class="note2">Grafieken (bijvoorbeeld bulk-duur tegenover temperatuur) komen pas na 5 broden, als ze iets vertellen.</p>
+</div>%%TABS%%</div>
+
+<div class="scr"><div class="body">
+<p class="folio">Ik ben weg</p><h2 class="t">Even niet thuis</h2><p class="sub">Dan past de planning zich aan.</p>
+<div class="seg"><button onclick="this.parentNode.children[0].classList.add('on');this.parentNode.children[1].classList.remove('on');document.getElementById('w1').style.display='block';document.getElementById('w2').style.display='none'" class="on">Een paar uur</button><button onclick="this.parentNode.children[1].classList.add('on');this.parentNode.children[0].classList.remove('on');document.getElementById('w2').style.display='block';document.getElementById('w1').style.display='none'">Meerdere dagen</button></div>
+<div id="w1"><div class="card b"><p class="lbl">Jij zegt</p><p style="margin:4px 0">Vrijdag ben ik pas om 20:00 thuis.</p><p class="lbl" style="margin-top:12px">De app stelt voor</p><p style="margin-top:4px"><b>Mengen schuift naar 20:00.</b> Alle stappen daarna schuiven mee: bakken zaterdag 14:30 in plaats van 11:30, klaar om 16:00.</p></div>
+<button class="btn">Pas planning aan</button><button class="btn o">Een andere dag kiezen</button><p class="note2">Rijstijd hangt van de temperatuur af. Jij beslist of het deeg klaar is.</p></div>
+<div id="w2" style="display:none"><p class="lbl">Weg van</p><div><span class="chip on">vr 20 nov</span><span class="chip on">tot zo 29 nov</span></div>
+<div class="card" style="padding:4px 16px">
+<div class="swt"><div><b>Jean naar de koelkast</b><p>Voed hem vlak voor je vertrekt en zet hem na de eerste rijs in de koelkast. Bronnen: 2 tot 3 weken bewaren kan, richtlijn.</p></div><button class="tg on" onclick="this.classList.toggle('on')"></button></div>
+<div class="swt"><div><b>Geen voedingsmeldingen</b><p>Tot zondag 29 november.</p></div><button class="tg on" onclick="this.classList.toggle('on')"></button></div>
+<div class="swt" style="border:0"><div><b>Bak na terugkeer plannen</b><p>Voed Jean de ochtend dat je thuiskomt, bak een dag later.</p></div><button class="tg" onclick="this.classList.toggle('on')"></button></div></div>
+<p class="note2" style="margin-bottom:12px">Je bak van zaterdag 21 november vervalt. Eerste mogelijke datum: dinsdag 1 december.</p>
+<button class="btn">Bewaar</button></div>
+</div>%%TABS%%</div>
+""".replace("%%STEPS%%", steps)
+
+def scandi(nr, naam, sfeer, vars_, sw, contrast, plus, minus, waarom):
+    css = ".screenbox{" + ";".join("--%s:%s" % kv for kv in vars_.items()) + "}" + SCANDI_CSS
+    return dict(naam=naam, sfeer=sfeer,
+      fonts='<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">',
+      sw=sw, contrast=contrast,
+      letters="Young Serif voor titels (zacht, een beetje speels), Figtree voor de rest. Veel witruimte, ronde vormen, een boog als vaste vorm.",
+      waarom=waarom, plus=plus, min=minus, css=css, screens=scandi_screens(),
+      tabs_labels=["Vandaag","Jean","Recepten","Plan","Broden","Weg"], tab_labels=["Vandaag","Jean","Recepten","Plan","Broden"])
+
+D[7] = scandi(7, "Scandi terracotta", "Rustig en licht met warme tinten: kalkwit, terracotta, donkergroen, en bordeaux als kleine punch. Een boog als speelse vorm.",
+  dict(bg="#F6F0E6",card="#FCF9F4",ink="#2A2522",mut="#6A5F57",ter="#B04E33",grn="#2F4A3E",bor="#6B2737",warn="#6B2737",blush="#EBD2C4",line="#E3D8C8",btxt="#FFFFFF"),
+  [("Kalkwit","#F6F0E6"),("Terracotta","#B04E33"),("Donkergroen","#2F4A3E"),("Bordeaux (punch)","#6B2737"),("Blush","#EBD2C4"),("Inkt","#2A2522")],
+  [("Inkt op kalkwit","13,4"),("Gedempt op kalkwit","5,5"),("Terracotta op kalkwit","4,7"),("Wit op terracotta (knop)","5,3"),("Donkergroen op kalkwit","8,5"),("Bordeaux op kalkwit","9,4"),("Terracotta op blush: 3,7, daarom daar nooit voor kleine tekst; groen op blush 6,7","")],
+  ["Rustig en toch levendig door de boog, de ronde knoppen en de bordeaux-accenten","Eén kleur per taak: terracotta = actie, groen = structuur, bordeaux = let op of nu"],
+  ["Lichte look: minder zacht om 5 uur 's ochtends dan een donkere","Terracotta haalt 4,7: enkel voor tekst vanaf ongeveer 14 px vet"],
+  "Gebaseerd op de antwoorden van je zus: simpel Scandinavisch, warme mediterrane tinten, rustig met een kleine punch, en speelser dan de Recepten-look. Stora Bageriet kon ik niet terugvinden qua uiterlijk (zie rapport), dus dit is mijn interpretatie van 'Scandinavische bakkerij'.")
+D[8] = scandi(8, "Scandi donkergroen", "Dezelfde vormen in donkergroen: diepe achtergrond, kalkwit, terracotta en een bordeaux vlak als punch.",
+  dict(bg="#23382F",card="#2E4A3E",ink="#F6F0E6",mut="#B9C4B8",ter="#E58A66",grn="#F6F0E6",bor="#7A2E40",warn="#F0A98C",blush="#38574A",line="#3F5E50",btxt="#23382F"),
+  [("Donkergroen","#23382F"),("Vlak","#2E4A3E"),("Kalkwit (tekst)","#F6F0E6"),("Terracotta licht","#E58A66"),("Bordeaux (punch)","#7A2E40"),("Gedempt","#B9C4B8")],
+  [("Kalkwit op donkergroen","11,0"),("Gedempt op donkergroen","6,9"),("Terracotta op donkergroen","4,9"),("Donkergroen op terracotta (knop)","4,9"),("Kalkwit op bordeaux","8,1"),("Kalkwit op vlak","8,6"),("Gedempt op vlak","5,4")],
+  ["Zacht voor de ogen bij vroeg of laat bakken, en nog steeds warm en Scandinavisch","Het groen is een eigen kleur, geen 'donkere modus' van een lichte look"],
+  ["Foto's van brood zijn in een donker scherm moeilijker te beoordelen","Overdag in een zonnige keuken minder goed leesbaar"],
+  "Voor wie 's avonds of 's ochtends vroeg met het deeg bezig is. Zelfde schermen als richting 7, alleen met andere kleuren: je zus mag kiezen welke sfeer ze het fijnst vindt.")
+
 def swatches(sw):
     out = []
     for n, h in sw:
@@ -470,12 +716,12 @@ def contrast_rows(rows):
 
 for nr, d in D.items():
     p = PAGE
-    scr = d["screens"].replace("%%TABS%%", tabs(d["tabs_labels"]))
+    scr = d["screens"].replace("%%TABS%%", tabs(d.get("tab_labels", d["tabs_labels"])))
     rep = {"%%NAAM%%": d["naam"], "%%NR%%": str(nr), "%%FONTS%%": d["fonts"], "%%CSS%%": d["css"], "%%NAV%%": nav(nr),
            "%%SFEER%%": d["sfeer"], "%%SW%%": swatches(d["sw"]), "%%CONTRAST%%": contrast_rows(d["contrast"]),
            "%%LETTERS%%": d["letters"], "%%WAAROM%%": d["waarom"],
            "%%PLUS%%": "".join("<li>%s</li>" % x for x in d["plus"]), "%%MIN%%": "".join("<li>%s</li>" % x for x in d["min"]),
-           "%%SCREENS%%": scr}
+           "%%SCREENS%%": scr, "%%JUMP%%": "".join("<button>%s</button>" % l for l in d["tabs_labels"])}
     for k, v in rep.items():
         p = p.replace(k, v)
     open(os.path.join(OUT, "r%d.html" % nr), "w", encoding="utf-8").write(p)
