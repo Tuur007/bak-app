@@ -2,8 +2,7 @@
 -- Recepten-app en de Tuin-app). Raakt geen tabellen van die apps aan.
 --
 -- Elke rij is van een gebruiker; de RLS laat enkel de eigen rijen zien en aanpassen.
--- NIET TOEGEPAST: eerst testen met supabase/tests/crumbly_test.sql (draait zichzelf terug),
--- dan pas na Tuurs ok uitvoeren in de SQL-editor.
+-- Getest in een teruggedraaide transactie en toegepast op 2 november 2026 na Tuurs ok.
 
 -- 1. Alle gegevens van de app als items (starter, voedingen, recepten, bakken, weg, instellingen).
 create table if not exists public.bak_items (
@@ -90,3 +89,7 @@ create policy bak_push_subscriptions_own on public.bak_push_subscriptions
   for all to authenticated
   using (user_id = (select auth.uid()))
   with check (user_id = (select auth.uid()));
+
+grant select, insert, update, delete on public.bak_items to authenticated;
+grant select, insert, update, delete on public.bak_reminders to authenticated;
+grant select, insert, update, delete on public.bak_push_subscriptions to authenticated;
