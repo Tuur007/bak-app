@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "Crumbly",
+    "slug": "crumbly",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "crumbly",
+    "userInterfaceStyle": "light",
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "lang": "nl",
+      "name": "Crumbly",
+      "shortName": "Crumbly",
+      "themeColor": "#F6F0E6",
+      "backgroundColor": "#F6F0E6"
+    },
+    "plugins": ["expo-router", "expo-font"],
+    "experiments": { "typedRoutes": false }
+  }
+}

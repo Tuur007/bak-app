@@ -1,0 +1,64 @@
+// Meldingen via Web Push (zoals in de Tuin-app). Op een iPhone werkt dit enkel als
+// Crumbly op het beginscherm staat (iOS 16.4 of nieuwer), en de toestemming moet uit
+// een tik komen.
+
+import { Platform } from 'react-native';
+import { supabase, VAPID_PUBLIC_KEY } from './supabase';
+
+export type PushStatus = 'laden' | 'nog-niet' | 'niet-ondersteund' | 'iphone-installeren' | 'geweigerd' | 'uit' | 'aan';
+
+function keyToBytes(base64: string): Uint8Array {
+  const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+  const raw = atob(padded.replace(/-/g, '+').replace(/_/g, '/'));
+  const bytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+  return bytes;
+}
+
+function supported(): boolean {
+  return Platform.OS === 'web' && typeof navigator !== 'undefined' && 'serviceWorker' in navigator && typeof window !== 'undefined' && 'PushManager' in window && 'Notification' in window;
+}
+
+export async function pushStatus(): Promise<PushStatus> {
+  if (!VAPID_PUBLIC_KEY || !supabase) return 'nog-niet';
+  if (!supported()) {
+    const iphone = typeof navigator !== 'undefined' && /iphone|ipad/i.test(navigator.userAgent);
+    return iphone ? 'iphone-installeren' : 'niet-ondersteund';
+  }
+  if (Notification.permission === 'denied') return 'geweigerd';
+  const reg = await navigator.serviceWorker.getRegistration();
+  const sub = reg ? await reg.pushManager.getSubscription() : null;
+  return sub ? 'aan' : 'uit';
+}
+
+export async function turnPushOn(): Promise<{ ok: boolean; message: string }> {
+  if (!supabase || !VAPID_PUBLIC_KEY) return { ok: false, message: 'Meldingen zijn nog niet ingesteld op de server.' };
+  if (!supported()) return { ok: false, message: 'Zet Crumbly eerst op je beginscherm (Deel, Zet op beginscherm) en open het van daaruit.' };
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') return { ok: false, message: 'Zonder toestemming kan Crumbly geen melding sturen.' };
+  const reg = (await navigator.serviceWorker.getRegistration()) ?? (await navigator.serviceWorker.register('/sw.js'));
+  await navigator.serviceWorker.ready;
+  const sub = (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyToBytes(VAPID_PUBLIC_KEY) as BufferSource }));
+  const json = sub.toJSON();
+  const { error } = await supabase.from('bak_push_subscriptions').upsert(
+    { endpoint: sub.endpoint, p256dh: json.keys?.p256dh ?? '', auth: json.keys?.auth ?? '' },
+    { onConflict: 'endpoint' },
+  );
+  if (error) return { ok: false, message: `Opslaan mislukt: ${error.message}` };
+  return { ok: true, message: 'Meldingen staan aan.' };
+}
+
+export async function turnPushOff(): Promise<void> {
+  if (!supported()) return;
+  const reg = await navigator.serviceWorker.getRegistration();
+  const sub = reg ? await reg.pushManager.getSubscription() : null;
+  if (!sub) return;
+  if (supabase) await supabase.from('bak_push_subscriptions').delete().eq('endpoint', sub.endpoint);
+  await sub.unsubscribe();
+}
+
+export function registerServiceWorker(): void {
+  if (Platform.OS !== 'web' || typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+  if (typeof __DEV__ !== 'undefined' && __DEV__) return;
+  navigator.serviceWorker.register('/sw.js').catch(() => undefined);
+}
