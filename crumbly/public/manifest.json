@@ -1,0 +1,17 @@
+{
+  "name": "Crumbly",
+  "short_name": "Crumbly",
+  "description": "Zuurdesem bijhouden: je starter, je recepten, je bakplan en je broden.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F6F0E6",
+  "theme_color": "#F6F0E6",
+  "lang": "nl",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
