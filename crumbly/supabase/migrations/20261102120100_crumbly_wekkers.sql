@@ -20,6 +20,13 @@ declare
   v_url text;
   v_payload jsonb;
 begin
+  -- Zonder geheimen in de kluis doen we niets (en blijven de wekkers staan).
+  select decrypted_secret into v_secret from vault.decrypted_secrets where name = 'bak_push_secret';
+  select decrypted_secret into v_url from vault.decrypted_secrets where name = 'bak_push_url';
+  if v_secret is null or v_url is null then
+    return null;
+  end if;
+
   -- Wat te laat is (meer dan 30 minuten), sturen we niet meer: dat helpt niemand.
   update public.bak_reminders set sent_at = now()
   where sent_at is null and due_at <= now() - interval '30 minutes';
@@ -41,12 +48,6 @@ begin
   from due d;
 
   if jsonb_array_length(v_payload) = 0 then
-    return null;
-  end if;
-
-  select decrypted_secret into v_secret from vault.decrypted_secrets where name = 'bak_push_secret';
-  select decrypted_secret into v_url from vault.decrypted_secrets where name = 'bak_push_url';
-  if v_secret is null or v_url is null then
     return null;
   end if;
 
