@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Sleutels voor de meldingen</title>
+<style>
+  :root{--bg:#F6F0E6;--card:#FCF9F4;--ink:#2A2522;--mut:#6A5F57;--ter:#B04E33;--grn:#2F4A3E;--line:#E3D8C8}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,sans-serif;padding:16px;max-width:640px;margin-inline:auto}
+  h1{font:400 28px/1.15 Georgia,serif;color:var(--grn);margin:8px 0 4px}
+  h2{font-size:17px;margin:0 0 8px}
+  p{margin:8px 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin:16px 0}
+  .note{color:var(--mut);font-size:14px}
+  .label{font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-top:12px}
+  code,textarea{display:block;width:100%;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;font:14px/1.4 ui-monospace,Menlo,monospace;word-break:break-all;color:var(--ink)}
+  textarea{height:150px;resize:none}
+  button{min-height:48px;border:0;border-radius:999px;padding:0 20px;font:700 16px system-ui;cursor:pointer;margin-top:8px}
+  .go{background:var(--ter);color:#fff;width:100%}
+  .copy{background:var(--grn);color:#F6F0E6}
+  .warn{color:#6B2737;font-weight:700}
+  .done{background:#2F4A3E;color:#F6F0E6}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<h1>Sleutels voor de meldingen</h1>
+<p class="note">Deze pagina maakt de sleutels in je eigen browser. Er wordt niets verstuurd of bewaard. Vernieuw je de pagina, dan zijn ze weg.</p>
+
+<div class="card">
+  <button class="go" id="make">Maak de sleutels</button>
+</div>
+
+<div id="out" class="hidden">
+  <div class="card">
+    <h2>Deel 1: in Vercel</h2>
+    <p class="note">Vercel, project <b>crumbly</b>, <b>Settings</b>, <b>Environment Variables</b>. Maak drie variabelen. Kies telkens <b>Production</b> en <b>Preview</b>. Zet bij de laatste twee <b>Sensitive</b> aan.</p>
+
+    <div class="label">1. Naam</div><code>EXPO_PUBLIC_VAPID_PUBLIC_KEY</code>
+    <div class="label">Waarde</div><code id="pub"></code>
+    <button class="copy" data-from="pub">Kopieer waarde</button>
+
+    <div class="label">2. Naam (Sensitive)</div><code>VAPID_PRIVATE_KEY</code>
+    <div class="label">Waarde</div><code id="priv"></code>
+    <button class="copy" data-from="priv">Kopieer waarde</button>
+
+    <div class="label">3. Naam (Sensitive)</div><code>CRON_SECRET</code>
+    <div class="label">Waarde</div><code id="cron"></code>
+    <button class="copy" data-from="cron">Kopieer waarde</button>
+  </div>
+
+  <div class="card">
+    <h2>Deel 2: in Supabase</h2>
+    <p class="note">Supabase, project <b>Apps DIY projects</b>, <b>SQL Editor</b>, <b>New query</b>. Plak dit en tik op <b>Run</b>.</p>
+    <textarea id="sql" readonly></textarea>
+    <button class="copy" data-from="sql">Kopieer de SQL</button>
+  </div>
+
+  <div class="card">
+    <p class="warn">Niet vernieuwen of sluiten voor je alles geplakt hebt.</p>
+    <p class="note">Daarna zeg je tegen Claude: "sleutels staan erin". Dan wordt de app opnieuw gebouwd en kan je de meldingen testen.</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  function b64url(bytes){var s='';bytes.forEach(function(b){s+=String.fromCharCode(b)});return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+  function fromB64url(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';var r=atob(s);var a=new Uint8Array(r.length);for(var i=0;i<r.length;i++)a[i]=r.charCodeAt(i);return a}
+  document.getElementById('make').addEventListener('click',function(){
+    var btn=this;btn.disabled=true;btn.textContent='Even geduld...';
+    crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveBits']).then(function(pair){
+      return Promise.all([crypto.subtle.exportKey('raw',pair.publicKey),crypto.subtle.exportKey('jwk',pair.privateKey)]);
+    }).then(function(r){
+      var pub=b64url(new Uint8Array(r[0]));
+      var priv=r[1].d; // al base64url, 32 bytes
+      if(fromB64url(priv).length!==32||fromB64url(pub).length!==65)throw new Error('Onverwachte sleutel');
+      var c=new Uint8Array(32);crypto.getRandomValues(c);var cron=b64url(c);
+      document.getElementById('pub').textContent=pub;
+      document.getElementById('priv').textContent=priv;
+      document.getElementById('cron').textContent=cron;
+      document.getElementById('sql').value=
+        "select vault.create_secret('"+cron+"', 'bak_push_secret');\n"+
+        "select vault.create_secret('https://crumbly.vercel.app/api/push/send', 'bak_push_url');";
+      document.getElementById('out').classList.remove('hidden');
+      btn.textContent='Sleutels gemaakt';
+      document.getElementById('out').scrollIntoView({behavior:'smooth'});
+    }).catch(function(e){btn.disabled=false;btn.textContent='Mislukt: '+e.message+'. Probeer opnieuw.'});
+  });
+  document.addEventListener('click',function(ev){
+    var t=ev.target;if(!t||!t.dataset||!t.dataset.from)return;
+    var el=document.getElementById(t.dataset.from);var text=el.value!==undefined&&el.tagName==='TEXTAREA'?el.value:el.textContent;
+    var done=function(){var old=t.textContent;t.textContent='Gekopieerd';t.classList.add('done');setTimeout(function(){t.textContent=old;t.classList.remove('done')},1500)};
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done,function(){fallback()})}else fallback();
+    function fallback(){var r=document.createRange();r.selectNodeContents(el);var s=getSelection();s.removeAllRanges();s.addRange(r);if(el.tagName==='TEXTAREA'){el.select()}try{document.execCommand('copy');done()}catch(e){t.textContent='Houd de tekst ingedrukt en kies Kopieer'}}
+  });
+})();
+</script>
+</body>
+</html>

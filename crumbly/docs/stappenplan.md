@@ -11,6 +11,10 @@ Waarom: anders stuurt de bevestigingsmail van een nieuw account naar de Recepten
 4. Laat de **Site URL** zoals hij is (die is van de Recepten-app).
 
 ## Stap 2. Sleutels voor de meldingen (5 min)
+Op je gsm, zonder terminal: open `/meldingen-sleutels.html` op de testlink (zie hieronder), tik **Maak de sleutels**
+en volg de twee blokken. Met een computer kan je ook het script gebruiken (hieronder).
+Daarna die hulppagina verwijderen (`crumbly/public/meldingen-sleutels.html` en `crumbly/scripts/`).
+
 Waarom: zonder sleutels komen er geen wekkers op de iPhone. De rest van de app werkt wel.
 1. Open een terminal in de map van de repo `bak-app` (Node 18 of nieuwer).
 2. `node crumbly/scripts/meldingen-sleutels.mjs`
