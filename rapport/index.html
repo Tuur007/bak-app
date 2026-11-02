@@ -35,6 +35,7 @@ code{background:#f3e9e4;border-radius:4px;padding:0 4px}
 <li>Voor de eerste versie raad ik aan: <b>bak invullen met live ratio's, logboek met foto + korstkleur + "volgende keer", een Vandaag-scherm en een eenvoudige tijdlijn met terugrekenen</b>. Meldingen en timers op de achtergrond eerst op haar eigen iPhone testen.</li>
 <li>Mijn designadvies: richting 5 (Ambachtelijke bakkerij), met richting 1 als alternatief als ze vooral de look van de Recepten-app wil.</li>
 <li>Naamvoorstel: <b>Kruim</b> (alternatief: Bakschrift).</li>
+<li>Uit de ChatGPT-projectbriefing nam ik de goede ideeën over (hoofdstuk 12), onder meer een zesde richting <a href="../mockups/r6.html">Haver en salie</a>.</li>
 </ul></div>
 
 <h2>1. Bestaande apps</h2>
@@ -166,7 +167,7 @@ code{background:#f3e9e4;border-radius:4px;padding:0 4px}
 </ol>
 <p>Jouw eigen voorbeelden zitten wel in de mockups: <b>terugrekenen vanaf het gewenste uur</b> en <b>keukentemperatuur die de rijstijd aanpast</b> staan in het scherm "Nieuwe bak" van elke richting, en <b>"vandaag in de oven"</b> op het Vandaag-scherm. De cijfers (bijvoorbeeld "21 graden: 45 min langer") zijn <b>voorbeelden</b>; ik heb geen gecontroleerde tabel gebruikt.</p>
 
-<h2>7. De vijf designrichtingen</h2>
+<h2>7. De zes designrichtingen</h2>
 <p>Klikbaar in <a href="../mockups/index.html">de mockups</a>. Bij elke richting vind je palet, contrast, lettertypes, sterke en zwakke punten.</p>
 <div class="tbl"><table>
 <tr><th>Richting</th><th>Sfeer</th><th>Past bij handen vol deeg omdat ...</th><th>Zwak</th></tr>
@@ -175,6 +176,7 @@ code{background:#f3e9e4;border-radius:4px;padding:0 4px}
 <tr><td><a href="../mockups/r3.html">3. Labo</a><br><small>Mono, raster, grafiekjes</small></td><td>Strak, technisch</td><td>Cijfers in kolommen, hoogste contrast (16,9)</td><td>Kil; grafieken pas nuttig na veel bakken</td></tr>
 <tr><td><a href="../mockups/r4.html">4. Nachtbak</a><br><small>Donker, amber</small></td><td>Zacht 's nachts</td><td>Tikvlakken 56 tot 64 px, grote timer</td><td>Overdag minder leesbaar; foto's ogen donker</td></tr>
 <tr><td><a href="../mockups/r5.html">5. Ambachtelijke bakkerij</a><br><small>Meelstof, korstkleuren</small></td><td>Dorpsbakker</td><td>Korstkleur tikken in plaats van sterren; grote etiketten</td><td>Meer eigen componenten te bouwen</td></tr>
+<tr><td><a href="../mockups/r6.html">6. Haver en salie</a><br><small>Crème, haver, salie, aarde (briefing)</small></td><td>Rustig, foto-gedreven</td><td>Foto's centraal; bakmodus met controlevragen; 5 tabs</td><td>Veel schermen; leeg zonder goede foto's</td></tr>
 </table></div>
 <h3>Aanbeveling</h3>
 <p><b>Richting 5 (Ambachtelijke bakkerij)</b> voor de eerste versie. Redenen: de korstkleurschaal is een echte meerwaarde (sneller en preciezer dan sterren), de etiketten maken het logboek herkenbaar als brood, en contrast en tikgrootte zijn goed (alle tekstparen 5,9 of hoger). Hergebruik de afmetingen van je Recepten-app (radius, knopmaten) zodat het bouwen niet veel duurder is. Als je zus vooral dezelfde look wil als je Recepten-app, is <b>richting 1</b> de goedkoopste keuze. De donkere modus van richting 4 is een goed <i>later</i> toevoegsel als thema. Laat haar kiezen: de mockups kosten haar vijf minuten.</p>
@@ -233,6 +235,32 @@ code{background:#f3e9e4;border-radius:4px;padding:0 4px}
 <li><b>Werkafspraak:</b> in je CLAUDE.md staat dat elke wijziging via een PR en een Vercel-preview gaat, en dat er enkel op jouw "merge" wordt samengevoegd. Dat volg ik ook voor de bak-app.</li>
 </ul>
 <p class="s">Ik las enkel de Recepten-app (colors, design system, login, timer, sw.js, manifest). De andere repos heb ik niet bekeken.</p>
+
+<h2>12. Wat ik van de ChatGPT-briefing overneem</h2>
+<p>Je gaf me een projectbriefing van ChatGPT (7 pagina's). Dit is wat goed en nuttig is, en wat ik ermee doe. Wat botst met onze keuzes staat eronder.</p>
+<h3>Overgenomen</h3>
+<ul>
+<li><b>Fasering 0 tot 4</b> (afstemmen, ontwerp, basisversie, verfijning, optioneel): ik splits de basisversie in twee releases, zie hieronder.</li>
+<li><b>Controlepunten in de bakmodus:</b> "is het volume +30%? bellen aan de rand? deeg gespannen?" met de knoppen "Ja, volgende stap" en "Nog niet, +30 min", waarna de planning opnieuw rekent. Dit past bij eerlijke schattingen en zit in <a href="../mockups/r6.html">richting 6</a>.</li>
+<li><b>Starterscherm:</b> naam, foto, hydratatie, voedingslog (1:5:5, temperatuur) en een kleine grafiek van de rijs na de voeding.</li>
+<li><b>Maximaal 5 tabs.</b> De briefing noemt er 6; de calculator zit daarom in "Nieuwe bak" en in het recept, niet als aparte tab.</li>
+<li><b>"Plan deze bak"</b> als knop in een recept of de calculator.</li>
+<li><b>Schalen</b> van een recept naar aantal broden of gewenst deeggewicht.</li>
+<li><b>Export en back-up</b> van recepten, logboek en foto's, met herstelmogelijkheid. Past bij Supabase.</li>
+<li><b>Privé foto's:</b> privé opslagbucket met signed URLs, zoals in je Recepten-app. Originelen bewaren, thumbnails tonen, alt-teksten.</li>
+<li><b>Duidelijke lege toestanden</b> ("nog geen starter, maak er een aan"), geen verplichte velden en foto toevoegen vanuit de camera.</li>
+<li><b>"Niet opnemen"-lijst:</b> geen community, abonnementen, store-publicatie, complexe AI.</li>
+<li><b>Extra vragen aan je zus:</b> hoeveel starters, welke apparaten (telefoon, tablet, laptop), welke soorten brood, favoriete kleuren, naam.</li>
+<li><b>Palet uit de briefing</b> (crème, haver, salie, aarde, donker) als zesde richting. Het palet zelf haalt te lage contrasten, dus ik voegde donkere varianten toe: aarde #8A5236 en salie #566043 voor tekst en knoppen.</li>
+</ul>
+<h3>Aangepast of niet overgenomen</h3>
+<ul>
+<li><b>Next.js</b>: blijft Expo/React Native Web, zoals jij vroeg en zoals je Recepten-app.</li>
+<li><b>Omvang:</b> de basisversie uit de briefing is groot. Mijn voorstel: <b>release 1</b> = Vandaag, Nieuwe bak met ratio's en terugrekenen, Bakmodus met controlepunten, Broden met foto's en volgende-keer. <b>Release 2</b> = Starter met voedingslog en grafiek, receptenbibliotheek en schalen. <b>Release 3</b> = export en back-up, vergelijken van broden. AI en fotoanalyse blijven optioneel en laatst.</li>
+<li><b>Meldingen:</b> de briefing wil "waar ondersteund"; jij wilt ze in versie 1. Dat blijft een test op haar iPhone.</li>
+<li><b>Fotoreferenties</b> uit de briefing: de links kon ik niet zien en niet nagaan op gebruiksrechten. Eigen foto's van je zus zijn beter en worden voorzien.</li>
+</ul>
+<p class="s">De keuze tussen "volledige basisversie" en "twee releases" heb ik je eerder gevraagd en nog geen antwoord op; ik ga uit van mijn voorstel tot je anders zegt.</p>
 
 <h2>Bronnen</h2>
 <ul class="s">

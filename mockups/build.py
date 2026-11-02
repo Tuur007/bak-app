@@ -16,7 +16,7 @@ PAGE = """<!doctype html>
 <div class="info">
 <h1>Richting %%NR%%: %%NAAM%%</h1>
 <p class="sfeer">%%SFEER%%</p>
-<div class="jump"><button>Vandaag</button><button>Nieuwe bak</button><button>Tijdlijn</button><button>Logboek</button></div>
+<div class="jump">%%JUMP%%</div>
 <h2>Kleurpalet en contrast</h2>
 <div class="sw">%%SW%%</div>
 <h2>Contrast (WCAG)</h2>
@@ -37,7 +37,7 @@ PAGE = """<!doctype html>
 </body></html>"""
 
 def nav(cur):
-    items = [("index.html", "Overzicht")] + [("r%d.html" % i, "Richting %d" % i) for i in range(1, 6)] + [("../rapport/index.html", "Rapport")]
+    items = [("index.html", "Overzicht")] + [("r%d.html" % i, "Richting %d" % i) for i in range(1, 7)] + [("../rapport/index.html", "Rapport")]
     return "".join('<a href="%s"%s>%s</a>' % (h, ' class="on"' if h == "r%d.html" % cur else "", t) for h, t in items)
 
 def tabs(labels):
@@ -459,6 +459,100 @@ h2.t{font:800 34px/1.05 Fraunces,serif;margin:0 0 4px;color:#3F2410}
 """, tabs_labels=["Vandaag","Nieuw","Bakplan","Broden"],
 )
 
+# ---------------------------------------------------------------- 6 HAVER EN SALIE (uit de ChatGPT-briefing)
+D[6] = dict(
+ naam="Haver en salie", sfeer="Rustig en ambachtelijk met echte foto's van haar broden en starter: crème, haver, salie en aarde, naar de projectbriefing.",
+ fonts='<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">',
+ sw=[("Crème","#F5F0E7"),("Haver","#E8DDCC"),("Salie (vlak)","#A7AD91"),("Aarde (vlak)","#A96F50"),("Donker","#302E29"),("Aarde donker (tekst/knop)","#8A5236"),("Salie donker (tekst)","#566043"),("Gedempt","#625C54")],
+ contrast=[("Donker op crème","11,9"),("Aarde donker #8A5236 op crème","5,5"),("Wit op aarde donker (knop)","6,3"),("Aarde donker op haver","4,7"),("Salie donker op crème","5,9"),("Gedempt op crème","5,8"),("Briefingkleuren zelf: aarde #A96F50 op crème 3,6 en wit op aarde 4,1 (te laag voor kleine tekst), salie op crème 2,0 (enkel vlak). Daarom twee donkere varianten toegevoegd.","")],
+ letters="DM Serif Display voor titels (zacht, kookboekachtig), DM Sans voor de rest. Echte foto's als hoofdrolspeler; hier getoond als tonale vlakken met het label FOTO.",
+ waarom="Dit is het palet uit de briefing (van ChatGPT), bijgesteld voor leesbaarheid. De foto's van haar eigen broden en starter maken de app persoonlijk. Vijf tabs, zoals de briefing vraagt, en een bakmodus die vraagt of het deeg echt klaar is.",
+ plus=["Foto's centraal: logboek en starter voelen als haar eigen kookboek","Bakmodus met controlepunten ('is het volume +30%?') past bij de eerlijke schatting van fermentatie"],
+ min=["Vraagt goede foto's; zonder foto's ogen de schermen leeg","Meer schermen (starter erbij) dus meer bouwwerk dan richting 5"],
+ css="""
+.screenbox{background:#F5F0E7;color:#302E29;font-family:'DM Sans',system-ui,sans-serif}
+.statusbar{color:#302E29}.homebar{background:#302E29}
+h2.t{font:400 32px/1.1 'DM Serif Display',serif;margin:0 0 16px}
+.card{background:#E8DDCC;border-radius:16px;padding:16px;margin-bottom:16px}
+.card.w{background:#FBF8F2}
+.lbl{font:700 12px 'DM Sans';text-transform:uppercase;letter-spacing:.08em;color:#566043}
+.big{font:400 56px/1 'DM Serif Display',serif}
+.btn{display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:12px;background:#8A5236;color:#fff;font:700 16px 'DM Sans';border:0;width:100%;cursor:pointer;margin-bottom:8px}
+.btn.ghost{background:transparent;color:#8A5236;border:2px solid #8A5236}
+.btn.sage{background:#566043}
+.tabbar{background:#FBF8F2;border-top:1px solid #E8DDCC;padding:8px 4px 24px}.tabbar button{color:#625C54;font:600 11px 'DM Sans'}.tabbar button.on{color:#8A5236;font-weight:700}
+.photo{border-radius:12px;background:#A7AD91;display:flex;align-items:center;justify-content:center;font:700 12px 'DM Sans';color:#302E29;letter-spacing:.1em}
+.photo.a{background:#A96F50;color:#fff}
+.field{margin-bottom:8px}.field label{display:block;font:700 12px 'DM Sans';text-transform:uppercase;letter-spacing:.06em;color:#566043;margin-bottom:4px}
+.field input{width:100%;height:48px;border:1px solid #C9BBA3;border-radius:12px;background:#FBF8F2;padding:0 16px;font:600 20px 'DM Sans';color:#302E29}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.res{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 16px}.res div{background:#E8DDCC;border-radius:12px;padding:12px 8px;text-align:center}.res b{display:block;font:400 26px 'DM Serif Display'}.res span{font-size:12px;color:#625C54;font-weight:600}
+.step{display:flex;gap:16px;align-items:center;min-height:52px;padding:8px 0;border-bottom:1px solid #E8DDCC;cursor:pointer}
+.step .tm{width:64px;font:700 14px 'DM Sans';color:#8A5236}.step .dot{width:24px;height:24px;border-radius:12px;border:2px solid #566043;flex:none}
+.step.done .dot{background:#566043}.step.done .nm{color:#625C54;text-decoration:line-through}
+.step.now{background:#E8DDCC;border-radius:12px;padding:8px;border:0}
+.row{display:flex;gap:16px;align-items:center}
+.log p{font-size:14px;color:#625C54}.log h4{font:400 20px 'DM Serif Display'}
+.msg{font-size:14px;color:#566043;font-weight:700;margin-top:8px;min-height:20px}
+""",
+ screens="""
+<div class="scr on"><div class="body">
+<p class="lbl">Goeiemorgen, vrijdag 6 november</p><h2 class="t">Vandaag</h2>
+<div class="card"><div class="row"><div class="photo" style="width:72px;height:72px;flex:none">FOTO</div><div><p class="lbl">Starter</p><h3 style="font:400 22px 'DM Serif Display'">Oma-starter</h3><p style="font-size:14px;color:#625C54">Op piek, gevoed om 06:30</p></div></div></div>
+<div class="card w"><p class="lbl">Volgende actie</p><h3 style="font:400 24px 'DM Serif Display';margin:4px 0">Vouwen 3 van 4</h3><div class="big" data-sec="760" style="margin:8px 0"></div><button class="btn" data-s="3">Open bakmodus</button></div>
+<div class="card"><p class="lbl">Vandaag in de oven</p><p style="margin-top:4px">Za <b>10:00</b> aan, <b>10:45</b> bakken, <b>12:00</b> klaar.</p></div>
+<div class="card w"><p class="lbl">Vorige keer</p><p style="margin-top:4px">Kruim iets dicht: bulk 30 min langer.</p></div>
+</div>%%TABS%%</div>
+
+<div class="scr"><div class="body">
+<h2 class="t">Starter</h2>
+<div class="photo" style="height:140px;margin-bottom:16px">FOTO VAN DE POT</div>
+<div class="card"><h3 style="font:400 22px 'DM Serif Display'">Oma-starter</h3><p style="font-size:14px;color:#625C54">Roggemeel 20%, tarwe 80%, hydratatie 100%, bewaard op 21 graden</p><button class="btn" style="margin-top:16px">Voeding noteren</button></div>
+<div class="card w"><p class="lbl">Rijs na laatste voeding (voorbeeldgegevens)</p>
+<svg viewBox="0 0 240 64" style="width:100%;height:64px"><g fill="#566043"><rect x="8" y="48" width="20" height="12"/><rect x="40" y="40" width="20" height="20"/><rect x="72" y="28" width="20" height="32"/><rect x="104" y="14" width="20" height="46"/><rect x="136" y="8" width="20" height="52"/><rect x="168" y="18" width="20" height="42"/><rect x="200" y="32" width="20" height="28"/></g></svg>
+<p style="font-size:13px;color:#625C54">Piek na ongeveer 4 tot 5 uur (schatting op basis van eigen metingen).</p></div>
+<div class="card w"><p class="lbl">Voedingslog</p>
+<p style="margin-top:8px;font-size:15px"><b>vr 06:30</b> 1:5:5 (20 / 100 / 100 g), 22 C</p>
+<p style="margin-top:8px;font-size:15px"><b>do 06:30</b> 1:5:5, 21 C</p></div>
+</div>%%TABS%%</div>
+
+<div class="scr"><div class="body">
+<h2 class="t">Nieuwe bak</h2>
+<div class="two">
+<div class="field"><label>Meel (g)</label><input class="calc" id="f-meel" inputmode="decimal" value="500"></div>
+<div class="field"><label>Water (g)</label><input class="calc" id="f-water" inputmode="decimal" value="350"></div>
+<div class="field"><label>Starter (g)</label><input class="calc" id="f-starter" inputmode="decimal" value="100"></div>
+<div class="field"><label>Starter hydr. %</label><input class="calc" id="f-sthyd" inputmode="decimal" value="100"></div>
+<div class="field"><label>Zout (g)</label><input class="calc" id="f-zout" inputmode="decimal" value="10"></div>
+<div class="field"><label>Keuken (graden)</label><input id="f-temp" inputmode="decimal" value="21"></div></div>
+<div class="res"><div><b id="o-hyd"></b><span>Hydratatie</span></div><div><b id="o-st"></b><span>Starter</span></div><div><b id="o-zout"></b><span>Zout</span></div></div>
+<p style="font-size:13px;color:#625C54;margin:-8px 0 16px">Totaal deeg <b id="o-tot"></b>, totaal meel <b id="o-meel2"></b>. Alles op het totale meel gerekend.</p>
+<div class="card"><p class="lbl">Klaar tegen</p><p style="font:400 26px 'DM Serif Display'">Zaterdag 12:00</p><p style="font-size:14px;color:#625C54;margin-top:4px">Keuken 21 graden: bulk 45 min langer. Schatting, bevestig het deeg zelf.</p></div>
+<button class="btn" data-s="3">Plan deze bak</button>
+</div>%%TABS%%</div>
+
+<div class="scr"><div class="body">
+<h2 class="t">Bakmodus</h2>
+<div class="card w" style="text-align:center;padding:24px 16px"><p class="lbl">Nu</p><h3 style="font:400 30px 'DM Serif Display';margin:4px 0">Vouwen 3 van 4</h3><div class="big" data-sec="760"></div></div>
+<div class="card"><p class="lbl">Controle: is het deeg klaar?</p><p style="font-size:15px;margin:4px 0 16px">Volume +30%? Bellen aan de rand? Deeg gespannen?</p>
+<button class="btn sage" onclick="document.getElementById('m6').textContent='Genoteerd. Planning blijft staan.'">Ja, volgende stap</button>
+<button class="btn ghost" data-bump="1800" onclick="document.getElementById('m6').textContent='Nog niet: planning schuift 30 min op.'">Nog niet, +30 min</button><p class="msg" id="m6"></p></div>
+<div class="step done" data-step><span class="tm">15:15</span><span class="dot"></span><span class="nm">Vouwen 2</span></div>
+<div class="step now" data-step><span class="tm">16:00</span><span class="dot"></span><span class="nm"><b>Vouwen 3</b></span></div>
+<div class="step" data-step><span class="tm">16:45</span><span class="dot"></span><span class="nm">Vouwen 4</span></div>
+<div class="step" data-step><span class="tm">19:30</span><span class="dot"></span><span class="nm">Vormen, koelkast</span></div>
+<div class="step" data-step><span class="tm">za 10:45</span><span class="dot"></span><span class="nm">Bakken, 40 min</span></div>
+</div>%%TABS%%</div>
+
+<div class="scr"><div class="body">
+<h2 class="t">Mijn broden</h2>
+<div class="card w log"><div class="photo a" style="height:120px;margin-bottom:8px">FOTO KRUIM</div><h4>Landbrood</h4><p>31 okt, hydratatie 73%, 4 van 5</p><p>Volgende keer: bulk 30 min langer.</p></div>
+<div class="card w log"><div class="photo" style="height:120px;margin-bottom:8px">FOTO KRUIM</div><h4>Volkoren 30%</h4><p>24 okt, hydratatie 78%, 3 van 5</p><p>Oven 10 graden lager.</p></div>
+<button class="btn ghost">Vergelijk twee broden</button>
+</div>%%TABS%%</div>
+""", tabs_labels=["Vandaag","Starter","Nieuwe bak","Bakmodus","Broden"],
+)
+
 def swatches(sw):
     out = []
     for n, h in sw:
@@ -475,7 +569,7 @@ for nr, d in D.items():
            "%%SFEER%%": d["sfeer"], "%%SW%%": swatches(d["sw"]), "%%CONTRAST%%": contrast_rows(d["contrast"]),
            "%%LETTERS%%": d["letters"], "%%WAAROM%%": d["waarom"],
            "%%PLUS%%": "".join("<li>%s</li>" % x for x in d["plus"]), "%%MIN%%": "".join("<li>%s</li>" % x for x in d["min"]),
-           "%%SCREENS%%": scr}
+           "%%SCREENS%%": scr, "%%JUMP%%": "".join("<button>%s</button>" % l for l in d["tabs_labels"])}
     for k, v in rep.items():
         p = p.replace(k, v)
     open(os.path.join(OUT, "r%d.html" % nr), "w", encoding="utf-8").write(p)
