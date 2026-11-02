@@ -1,6 +1,6 @@
 # Wekkers (meldingen) instellen
 
-**Status:** tabellen en wekker-functie staan live (2 november 2026). Nog te doen: sleutels in Vercel en geheimen in de kluis (stap 1 en 2). Zonder dit werkt Crumbly volledig, alleen zonder meldingen:
+**Status:** alles staat ingesteld (2 november 2026): tabellen, wekker-functie, sleutels in Vercel en geheimen in de kluis. Of de meldingen op de iPhone in België betrouwbaar aankomen, is nog te testen. Zonder dit werkt Crumbly volledig, alleen zonder meldingen:
 de uren staan altijd in het bakplan.
 
 ## Hoe het werkt

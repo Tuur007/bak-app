@@ -10,24 +10,11 @@ Waarom: anders stuurt de bevestigingsmail van een nieuw account naar de Recepten
 3. Bij **Redirect URLs**: **Add URL**, vul `https://crumbly.vercel.app` in, bewaar.
 4. Laat de **Site URL** zoals hij is (die is van de Recepten-app).
 
-## Stap 2. Sleutels voor de meldingen (5 min)
-Op je gsm, zonder terminal: open `/meldingen-sleutels.html` op de testlink (zie hieronder), tik **Maak de sleutels**
-en volg de twee blokken. Met een computer kan je ook het script gebruiken (hieronder).
-Daarna die hulppagina verwijderen (`crumbly/public/meldingen-sleutels.html` en `crumbly/scripts/`).
-
-Waarom: zonder sleutels komen er geen wekkers op de iPhone. De rest van de app werkt wel.
-1. Open een terminal in de map van de repo `bak-app` (Node 18 of nieuwer).
-2. `node crumbly/scripts/meldingen-sleutels.mjs`
-3. Het script toont **stap A** (drie waarden voor Vercel) en **stap B** (twee regels SQL).
-4. Vercel: project **crumbly**, **Settings**, **Environment Variables**. Voeg de drie toe voor
-   **Production** en **Preview**; `VAPID_PRIVATE_KEY` en `CRON_SECRET` als **Sensitive**.
-5. Supabase, **SQL Editor**, nieuwe query: plak de twee regels van stap B en klik **Run**.
-6. Sluit de terminal. De sleutels staan nergens anders bewaard.
-
-## Stap 3. Opnieuw bouwen (1 min)
-Waarom: de publieke sleutel wordt bij het bouwen in de app gezet.
-Vercel, project crumbly, **Deployments**, bij de bovenste (branch `claude/crumbly-v1`) de drie
-puntjes, **Redeploy**. Of zeg het aan Claude, die doet het.
+## Stap 2 en 3. Sleutels voor de meldingen: gedaan (2 november 2026)
+De VAPID-sleutels en het CRON_SECRET staan in Vercel (privé en geheim afgeschermd), en de twee
+geheimen `bak_push_secret` en `bak_push_url` staan in de kluis van Supabase. Opnieuw maken kan met
+een `npx web-push generate-vapid-keys` en een willekeurige tekst van minstens 32 tekens; zie
+`meldingen-instellen.md`. Na een wijziging van de publieke sleutel moet de app opnieuw gebouwd worden.
 
 ## Stap 4. Zelf testen op je iPhone (15 min)
 1. Open in Safari de testlink: https://crumbly-git-claude-crumbly-v1-tuur007s-projects.vercel.app
