@@ -26,7 +26,6 @@ Vercel (project crumbly), Production en Preview:
 | `EXPO_PUBLIC_VAPID_PUBLIC_KEY` | de publieke sleutel |
 | `VAPID_PRIVATE_KEY` | de private sleutel (geheim) |
 | `CRON_SECRET` | willekeurige tekst van minstens 32 tekens (geheim) |
-| `CONTACT_EMAIL` | contactadres voor de push-diensten |
 
 Daarna opnieuw deployen (`EXPO_PUBLIC_` wordt bij het bouwen ingevuld).
 

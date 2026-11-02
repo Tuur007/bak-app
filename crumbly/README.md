@@ -22,7 +22,7 @@ npx expo export --platform web   # bouwt dist/
 - Nieuw Vercel-project op deze repo, Root Directory = `crumbly`. De rest staat in `vercel.json`.
 - Omgevingsvariabelen: `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY` (zelfde als de
   Recepten-app), en voor meldingen `EXPO_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`,
-  `CRON_SECRET`, `CONTACT_EMAIL`.
+  `CRON_SECRET`.
 
 ## Databank
 Migraties in `supabase/migrations/` (nog niet toegepast). Eerst `supabase/tests/crumbly_test.sql`

@@ -44,7 +44,9 @@ module.exports = async function handler(req, res) {
   const pub = process.env.EXPO_PUBLIC_VAPID_PUBLIC_KEY;
   const priv = process.env.VAPID_PRIVATE_KEY;
   if (!pub || !priv) return res.status(503).json({ error: 'Geen VAPID-sleutels' });
-  webpush.setVapidDetails(`mailto:${process.env.CONTACT_EMAIL || 'noreply@example.com'}`, pub, priv);
+  // Contact voor de push-diensten: het adres van de site (geen e-mailadres nodig).
+  const site = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  webpush.setVapidDetails(process.env.VAPID_SUBJECT || (site ? `https://${site}` : 'https://crumbly.vercel.app'), pub, priv);
 
   const items = parse(req.body);
   if (!items) return res.status(400).json({ error: 'Ongeldige gegevens' });
