@@ -43,6 +43,8 @@
   setInterval(function(){cds.forEach(function(e){if(e._run&&e._t>0)e._t--;e.textContent=fmt(e._t)})},1000);
   cds.forEach(function(e){e.textContent=fmt(e._t)});
 
+  document.querySelectorAll('[data-bump]').forEach(function(b){b.addEventListener('click',function(){cds.forEach(function(e){e._t+=+b.dataset.bump;e.textContent=fmt(e._t)})})});
+
   // Sterren / korstkleur kiezen
   document.querySelectorAll('[data-pick]').forEach(function(grp){
     [].slice.call(grp.children).forEach(function(c,i){c.addEventListener('click',function(){
