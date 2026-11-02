@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="nl-BE"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Labo - richting 3</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+.screenbox{background:#F4F5F2;color:#101417;font-family:'IBM Plex Sans',system-ui,sans-serif}
+.statusbar{color:#101417}.homebar{background:#101417}
+h2.t{font:600 13px 'IBM Plex Mono';text-transform:uppercase;letter-spacing:.12em;color:#55605B;margin:0 0 16px;border-bottom:2px solid #101417;padding-bottom:8px}
+.mono{font-family:'IBM Plex Mono',monospace;font-weight:600}
+.panel{background:#fff;border:1px solid #D9DCD6;padding:16px;margin-bottom:8px}
+.lbl{font:500 11px 'IBM Plex Mono';text-transform:uppercase;letter-spacing:.1em;color:#55605B}
+.big{font:600 56px/1 'IBM Plex Mono';letter-spacing:-.02em}
+.btn{display:flex;align-items:center;justify-content:center;min-height:48px;background:#0F6B4F;color:#fff;font:600 15px 'IBM Plex Sans';border:0;width:100%;cursor:pointer;margin-top:8px;border-radius:0}
+.btn.ghost{background:transparent;color:#101417;border:1px solid #101417}
+.tabbar{background:#101417}.tabbar button{color:#9aa39e;font:500 12px 'IBM Plex Mono';text-transform:uppercase}.tabbar button.on{color:#fff;border-top:3px solid #4CC9A0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#D9DCD6;border:1px solid #D9DCD6;margin-bottom:8px}
+.g2>div{background:#fff;padding:8px 16px;min-height:64px}
+.g2 input{width:100%;height:44px;border:0;border-bottom:2px solid #101417;background:#F4F5F2;font:600 22px 'IBM Plex Mono';padding:0 8px;color:#101417}
+.res{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#101417;margin-bottom:8px}.res div{background:#0F6B4F;color:#fff;padding:8px;text-align:center}.res b{display:block;font:600 24px 'IBM Plex Mono'}.res span{font:500 10px 'IBM Plex Mono';text-transform:uppercase;letter-spacing:.08em}
+.tl{display:grid;grid-template-columns:72px 1fr auto;gap:8px;align-items:center;min-height:44px;border-bottom:1px solid #D9DCD6;cursor:pointer;padding:0 4px}
+.tl .tm{font:600 14px 'IBM Plex Mono'}.tl .st{font:500 11px 'IBM Plex Mono';color:#55605B}
+.tl.done{color:#55605B}.tl.done .nm{text-decoration:line-through}
+.tl.now{background:#101417;color:#fff;min-height:64px}.tl.now .st{color:#4CC9A0}
+.spark{width:100%;height:56px;display:block}
+.tbl{width:100%;border-collapse:collapse;font:500 13px 'IBM Plex Mono'}.tbl td,.tbl th{border-bottom:1px solid #D9DCD6;padding:8px 4px;text-align:right}.tbl td:first-child,.tbl th:first-child{text-align:left}.tbl th{font-size:10px;text-transform:uppercase;color:#55605B}
+</style></head>
+<body><div class="page">
+<div class="top"><a href="index.html">Overzicht</a><a href="r1.html">Richting 1</a><a href="r2.html">Richting 2</a><a href="r3.html" class="on">Richting 3</a><a href="r4.html">Richting 4</a><a href="r5.html">Richting 5</a><a href="../rapport/index.html">Rapport</a></div>
+<div class="layout">
+<div class="info">
+<h1>Richting 3: Labo</h1>
+<p class="sfeer">Een bakkerslaboratorium: koel wit, strakke cijfers, monospace en kleine grafiekjes waarop je trends ziet.</p>
+<div class="jump"><button>Vandaag</button><button>Nieuwe bak</button><button>Tijdlijn</button><button>Logboek</button></div>
+<h2>Kleurpalet en contrast</h2>
+<div class="sw"><div><i style="background:#F4F5F2"></i><span><b>Achtergrond</b><br>#F4F5F2</span></div><div><i style="background:#101417"></i><span><b>Inkt</b><br>#101417</span></div><div><i style="background:#0F6B4F"></i><span><b>Groen (actie)</b><br>#0F6B4F</span></div><div><i style="background:#9A5000"></i><span><b>Oranje (let op)</b><br>#9A5000</span></div><div><i style="background:#D9DCD6"></i><span><b>Raster</b><br>#D9DCD6</span></div><div><i style="background:#55605B"></i><span><b>Gedempt</b><br>#55605B</span></div></div>
+<h2>Contrast (WCAG)</h2>
+<table class="c"><tr><td>Inkt op achtergrond</td><td>16,9</td></tr><tr><td>Groen op achtergrond</td><td>5,9</td></tr><tr><td>Wit op groen (knop)</td><td>6,5</td></tr><tr><td>Oranje #9A5000 op achtergrond (eerst #B25E00 = 4,3, daarom donkerder)</td><td>5,4</td></tr><tr><td>Gedempt op achtergrond</td><td>6,0</td></tr></table>
+<h2>Lettertypes</h2><p>IBM Plex Mono voor alle getallen en tijden (vaste breedte, uitgelijnd), IBM Plex Sans voor tekst. 8px-raster zichtbaar in de opmaak.</p>
+<h2>Waarom dit bij brood past</h2><p>Voor wie tweaket: hydratatie, starter% en rijstijd naast elkaar zien en de volgende bak bijsturen. Cijfers staan in kolommen, grafieken tonen of de bulk korter of langer moet.</p>
+<h2>Sterk</h2><ul class="plus"><li>Meest geschikt voor ratio's en trends; bakker 'ziet' haar vooruitgang</li><li>Heel scherp leesbaar, weinig ruis</li></ul>
+<h2>Zwak</h2><ul class="min"><li>Kil en technisch: minder gezellig, kan beginners afschrikken</li><li>Grafieken zijn zinloos zonder 10+ bakken data</li></ul>
+<p class="note">Alle cijfers in de mockup zijn voorbeelden. Tik op de knoppen, de tabbalk, de stappen en de timer; de velden in &quot;Nieuwe bak&quot; rekenen live mee.</p>
+</div>
+<div class="phonewrap"><div class="phone"><div class="screenbox">
+<div class="notch"></div><div class="statusbar"><span>9:41</span><span>5G 87%</span></div>
+
+<div class="scr on"><div class="body">
+<h2 class="t">Vandaag / vr 06.11</h2>
+<div class="panel" style="background:#101417;color:#fff"><div class="lbl" style="color:#4CC9A0">Nu: vouwen 3/4</div><div class="big" data-sec="760"></div><div class="lbl" style="color:#9aa39e;margin-top:8px">Dough 24,1 C / bulk +18% / doel +30%</div></div>
+<div class="g2"><div><div class="lbl">Starter</div><div class="mono" style="font-size:20px">piek ~13:00</div></div><div><div class="lbl">Keuken</div><div class="mono" style="font-size:20px">21 C</div></div></div>
+<div class="panel"><div class="lbl">Oven</div><div class="mono" style="font-size:18px;margin-top:4px">za 10:00 aan / 10:45 bak / 12:00 klaar</div></div>
+<div class="panel"><div class="lbl">Hydratatie laatste 6 bakken</div>
+<svg class="spark" viewBox="0 0 240 56"><polyline fill="none" stroke="#0F6B4F" stroke-width="2" points="8,40 56,34 104,26 152,30 200,18 232,12"/><g fill="#0F6B4F"><circle cx="8" cy="40" r="3"/><circle cx="56" cy="34" r="3"/><circle cx="104" cy="26" r="3"/><circle cx="152" cy="30" r="3"/><circle cx="200" cy="18" r="3"/><circle cx="232" cy="12" r="3"/></g></svg></div>
+<button class="btn ghost" data-s="1">Nieuwe bak</button>
+</div><div class="tabbar"><button data-s="0">Vandaag</button><button data-s="1">Formule</button><button data-s="2">Tijdlijn</button><button data-s="3">Log</button></div></div>
+
+<div class="scr"><div class="body">
+<h2 class="t">Nieuwe bak / formule</h2>
+<div class="g2">
+<div><div class="lbl">Meel g</div><input class="calc" id="f-meel" inputmode="decimal" value="500"></div>
+<div><div class="lbl">Water g</div><input class="calc" id="f-water" inputmode="decimal" value="350"></div>
+<div><div class="lbl">Starter g</div><input class="calc" id="f-starter" inputmode="decimal" value="100"></div>
+<div><div class="lbl">Starter hydr. %</div><input class="calc" id="f-sthyd" inputmode="decimal" value="100"></div>
+<div><div class="lbl">Zout g</div><input class="calc" id="f-zout" inputmode="decimal" value="10"></div>
+<div><div class="lbl">Keuken C</div><input id="f-temp" inputmode="decimal" value="21"></div></div>
+<div class="res"><div><b id="o-hyd"></b><span>Hydratatie</span></div><div><b id="o-st"></b><span>Starter</span></div><div><b id="o-zout"></b><span>Zout</span></div></div>
+<div class="panel"><div class="lbl">Totaal deeg / totaal meel</div><div class="mono" style="font-size:20px"><span id="o-tot"></span> / <span id="o-meel2"></span></div></div>
+<div class="panel"><div class="lbl">Terugrekenen vanaf</div><div class="mono" style="font-size:20px">za 12:00</div><div style="font-size:13px;color:#9A5000;margin-top:4px;font-weight:600">Keuken 21 C: bulk +45 min</div></div>
+<button class="btn" data-s="2">Genereer tijdlijn</button>
+</div><div class="tabbar"><button data-s="0">Vandaag</button><button data-s="1">Formule</button><button data-s="2">Tijdlijn</button><button data-s="3">Log</button></div></div>
+
+<div class="scr"><div class="body">
+<h2 class="t">Tijdlijn / landbrood</h2>
+<div class="tl done" data-step><span class="tm">06:30</span><span class="nm">Starter voeden</span><span class="st">OK</span></div>
+<div class="tl done" data-step><span class="tm">14:00</span><span class="nm">Mengen + zout</span><span class="st">OK</span></div>
+<div class="tl done" data-step><span class="tm">15:15</span><span class="nm">Vouwen 2</span><span class="st">OK</span></div>
+<div class="tl now" data-step><span class="tm">16:00</span><span class="nm">Vouwen 3</span><span class="st mono" data-sec="760"></span></div>
+<div class="tl" data-step><span class="tm">16:45</span><span class="nm">Vouwen 4</span><span class="st">+0:45</span></div>
+<div class="tl" data-step><span class="tm">19:30</span><span class="nm">Vormen</span><span class="st">+3:30</span></div>
+<div class="tl" data-step><span class="tm">20:00</span><span class="nm">Koelkast</span><span class="st">+4:00</span></div>
+<div class="tl" data-step><span class="tm">za 10:00</span><span class="nm">Oven 240 C</span><span class="st">T-2:00</span></div>
+<div class="tl" data-step><span class="tm">za 10:45</span><span class="nm">Bakken 40 min</span><span class="st">T-1:15</span></div>
+<div class="panel" style="margin-top:8px"><div class="lbl">Bulk: temp vs. tijd (eigen bakken)</div>
+<svg class="spark" viewBox="0 0 240 56"><line x1="8" y1="8" x2="232" y2="48" stroke="#D9DCD6"/><g fill="#0F6B4F"><circle cx="40" cy="12" r="3"/><circle cx="96" cy="22" r="3"/><circle cx="150" cy="34" r="3"/><circle cx="200" cy="44" r="3"/></g><circle cx="118" cy="28" r="4" fill="none" stroke="#9A5000" stroke-width="2"/></svg></div>
+</div><div class="tabbar"><button data-s="0">Vandaag</button><button data-s="1">Formule</button><button data-s="2">Tijdlijn</button><button data-s="3">Log</button></div></div>
+
+<div class="scr"><div class="body">
+<h2 class="t">Logboek / 12 bakken</h2>
+<div class="panel"><table class="tbl"><tr><th>Datum</th><th>Hydr</th><th>Start</th><th>Bulk</th><th>Score</th></tr>
+<tr><td>31.10</td><td>73%</td><td>20%</td><td>5:15</td><td>4/5</td></tr>
+<tr><td>24.10</td><td>78%</td><td>20%</td><td>4:45</td><td>3/5</td></tr>
+<tr><td>17.10</td><td>72%</td><td>18%</td><td>5:30</td><td>5/5</td></tr>
+<tr><td>10.10</td><td>75%</td><td>20%</td><td>4:30</td><td>3/5</td></tr></table></div>
+<div class="panel"><div class="lbl">Score per bak</div>
+<svg class="spark" viewBox="0 0 240 56"><g fill="#0F6B4F"><rect x="12" y="24" width="20" height="28"/><rect x="52" y="12" width="20" height="40"/><rect x="92" y="28" width="20" height="24"/><rect x="132" y="8" width="20" height="44"/><rect x="172" y="20" width="20" height="32"/><rect x="212" y="12" width="20" height="40"/></g></svg></div>
+<div class="panel"><div class="lbl">Laatste notitie</div><p style="margin-top:4px">Kruim iets dicht. Volgende keer bulk 30 min langer.</p></div>
+</div><div class="tabbar"><button data-s="0">Vandaag</button><button data-s="1">Formule</button><button data-s="2">Tijdlijn</button><button data-s="3">Log</button></div></div>
+
+<div class="homebar"></div>
+</div></div></div>
+</div></div>
+<script src="shared.js"></script>
+</body></html>
