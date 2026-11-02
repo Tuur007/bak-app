@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { canPickPhoto, pickPhoto } from '../../src/services/photo';
 import { fmtDay, fmtLongDate } from '../../src/domain/dates';
 import { formatPct } from '../../src/domain/ratios';
 import type { Bake, CrumbKind } from '../../src/domain/types';
@@ -20,6 +21,7 @@ function ResultForm({ bake }: { bake: Bake }) {
   const [crust, setCrust] = useState(2);
   const [crumb, setCrumb] = useState<CrumbKind>('gelijkmatig');
   const [next, setNext] = useState('');
+  const [photo, setPhoto] = useState<string | undefined>(undefined);
   return (
     <Card>
       <Txt v="folio">Hoe is hij geworden?</Txt>
@@ -36,7 +38,13 @@ function ResultForm({ bake }: { bake: Bake }) {
         {CRUMBS.map((c) => <Chip key={c.v} label={c.label} on={crumb === c.v} onPress={() => setCrumb(c.v)} />)}
       </Row>
       <Field label="Volgende keer" value={next} onChange={setNext} placeholder="bv. bulk 30 min langer" />
-      <Button label="Bewaar" onPress={() => finishBake(bake.id, { crust, crumb, nextTime: next.trim() })} />
+      {canPickPhoto() ? (
+        <>
+          {photo ? <Image source={{ uri: photo }} style={b.photo} accessibilityLabel="foto van het brood" /> : null}
+          <Button small v="outline" label={photo ? 'Andere foto' : 'Foto van de kruim toevoegen'} onPress={async () => { const p = await pickPhoto(); if (p) setPhoto(p); }} style={b.photoBtn} />
+        </>
+      ) : null}
+      <Button label="Bewaar" onPress={() => finishBake(bake.id, { crust, crumb, nextTime: next.trim(), photo })} />
     </Card>
   );
 }
@@ -66,6 +74,7 @@ export default function Broden() {
               <Txt v="note">{fmtDay(new Date(x.endAt), now)} · hydratatie {formatPct(x.hydration)}{x.result ? ` · ${x.result.crumb} kruim` : ''}</Txt>
             </View>
           </Row>
+          {x.result?.photo ? <Image source={{ uri: x.result.photo }} style={b.photo} accessibilityLabel={`foto van ${x.recipeName}`} /> : null}
           {x.result?.nextTime ? <Txt style={b.mt}>Volgende keer: {x.result.nextTime}</Txt> : null}
         </Card>
       ))}
@@ -82,4 +91,6 @@ const b = StyleSheet.create({
   swatch: { flex: 1, height: 44, borderRadius: 12, borderWidth: 2, borderColor: 'transparent' },
   swatchOn: { borderColor: colors.ink },
   dot: { width: 28, height: 28, borderRadius: 14 },
+  photo: { width: '100%', aspectRatio: 4 / 3, borderRadius: 12, marginTop: space(1), backgroundColor: colors.blush },
+  photoBtn: { marginVertical: space(1), alignSelf: 'flex-start' },
 });

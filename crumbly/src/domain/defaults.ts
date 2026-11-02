@@ -4,9 +4,16 @@
 import { newId } from './ids';
 import type { ProcessStep, Recipe, Settings, Starter } from './types';
 
-export function defaultStarter(nowIso: string): Starter {
+// Startgegevens hebben een vaste id en een tijd in 1970. Zo wint elke echte gegeven uit
+// de cloud altijd van de startgegevens van een nieuw toestel (laatste wijziging wint), en
+// komen er geen dubbele starters of voorbeeldrecepten bij een tweede toestel.
+export const SEED_TIME = '1970-01-01T00:00:00.000Z';
+export const STARTER_ID = '00000000-0000-4000-8000-0000000057a7';
+export const EXAMPLE_RECIPE_ID = '00000000-0000-4000-8000-00000000ba7a';
+
+export function defaultStarter(nowIso: string = SEED_TIME): Starter {
   return {
-    id: newId(),
+    id: STARTER_ID,
     name: 'Jean',
     startedOn: '2026-10-16',
     defaultRatio: '1:5:5',
@@ -47,9 +54,9 @@ export function batardProcess(): ProcessStep[] {
   ];
 }
 
-export function exampleRecipe(nowIso: string): Recipe {
+export function exampleRecipe(nowIso: string = SEED_TIME): Recipe {
   return {
-    id: newId(),
+    id: EXAMPLE_RECIPE_ID,
     name: 'Klassieke bâtard',
     source: 'Voorbeeld: vervang door je eigen recept',
     flours: [{ id: newId(), name: 'Bloem', grams: 500 }],
@@ -63,7 +70,7 @@ export function exampleRecipe(nowIso: string): Recipe {
   };
 }
 
-export function defaultSettings(nowIso: string): Settings {
+export function defaultSettings(nowIso: string = SEED_TIME): Settings {
   // Voorbeeld: weekdagen thuis vanaf 17:30, weekend de hele dag. Aan te passen.
   const week = [1, 2, 3, 4, 5].flatMap((day) => [
     { day, from: '06:30', to: '08:00' },

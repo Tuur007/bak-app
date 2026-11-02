@@ -8,7 +8,7 @@ import type { Bake, HomeWindow, PlannedStep, ProcessStep } from '../../src/domai
 import { liveRecipes, plannedBakes, useCrumbly } from '../../src/store/store';
 import { Button, Card, Chip, Gap, Row, Screen, Txt } from '../../src/ui/kit';
 import { colors, space } from '../../src/ui/theme';
-import { Bell, DayChips, TimeStepper, useNow } from '../../src/ui/widgets';
+import { Bell, DayChips, TimeStepper, useNow, useWakeLock } from '../../src/ui/widgets';
 
 function StepRow({ bake, step, now, current }: { bake: Bake; step: PlannedStep; now: Date; current: boolean }) {
   const setStepDone = useCrumbly((s) => s.setStepDone);
@@ -42,6 +42,8 @@ function ActiveBake({ bake, now }: { bake: Bake; now: Date }) {
   const [confirmCancel, setConfirmCancel] = useState(false);
   const st = stepState(bake.steps, now);
   const conflicts = homeConflicts(bake.steps, windows);
+  // Scherm aan als er binnen het halfuur iets te doen is.
+  useWakeLock(!!st.step && st.msUntil < 30 * 60_000);
 
   return (
     <>

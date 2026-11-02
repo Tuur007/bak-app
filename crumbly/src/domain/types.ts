@@ -79,6 +79,8 @@ export interface BakeResult {
   crust: number;
   crumb: CrumbKind;
   nextTime: string;
+  /** Kleine JPEG als data-URL (zie src/services/photo.ts). */
+  photo?: string;
   at: string;
 }
 

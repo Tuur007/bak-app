@@ -37,3 +37,23 @@ export function buildReminders(
   }
   return out.sort((a, b) => a.dueAt.localeCompare(b.dueAt));
 }
+
+export interface StoredReminder {
+  id: string;
+  due_at: string;
+  title: string;
+  body: string;
+  url: string;
+}
+
+/** Wat er op de server moet veranderen: welke openstaande wekkers weg, welke nieuw of anders. */
+export function diffReminders(existing: StoredReminder[], wanted: Reminder[]): { remove: string[]; upsert: Reminder[] } {
+  const byId = new Map(existing.map((e) => [e.id, e]));
+  const wantedIds = new Set(wanted.map((w) => w.id));
+  const remove = existing.filter((e) => !wantedIds.has(e.id)).map((e) => e.id);
+  const upsert = wanted.filter((w) => {
+    const e = byId.get(w.id);
+    return !e || new Date(e.due_at).getTime() !== new Date(w.dueAt).getTime() || e.title !== w.title || e.body !== w.body || e.url !== w.url;
+  });
+  return { remove, upsert };
+}

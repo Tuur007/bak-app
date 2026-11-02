@@ -15,6 +15,32 @@ export function useNow(ms = 1000): Date {
   return now;
 }
 
+type WakeLockSentinelLike = { release: () => Promise<void> };
+type WakeNavigator = Navigator & { wakeLock?: { request: (type: 'screen') => Promise<WakeLockSentinelLike> } };
+
+/** Houdt het scherm aan zolang `active` waar is (web, waar ondersteund). */
+export function useWakeLock(active: boolean): void {
+  useEffect(() => {
+    if (!active || typeof navigator === 'undefined') return;
+    const nav = navigator as WakeNavigator;
+    if (!nav.wakeLock) return;
+    let lock: WakeLockSentinelLike | null = null;
+    let cancelled = false;
+    const request = (): void => {
+      nav.wakeLock?.request('screen').then((l) => { if (cancelled) void l.release(); else lock = l; }).catch(() => undefined);
+    };
+    request();
+    // iOS laat de vergrendeling los als je de app verlaat; vraag ze opnieuw bij terugkeer.
+    const onVis = (): void => { if (document.visibilityState === 'visible') request(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVis);
+      if (lock) void lock.release().catch(() => undefined);
+    };
+  }, [active]);
+}
+
 // ---------------------------------------------------------------- boog (starter)
 
 export function Arch({ label, title, children }: { label: string; title: string; children?: React.ReactNode }) {

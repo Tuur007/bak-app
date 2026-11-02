@@ -11,17 +11,11 @@ import { newId } from '../domain/ids';
 import { computeRatios } from '../domain/ratios';
 import { delayOpen, endOf, markDone, planBackward, shiftForReturn, undoDone } from '../domain/schedule';
 import { liveFeeds } from '../domain/starter';
+import { mergeRemote, type Kind, type RemoteItem } from './merge';
 import type { AwayPeriod, Bake, BakeResult, Feed, PlannedStep, Recipe, Settings, Starter } from '../domain/types';
 
-export type Kind = 'starter' | 'feed' | 'recipe' | 'bake' | 'away' | 'settings';
+export type { Kind, RemoteItem } from './merge';
 export const SETTINGS_ID = '00000000-0000-4000-8000-00000000c0de';
-
-export interface RemoteItem {
-  id: string;
-  kind: Kind;
-  data: unknown;
-  updated_at: string;
-}
 
 export interface CrumblyState {
   seeded: boolean;
@@ -101,11 +95,11 @@ export const useCrumbly = create<CrumblyState>()(
         seedIfEmpty: () =>
           set((s) => {
             if (s.seeded) return;
-            const t = nowIso();
-            s.starter = defaultStarter(t);
-            const r = exampleRecipe(t);
-            s.recipes.push(r);
-            s.settings = defaultSettings(t);
+            // Vaste id's en een tijd in 1970: echte gegevens uit de cloud winnen altijd.
+            s.starter = defaultStarter();
+            const r = exampleRecipe();
+            if (!s.recipes.some((x) => x.id === r.id)) s.recipes.push(r);
+            s.settings = defaultSettings();
             s.seeded = true;
             touch(s, 'starter', s.starter.id);
             touch(s, 'recipe', r.id);
@@ -246,25 +240,7 @@ export const useCrumbly = create<CrumblyState>()(
         // zijn en nieuwer zijn, blijven staan.
         applyRemote: (items, pulledAt) =>
           set((s) => {
-            const newer = (local: { updatedAt: string } | null | undefined, remote: { updatedAt?: string }): boolean =>
-              !local || (remote.updatedAt ?? '') > local.updatedAt;
-            for (const it of items) {
-              const d = it.data as { id: string; updatedAt: string };
-              if (!d || typeof d !== 'object') continue;
-              const upsert = <T extends { id: string; updatedAt: string }>(list: T[]): void => {
-                const i = list.findIndex((x) => x.id === d.id);
-                if (i < 0) list.push(d as unknown as T);
-                else if (newer(list[i], d)) list[i] = d as unknown as T;
-              };
-              switch (it.kind) {
-                case 'starter': if (newer(s.starter, d)) s.starter = d as unknown as Starter; s.seeded = true; break;
-                case 'settings': if (newer(s.settings, d)) s.settings = d as unknown as Settings; break;
-                case 'feed': upsert(s.feeds); break;
-                case 'recipe': upsert(s.recipes); break;
-                case 'bake': upsert(s.bakes); break;
-                case 'away': upsert(s.away); break;
-              }
-            }
+            mergeRemote(s, items);
             s.lastPulledAt = pulledAt;
           }),
 

@@ -33,14 +33,29 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
   de starter telt mee), starter (klaar-schatting), schema (terugrekenen, schuiven, thuis-momenten,
   weg), wekkers.
 - `src/store/store.ts`: lokaal de bron van waarheid (werkt offline). Wijzigingen in `dirty`.
+  Startgegevens (Jean, voorbeeldrecept, instellingen) hebben vaste id's en tijd 1970
+  (`src/domain/defaults.ts`), zodat echte gegevens uit de cloud altijd winnen op een nieuw toestel.
+  Samenvoegen is puur: `src/store/merge.ts` (getest).
   Selecteer in componenten de ruwe lijst (`s.bakes`) en filter daarna: een selector die
   telkens een nieuwe lijst geeft, laat zustand eindeloos hertekenen.
 - `src/services/sync.ts`: upsert naar `bak_items` (sleutel user_id+id), ophalen op
   `server_updated_at`, laatste wijziging wint (ook in de databank, trigger). Daarna de
   openstaande wekkers vervangen in `bak_reminders`.
+- Account: aanmelden, account maken en wachtwoord vergeten in Instellingen (`src/services/auth.ts`).
+  Zelfde `auth.users` als Recepten, Tuin en Op reis. De bevestigingsmail stuurt terug naar de site
+  als `https://crumbly.vercel.app` in Supabase, Authentication, URL Configuration, Redirect URLs staat.
+- Foto van het brood: verkleind tot 480 px JPEG (data-URL) in `BakeResult.photo`, synct mee
+  in `bak_items` (geen opslagbucket). Ongeveer 2 MB per jaar bij een brood per week.
+- Wekkers naar de server: enkel verschillen (`diffReminders`).
 - Meldingen: `bak_push_subscriptions` + `private.bak_send_due()` (pg_cron elke minuut) ->
   `api/push/send.js` (Vercel, web-push). Zie `crumbly/docs/meldingen-instellen.md`.
 - Tijden altijd als absolute momenten; aftellen rekent vanaf de klok (iOS pauzeert timers).
+
+## Online
+Vercel-project `crumbly` (team tuur007s-projects), Root Directory `crumbly`, Node 22.
+Productie: https://crumbly.vercel.app (na merge naar main). Previews achter de Vercel-login.
+Databank: tabellen en wekker-functie staan live (2 november 2026). Kluisgeheimen en VAPID-sleutels: zie
+`crumbly/docs/meldingen-instellen.md`.
 
 ## Testen
 `cd crumbly && npm test && npm run typecheck`. Webbouw: `npx expo export --platform web`.

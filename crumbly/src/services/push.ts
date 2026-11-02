@@ -59,6 +59,9 @@ export async function turnPushOff(): Promise<void> {
 
 export function registerServiceWorker(): void {
   if (Platform.OS !== 'web' || typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+  // Vraag de browser om de gegevens op dit toestel niet op te ruimen bij plaatsgebrek.
+  const storage = (navigator as Navigator & { storage?: { persist?: () => Promise<boolean> } }).storage;
+  storage?.persist?.().catch(() => undefined);
   if (typeof __DEV__ !== 'undefined' && __DEV__) return;
   navigator.serviceWorker.register('/sw.js').catch(() => undefined);
 }

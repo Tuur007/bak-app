@@ -3,7 +3,9 @@ import { StyleSheet, View } from 'react-native';
 import { fmtCountdown, fmtDay, fmtDayTime, fmtLongDate, fmtTime } from '../../src/domain/dates';
 import { activeAway, stepState, upcomingAway } from '../../src/domain/schedule';
 import { earliestBakeDay, formatHours, liveFeeds, nextFeedDue, readiness } from '../../src/domain/starter';
-import { plannedBakes, useCrumbly } from '../../src/store/store';
+import { useSessionEmail } from '../../src/services/auth';
+import { supabase } from '../../src/services/supabase';
+import { liveRecipes, plannedBakes, useCrumbly } from '../../src/store/store';
 import { Button, Card, Gap, Row, Screen, Txt } from '../../src/ui/kit';
 import { space } from '../../src/ui/theme';
 import { Arch, Dots, Gear, useNow } from '../../src/ui/widgets';
@@ -19,6 +21,8 @@ export default function Vandaag() {
   const feedNow = useCrumbly((s) => s.feedNow);
   const markPeak = useCrumbly((s) => s.markPeak);
   const setStepDone = useCrumbly((s) => s.setStepDone);
+  const recipes = useCrumbly((s) => s.recipes);
+  const sessionEmail = useSessionEmail();
 
   if (!starter) return <Screen title="Crumbly"><Txt>Even geduld...</Txt></Screen>;
 
@@ -105,6 +109,23 @@ export default function Vandaag() {
         <Card>
           <Txt v="folio">Straks weg</Txt>
           <Txt style={s.mt}>Van {fmtDayTime(new Date(awaySoon.from), now)} tot {fmtDayTime(new Date(awaySoon.to), now)}.</Txt>
+        </Card>
+      ) : null}
+      {supabase && sessionEmail === null ? (
+        <Card>
+          <Txt v="folio">Bewaar je gegevens</Txt>
+          <Txt style={s.mt}>Nu staat alles enkel op dit toestel. Met een account staat het ook veilig in de cloud.</Txt>
+          <Gap />
+          <Row><Button small v="outline" label="Aanmelden of account maken" onPress={() => router.push('/instellingen')} /></Row>
+        </Card>
+      ) : null}
+
+      {liveRecipes(recipes).every((x) => x.isExample) ? (
+        <Card>
+          <Txt v="folio">Eerst even</Txt>
+          <Txt style={s.mt}>Vul je eigen recept in. Het voorbeeld en zijn tijden zijn maar een vertrekpunt.</Txt>
+          <Gap />
+          <Row><Button small v="outline" label="Naar mijn recepten" onPress={() => router.push('/recepten')} /></Row>
         </Card>
       ) : null}
       <View style={s.bottom} />

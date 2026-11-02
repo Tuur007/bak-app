@@ -2,7 +2,7 @@
 // wijzigingen ophalen. Laatste wijziging wint. Daarna de wekkers bijwerken
 // (bak_reminders), die de server als melding verstuurt.
 
-import { buildReminders } from '../domain/reminders';
+import { buildReminders, diffReminders, type StoredReminder } from '../domain/reminders';
 import { itemForKey, useCrumbly, type RemoteItem } from '../store/store';
 import { supabase } from './supabase';
 
@@ -96,17 +96,23 @@ export async function syncNow(): Promise<SyncStatus> {
   return lastStatus;
 }
 
-/** Vervang de openstaande wekkers door de huidige lijst. */
+/** Breng de openstaande wekkers op de server in lijn met de huidige lijst (enkel verschillen). */
 async function syncReminders(): Promise<void> {
   if (!supabase) return;
   const s = useCrumbly.getState();
   const wanted = buildReminders({ bakes: s.bakes, feeds: s.feeds, starter: s.starter, settings: s.settings, away: s.away }, new Date()).slice(0, 200);
-  const del = await supabase.from('bak_reminders').delete().is('sent_at', null);
-  if (del.error) throw new Error(del.error.message);
-  if (wanted.length === 0) return;
-  const { error } = await supabase.from('bak_reminders').upsert(
-    wanted.map((r) => ({ id: r.id, due_at: r.dueAt, title: r.title, body: r.body, url: r.url, sent_at: null })),
-    { onConflict: 'user_id,id' },
-  );
+  const { data, error } = await supabase.from('bak_reminders').select('id, due_at, title, body, url').is('sent_at', null);
   if (error) throw new Error(error.message);
+  const { remove, upsert } = diffReminders((data ?? []) as StoredReminder[], wanted);
+  if (remove.length > 0) {
+    const del = await supabase.from('bak_reminders').delete().is('sent_at', null).in('id', remove);
+    if (del.error) throw new Error(del.error.message);
+  }
+  if (upsert.length > 0) {
+    const up = await supabase.from('bak_reminders').upsert(
+      upsert.map((r) => ({ id: r.id, due_at: r.dueAt, title: r.title, body: r.body, url: r.url, sent_at: null })),
+      { onConflict: 'user_id,id' },
+    );
+    if (up.error) throw new Error(up.error.message);
+  }
 }

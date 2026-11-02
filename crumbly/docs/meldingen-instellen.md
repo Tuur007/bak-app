@@ -1,6 +1,6 @@
 # Wekkers (meldingen) instellen
 
-**Status:** nog niet ingesteld. Zonder dit werkt Crumbly volledig, alleen zonder meldingen:
+**Status:** tabellen en wekker-functie staan live (2 november 2026). Nog te doen: sleutels in Vercel en geheimen in de kluis (stap 1 en 2). Zonder dit werkt Crumbly volledig, alleen zonder meldingen:
 de uren staan altijd in het bakplan.
 
 ## Hoe het werkt
@@ -32,9 +32,9 @@ Daarna opnieuw deployen (`EXPO_PUBLIC_` wordt bij het bouwen ingevuld).
 ## 2. Geheimen in de kluis van Supabase
 ```sql
 select vault.create_secret('<hetzelfde als CRON_SECRET>', 'bak_push_secret');
-select vault.create_secret('https://<crumbly-domein>/api/push/send', 'bak_push_url');
+select vault.create_secret('https://crumbly.vercel.app/api/push/send', 'bak_push_url');
 ```
 
-## 3. Planning aanzetten
-`supabase/migrations/20261102120100_crumbly_wekkers.sql` uitvoeren (na Tuurs ok).
+## 3. Planning
+Staat al aan (`crumbly-wekkers`, elke minuut). Zonder de geheimen uit stap 2 doet ze niets.
 Uitzetten: `select cron.unschedule('crumbly-wekkers');`

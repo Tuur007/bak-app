@@ -84,3 +84,19 @@ test('passend moment zoeken kijkt tot een week vooruit (weekend)', () => {
   assert.ok(end, 'vindt een moment');
   assert.equal(homeConflicts(planBackward(long, end!), windows).length, 0);
 });
+
+test('wekkers: enkel wat verandert gaat naar de server', async () => {
+  const { diffReminders } = await import('../src/domain/reminders.ts');
+  const w = [
+    { id: 'a', dueAt: '2026-11-05T10:00:00.000Z', title: 'Bâtard', body: 'Nu: vouwen 1', url: '/plan' },
+    { id: 'b', dueAt: '2026-11-05T11:00:00.000Z', title: 'Bâtard', body: 'Nu: vouwen 2', url: '/plan' },
+  ];
+  const existing = [
+    { id: 'a', due_at: '2026-11-05T10:00:00+00:00', title: 'Bâtard', body: 'Nu: vouwen 1', url: '/plan' },
+    { id: 'b', due_at: '2026-11-05T10:30:00+00:00', title: 'Bâtard', body: 'Nu: vouwen 2', url: '/plan' },
+    { id: 'c', due_at: '2026-11-05T12:00:00+00:00', title: 'Bâtard', body: 'oud', url: '/plan' },
+  ];
+  const d = diffReminders(existing, w);
+  assert.deepEqual(d.remove, ['c']);
+  assert.deepEqual(d.upsert.map((x) => x.id), ['b']);
+});
