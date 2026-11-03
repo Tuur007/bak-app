@@ -10,6 +10,7 @@ import { supabase } from '../../src/services/supabase';
 import { liveRecipes, plannedBakes, useCrumbly } from '../../src/store/store';
 import { Button, Card, Gap, Row, Screen, Txt } from '../../src/ui/kit';
 import { space } from '../../src/ui/theme';
+import { PeakQuestion } from '../../src/ui/PeakQuestion';
 import { StepCard } from '../../src/ui/StepCard';
 import { Arch, Dots, Gear, useNow } from '../../src/ui/widgets';
 
@@ -81,18 +82,26 @@ export default function Vandaag() {
         <Txt v="note" style={s.center}>{archText}</Txt>
       </Arch>
 
+      <PeakQuestion now={now} />
+
       {bake && st?.step ? (
         <StepCard bake={bake} now={now} showName showPlanLink />
       ) : (
         <Card>
           <Txt v="folio">Volgende voeding</Txt>
           <Txt v="h2" style={s.mt}>{nextFeed ? `${fmtDay(nextFeed, now)} ${fmtTime(nextFeed)}` : `Voed ${starter.name} wanneer het je past`}</Txt>
-          <Gap />
-          {r.waitingForPeak ? (
-            <Button v="green" label={`${starter.name} is verdubbeld`} onPress={() => markPeak()} />
-          ) : null}
-          <Button label={`${starter.name} is gevoed`} onPress={() => feedNow()} />
-          <Txt v="note">Eén tik. Zelfde verhouding als altijd ({starter.defaultRatio}).{hasFeeds ? '' : ' Pas ze aan bij je starter.'}</Txt>
+          {starter.autoFeedAt ? (
+            <Txt v="note" style={s.mt}>Crumbly noteert de voeding zelf. Jij hoeft alleen af en toe de vraag hierboven te beantwoorden. Anders gevoed? Pas het aan bij {starter.name}.</Txt>
+          ) : (
+            <>
+              <Gap />
+              {r.waitingForPeak ? (
+                <Button v="green" label={`${starter.name} is verdubbeld`} onPress={() => markPeak()} />
+              ) : null}
+              <Button label={`${starter.name} is gevoed`} onPress={() => feedNow()} />
+              <Txt v="note">Eén tik. Zelfde verhouding als altijd ({starter.defaultRatio}).{hasFeeds ? '' : ' Pas ze aan bij je starter.'}</Txt>
+            </>
+          )}
         </Card>
       )}
 

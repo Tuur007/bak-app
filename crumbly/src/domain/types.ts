@@ -17,6 +17,10 @@ export interface Starter {
   /** Zoveel keer op rij binnen de drempel = klaar om te bakken. */
   streakNeeded: number;
   location: 'kamer' | 'koelkast';
+  /** Vast voeduur ("18:00"): Crumbly noteert de voeding dan zelf. */
+  autoFeedAt?: string;
+  /** Vanaf welke dag (YYYY-MM-DD) automatisch genoteerd wordt; nooit met terugwerkende kracht daarvoor. */
+  autoFeedSince?: string;
   updatedAt: string;
 }
 
@@ -27,6 +31,12 @@ export interface Feed {
   peakAt?: string;
   ratio: string;
   note?: string;
+  /** Door Crumbly genoteerd op het vaste voeduur. */
+  auto?: boolean;
+  /** De verdubbeltijd is een schatting uit een antwoord ("binnen 6 u"). */
+  peakApprox?: boolean;
+  /** De gebruiker zei: niet bekeken. */
+  peakSkipped?: boolean;
   updatedAt: string;
   deletedAt?: string;
 }

@@ -58,6 +58,11 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
 - Keukentemperatuur (`src/domain/temperature.ts`): enkel als een recept `refTempC` heeft, en enkel voor
   stappen met `tempSensitive`. Grove vuistregel (per 10 graden koeler `tempDoubling` keer langer, standaard 2),
   geen gemeten tabel; aanpasbaar in Instellingen. Een gebruiker die zelf andere waarden ziet, wint.
+- Minder werk voor de gebruiker (feedback van zus, 3 november): `starter.autoFeedAt` laat Crumbly de dagelijkse
+  voeding zelf noteren (`dueAutoFeeds`, nooit met terugwerkende kracht voor de startdag, niet tijdens weg, een
+  verwijderde voeding komt niet terug), en `PeakQuestion` stelt één vraag per dag ("binnen 4/6/8 u", `feedToAsk`).
+  Antwoorden zijn schattingen (`peakApprox`). Een recept uit het boek omzetten: `src/domain/recipeText.ts`
+  (plakken of "Tekst scannen" op de iPhone), altijd met waarschuwingen om na te kijken.
 - Eerste keer: `app/welkom.tsx` (naam en startdatum van de starter, thuis-momenten, eigen recept, uitleg van
   de woorden uit `src/domain/glossary.ts`). `settings.onboarded` synct mee, zodat een tweede toestel niet opnieuw begint.
 - Meldingen: `bak_push_subscriptions` + `private.bak_send_due()` (pg_cron elke minuut) ->

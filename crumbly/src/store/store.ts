@@ -11,7 +11,7 @@ import { newId } from '../domain/ids';
 import { computeRatios } from '../domain/ratios';
 import { delayOpen, endOf, finishWaitNow, markDone, planBackward, shiftForReturn, undoDone } from '../domain/schedule';
 import { adjustForTemperature } from '../domain/temperature';
-import { liveFeeds } from '../domain/starter';
+import { dueAutoFeeds, liveFeeds } from '../domain/starter';
 import { mergeRemote, type Kind, type RemoteItem } from './merge';
 import type { AwayPeriod, Bake, BakeResult, Feed, PlannedStep, Recipe, Settings, Starter } from '../domain/types';
 
@@ -33,6 +33,8 @@ export interface CrumblyState {
   updateStarter: (patch: Partial<Starter>) => void;
   feedNow: (at?: Date) => void;
   markPeak: (at?: Date) => void;
+  answerPeak: (feedId: string, answer: number | 'niet-gevoed' | 'niet-gekeken') => void;
+  ensureAutoFeeds: (now?: Date) => number;
   updateFeed: (id: string, patch: Partial<Feed>) => void;
   deleteFeed: (id: string) => void;
   saveRecipe: (r: Recipe) => void;
@@ -132,6 +134,32 @@ export const useCrumbly = create<CrumblyState>()(
             f.updatedAt = nowIso();
             touch(s, 'feed', f.id);
           }),
+
+        answerPeak: (feedId, answer) =>
+          set((s) => {
+            const f = s.feeds.find((x) => x.id === feedId);
+            if (!f) return;
+            if (answer === 'niet-gevoed') f.deletedAt = nowIso();
+            else if (answer === 'niet-gekeken') f.peakSkipped = true;
+            else { f.peakAt = new Date(new Date(f.fedAt).getTime() + answer * 3_600_000).toISOString(); f.peakApprox = true; }
+            f.updatedAt = nowIso();
+            touch(s, 'feed', f.id);
+          }),
+
+        ensureAutoFeeds: (now = new Date()) => {
+          const st = get().starter;
+          if (!st) return 0;
+          const due = dueAutoFeeds(st, get().feeds, get().away, now);
+          if (due.length === 0) return 0;
+          set((s) => {
+            for (const at of due) {
+              const f: Feed = { id: newId(), fedAt: at, ratio: s.starter?.defaultRatio ?? '1:5:5', auto: true, updatedAt: nowIso() };
+              s.feeds.push(f);
+              touch(s, 'feed', f.id);
+            }
+          });
+          return due.length;
+        },
 
         updateFeed: (id, patch) =>
           set((s) => {

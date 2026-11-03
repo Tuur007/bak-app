@@ -24,7 +24,8 @@ export default function Recepten() {
           </Pressable>
         );
       })}
-      <Button v="outline" label="Recept toevoegen" onPress={() => router.push('/recept/nieuw')} />
+      <Button label="Recept uit mijn boek omzetten" onPress={() => router.push('/recept/plakken')} />
+      <Button v="outline" label="Recept zelf invullen" onPress={() => router.push('/recept/nieuw')} />
     </Screen>
   );
 }

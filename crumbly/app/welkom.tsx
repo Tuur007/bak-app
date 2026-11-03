@@ -5,6 +5,7 @@ import { addDays, fmtLongDate, toDayString } from '../src/domain/dates';
 import { GLOSSARY } from '../src/domain/glossary';
 import { parseDay } from '../src/domain/starter';
 import type { HomeWindow } from '../src/domain/types';
+import { HhmmStepper } from '../src/ui/widgets';
 import { useCrumbly } from '../src/store/store';
 import { Button, Card, Chip, Field, Gap, Row, Screen, Txt } from '../src/ui/kit';
 import { space } from '../src/ui/theme';
@@ -26,11 +27,12 @@ export default function Welkom() {
   const updateSettings = useCrumbly((s) => s.updateSettings);
   const [name, setName] = useState(starter?.name ?? '');
   const [pattern, setPattern] = useState<Pattern>('week-avond');
+  const [feedAt, setFeedAt] = useState<string | null>(null);
   if (!starter) return <Screen title="Even geduld"><Txt>...</Txt></Screen>;
   const started = parseDay(starter.startedOn);
 
-  const done = (target: '/recepten' | '/'): void => {
-    updateStarter({ name: name.trim() || starter.name });
+  const done = (target: '/recept/plakken' | '/recepten' | '/'): void => {
+    updateStarter({ name: name.trim() || starter.name, ...(feedAt ? { autoFeedAt: feedAt, autoFeedSince: toDayString(new Date()) } : {}) });
     const w = windowsFor(pattern);
     updateSettings({ onboarded: true, ...(w ? { homeWindows: w } : {}) });
     router.replace(target);
@@ -50,6 +52,17 @@ export default function Welkom() {
       </Card>
 
       <Card>
+        <Txt v="folio">Hoe laat voed je {name.trim() || starter.name}?</Txt>
+        <Txt v="note" style={st.mt}>Voed je elke dag rond hetzelfde uur, dan noteert Crumbly de voedingen zelf. Dan hoef je niets te tikken, enkel af en toe één vraag: hoe snel verdubbelde hij?</Txt>
+        <Gap />
+        <View style={st.chips}>
+          <Chip label="Elke dag rond hetzelfde uur" on={feedAt !== null} onPress={() => setFeedAt(feedAt ?? '18:00')} />
+          <Chip label="Wisselend, ik tik zelf" on={feedAt === null} onPress={() => setFeedAt(null)} />
+        </View>
+        {feedAt !== null ? <Row style={st.row}><Txt v="label">Om</Txt><HhmmStepper value={feedAt} onChange={setFeedAt} /></Row> : null}
+      </Card>
+
+      <Card>
         <Txt v="folio">2. Wanneer ben je thuis?</Txt>
         <Txt v="note" style={st.mt}>Crumbly legt het handwerk (mengen, vouwen, vormen, bakken) op momenten dat je er bent.</Txt>
         <Gap />
@@ -62,9 +75,10 @@ export default function Welkom() {
 
       <Card>
         <Txt v="folio">3. Je eigen recept</Txt>
-        <Txt style={st.mt}>Crumbly bevat een voorbeeld, maar de tijden daarin zijn een vertrekpunt. Vul je eigen recept in, op de gram.</Txt>
+        <Txt style={st.mt}>Crumbly bevat een voorbeeld, maar de tijden daarin zijn een vertrekpunt. Zet het recept uit je boek om: plak de tekst of scan de bladzijde, en Crumbly maakt er een bakschema van.</Txt>
         <Gap />
-        <Button label="Recept invullen" onPress={() => done('/recepten')} />
+        <Button label="Recept uit mijn boek omzetten" onPress={() => done('/recept/plakken')} />
+        <Button v="outline" label="Zelf invullen" onPress={() => done('/recepten')} />
         <Button v="outline" label="Eerst rondkijken" onPress={() => done('/')} />
       </Card>
 
