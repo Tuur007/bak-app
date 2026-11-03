@@ -50,7 +50,8 @@ export interface StoredReminder {
 export function diffReminders(existing: StoredReminder[], wanted: Reminder[]): { remove: string[]; upsert: Reminder[] } {
   const byId = new Map(existing.map((e) => [e.id, e]));
   const wantedIds = new Set(wanted.map((w) => w.id));
-  const remove = existing.filter((e) => !wantedIds.has(e.id)).map((e) => e.id);
+  // Testmeldingen (id begint met 'test:') zijn van de gebruiker en worden nooit door de planning gewist.
+  const remove = existing.filter((e) => !wantedIds.has(e.id) && !e.id.startsWith('test:')).map((e) => e.id);
   const upsert = wanted.filter((w) => {
     const e = byId.get(w.id);
     return !e || new Date(e.due_at).getTime() !== new Date(w.dueAt).getTime() || e.title !== w.title || e.body !== w.body || e.url !== w.url;

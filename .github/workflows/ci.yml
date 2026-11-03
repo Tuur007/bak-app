@@ -1,0 +1,33 @@
+name: Crumbly
+
+# Bij elke PR en elke wijziging op main: typecontrole, tests en een proefbouw van de webversie.
+on:
+  pull_request:
+    paths: ['crumbly/**', '.github/workflows/ci.yml']
+  push:
+    branches: [main]
+    paths: ['crumbly/**', '.github/workflows/ci.yml']
+
+jobs:
+  controle:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: crumbly
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: crumbly/package-lock.json
+      - run: npm ci
+      - name: Typecontrole
+        run: npm run typecheck
+      - name: Tests
+        run: npm test
+      - name: Proefbouw van de webversie
+        run: npx expo export --platform web
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: https://example.invalid
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ci

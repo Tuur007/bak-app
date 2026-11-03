@@ -65,3 +65,21 @@ export function registerServiceWorker(): void {
   if (typeof __DEV__ !== 'undefined' && __DEV__) return;
   navigator.serviceWorker.register('/sw.js').catch(() => undefined);
 }
+
+/**
+ * Plant een testmelding die binnen een minuut moet aankomen (de wekker-functie in de databank
+ * verstuurt ze zoals elke andere wekker). Het id begint met 'test:' zodat de planning ze niet wist.
+ */
+export async function sendTestReminder(): Promise<{ ok: boolean; message: string }> {
+  if (!supabase) return { ok: false, message: 'Sync is niet ingesteld.' };
+  const { data } = await supabase.auth.getSession();
+  if (!data.session) return { ok: false, message: 'Meld je eerst aan.' };
+  const status = await pushStatus();
+  if (status !== 'aan') return { ok: false, message: 'Zet eerst de meldingen aan op dit toestel.' };
+  const { error } = await supabase.from('bak_reminders').upsert(
+    { id: `test:${Date.now()}`, due_at: new Date().toISOString(), title: 'Crumbly', body: 'Testmelding: je wekkers werken.', url: '/', sent_at: null },
+    { onConflict: 'user_id,id' },
+  );
+  if (error) return { ok: false, message: `Mislukt: ${error.message}` };
+  return { ok: true, message: 'Binnen een minuut moet er een melding komen. Komt er niets, sluit de app dan en wacht nog eens twee minuten.' };
+}

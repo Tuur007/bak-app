@@ -25,11 +25,12 @@ export function defaultStarter(nowIso: string = SEED_TIME): Starter {
   };
 }
 
-const s = (name: string, minutes: number, kind: 'hand' | 'wacht', workMinutes?: number): ProcessStep => ({
+const s = (name: string, minutes: number, kind: 'hand' | 'wacht', workMinutes?: number, tempSensitive = false): ProcessStep => ({
   id: newId(),
   name,
   minutes,
   kind,
+  tempSensitive: tempSensitive || undefined,
   workMinutes: kind === 'hand' ? workMinutes ?? 5 : undefined,
   alarm: kind === 'hand',
 });
@@ -44,7 +45,7 @@ export function batardProcess(): ProcessStep[] {
     s('Vouwen 2', 30, 'hand', 5),
     s('Vouwen 3', 30, 'hand', 5),
     s('Vouwen 4', 5, 'hand', 5),
-    s('Bulk laten rijzen', 150, 'wacht'),
+    s('Bulk laten rijzen', 150, 'wacht', undefined, true),
     s('Vormen', 30, 'hand', 15),
     s('In de koelkast (koude rijs)', 720, 'hand', 2),
     s('Oven aan met de pot erin', 45, 'hand', 2),

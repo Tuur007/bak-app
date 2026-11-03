@@ -64,14 +64,15 @@ export function Gap({ h = 1 }: { h?: number }) {
 
 type BtnVariant = 'primary' | 'green' | 'outline' | 'ghost' | 'danger';
 
-export function Button({ label, onPress, v = 'primary', small, disabled, style }: { label: string; onPress: () => void; v?: BtnVariant; small?: boolean; disabled?: boolean; style?: StyleProp<ViewStyle> }) {
+/** `light`: voor een donkere kaart (bordeaux): lichte rand en tekst. */
+export function Button({ label, onPress, v = 'primary', small, disabled, light, style }: { label: string; onPress: () => void; v?: BtnVariant; small?: boolean; disabled?: boolean; light?: boolean; style?: StyleProp<ViewStyle> }) {
   return (
     <Pressable
       accessibilityRole="button"
       onPress={disabled ? undefined : onPress}
       style={({ pressed }) => [s.btn, small && s.btnSmall, s[`btn_${v}`], disabled && s.disabled, pressed && s.pressed, style]}
     >
-      <Text style={[s.btnText, small && s.btnTextSmall, s[`btnText_${v}`]]}>{label}</Text>
+      <Text style={[s.btnText, small && s.btnTextSmall, s[`btnText_${v}`], light && v === 'outline' && s.btnTextLight]}>{label}</Text>
     </Pressable>
   );
 }
@@ -170,6 +171,7 @@ const s = StyleSheet.create({
   btnText_outline: { color: colors.ink },
   btnText_ghost: { color: colors.ter },
   btnText_danger: { color: colors.bor },
+  btnTextLight: { color: colors.bg },
   disabled: { opacity: 0.4 },
   pressed: { opacity: 0.8 },
   chip: { minHeight: 44, paddingHorizontal: space(2), borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center', marginRight: space(1), marginBottom: space(1) },

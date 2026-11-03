@@ -38,3 +38,8 @@ select vault.create_secret('https://crumbly.vercel.app/api/push/send', 'bak_push
 ## 3. Planning
 Staat al aan (`crumbly-wekkers`, elke minuut). Zonder de geheimen uit stap 2 doet ze niets.
 Uitzetten: `select cron.unschedule('crumbly-wekkers');`
+
+## Testen
+Instellingen, **Meldingen aanzetten**, daarna **Stuur mij een testmelding**. Binnen een minuut moet er een melding komen.
+Komt er niets: kijk of Crumbly op het beginscherm staat, of je aangemeld bent, en of de geheimen in de kluis staan
+(`select name from vault.decrypted_secrets where name like 'bak_push%'` moet twee rijen geven).

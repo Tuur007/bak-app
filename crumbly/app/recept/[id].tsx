@@ -27,6 +27,9 @@ function StepEditor({ step, onChange, onMove, onDelete }: { step: ProcessStep; o
         <Bell on={step.alarm} onPress={() => onChange({ alarm: !step.alarm })} />
       </Row>
       <Row style={s.wrap}>
+        <Chip label="Gevoelig voor temperatuur" on={!!step.tempSensitive} onPress={() => onChange({ tempSensitive: !step.tempSensitive })} />
+      </Row>
+      <Row style={s.wrap}>
         <Chip label="Handwerk" on={step.kind === 'hand'} onPress={() => onChange({ kind: 'hand', workMinutes: step.workMinutes ?? 5 })} />
         <Chip label="Wachten" on={step.kind === 'wacht'} onPress={() => onChange({ kind: 'wacht', alarm: false })} />
       </Row>
@@ -123,6 +126,8 @@ export default function ReceptBewerken() {
       </Card>
 
       <Card>
+        <Field label="Tijden gelden bij (graden in de keuken)" value={r.refTempC === undefined ? '' : str(r.refTempC)} onChange={(v) => patch({ refTempC: v.trim() === '' ? undefined : num(v) })} numeric placeholder="leeg = niet aanpassen aan de temperatuur" />
+        <Txt v="note" style={s.mbNote}>Vul dit in als je recept zegt bij hoeveel graden het rijst. Dan past Crumbly de rijstijd aan als je keuken warmer of koeler is. Duid bij de stappen aan welke gevoelig zijn (bv. de bulk). Het is een grove schatting: bij 10 graden koeler duurt het ongeveer dubbel zo lang.</Txt>
         <Pressable onPress={() => setShowSteps(!showSteps)} style={s.stepsHead} accessibilityRole="button">
           <View style={s.flex}>
             <Txt v="folio">Werkwijze en tijden</Txt>
@@ -161,5 +166,6 @@ const s = StyleSheet.create({
   scaleBtn: { marginTop: 18 },
   stepsHead: { flexDirection: 'row', alignItems: 'center', minHeight: 44 },
   link: { color: colors.ter },
+  mbNote: { marginBottom: space(1) },
   step: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space(1), marginTop: space(1) },
 });
