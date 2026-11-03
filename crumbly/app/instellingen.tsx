@@ -1,10 +1,11 @@
 import { useRouter } from 'expo-router';
+import { GLOSSARY } from '../src/domain/glossary';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { dayName, fmtDayTime } from '../src/domain/dates';
 import type { HomeWindow } from '../src/domain/types';
 import { downloadBackup, parseBackup } from '../src/services/backup';
-import { pushStatus, turnPushOff, turnPushOn, type PushStatus } from '../src/services/push';
+import { pushStatus, sendTestReminder, turnPushOff, turnPushOn, type PushStatus } from '../src/services/push';
 import { sendPasswordReset, signIn, signUp, useSessionEmail } from '../src/services/auth';
 import { supabase } from '../src/services/supabase';
 import { getSyncStatus, onSyncStatus, syncNow, type SyncStatus } from '../src/services/sync';
@@ -108,7 +109,12 @@ function Meldingen() {
       <Txt v="note">Een melding kan een paar minuten later komen. De uren staan altijd in het bakplan.</Txt>
       <Gap />
       {status === 'uit' ? <Button v="green" label="Meldingen aanzetten" onPress={async () => { const r = await turnPushOn(); setMsg(r.message); setStatus(await pushStatus()); void syncNow(); }} /> : null}
-      {status === 'aan' ? <Button v="outline" label="Meldingen uitzetten" onPress={async () => { await turnPushOff(); setStatus(await pushStatus()); }} /> : null}
+      {status === 'aan' ? (
+        <>
+          <Button v="green" label="Stuur mij een testmelding" onPress={async () => { setMsg('Even geduld...'); const r = await sendTestReminder(); setMsg(r.message); }} />
+          <Button v="outline" label="Meldingen uitzetten" onPress={async () => { await turnPushOff(); setStatus(await pushStatus()); }} />
+        </>
+      ) : null}
       {msg ? <Txt v="note">{msg}</Txt> : null}
       <Toggle value={feedReminder} onChange={(v) => updateSettings({ feedReminder: v })} label={`Herinnering om ${starterName} te voeden`} note="Op het uur van de volgende voeding." />
     </Card>
@@ -153,6 +159,23 @@ function ThuisMomenten() {
   );
 }
 
+function Temperatuur() {
+  const kitchen = useCrumbly((s) => s.settings.kitchenTempC);
+  const doubling = useCrumbly((s) => s.settings.tempDoubling) ?? 2;
+  const updateSettings = useCrumbly((s) => s.updateSettings);
+  return (
+    <Card>
+      <Txt v="folio">Rijstijd en temperatuur</Txt>
+      <Txt v="note" style={st.mt}>Als een recept zegt bij hoeveel graden het rijst, past Crumbly de rijstijd aan jouw keuken aan. Dat is een grove vuistregel: per 10 graden koeler duurt het ongeveer zoveel keer langer. Pas het getal aan op wat je zelf ziet.</Txt>
+      <Gap />
+      <Row>
+        <Field style={st.flexField} label="Keuken (graden)" value={kitchen === undefined ? '' : String(kitchen)} onChange={(v) => updateSettings({ kitchenTempC: v.trim() === '' ? undefined : Number(v.replace(',', '.')) || undefined })} numeric placeholder="bv. 21" />
+        <Field style={st.flexField} label="Keer langer per 10 graden koeler" value={String(doubling).replace('.', ',')} onChange={(v) => { const n = Number(v.replace(',', '.')); if (Number.isFinite(n) && n > 1 && n < 5) updateSettings({ tempDoubling: n }); }} numeric />
+      </Row>
+    </Card>
+  );
+}
+
 function BackUp() {
   const replaceAll = useCrumbly((s) => s.replaceAll);
   const [text, setText] = useState('');
@@ -181,6 +204,24 @@ function BackUp() {
   );
 }
 
+function Uitleg() {
+  const [open, setOpen] = useState(false);
+  return (
+    <Card>
+      <Txt v="folio">Uitleg</Txt>
+      <Txt v="note" style={st.mt}>Wat betekenen verdubbeld, 1:5:5, hydratatie, bulk en de bel?</Txt>
+      <Gap />
+      <Button small v="outline" label={open ? 'Verberg de uitleg' : 'Toon de uitleg'} onPress={() => setOpen(!open)} />
+      {open ? GLOSSARY.map((g) => (
+        <View key={g.term} style={st.day}>
+          <Txt v="bold">{g.term}</Txt>
+          <Txt>{g.text}</Txt>
+        </View>
+      )) : null}
+    </Card>
+  );
+}
+
 export default function Instellingen() {
   const router = useRouter();
   return (
@@ -188,6 +229,8 @@ export default function Instellingen() {
       <Account />
       <Meldingen />
       <ThuisMomenten />
+      <Temperatuur />
+      <Uitleg />
       <BackUp />
       <Txt v="note" style={st.center}>Crumbly 0.1</Txt>
     </Screen>
@@ -201,4 +244,5 @@ const st = StyleSheet.create({
   windowRow: { flexWrap: 'wrap', marginTop: 4 },
   left: { alignSelf: 'flex-start' },
   center: { textAlign: 'center', marginTop: space(2) },
+  flexField: { flex: 1 },
 });

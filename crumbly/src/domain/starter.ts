@@ -3,7 +3,8 @@
 // een paar uur na het voeden, meerdere keren op rij; een jonge starter heeft vaak minstens
 // 14 dagen nodig. De drempel en het aantal keer zijn instelbaar. Getest in tests/starter.test.ts.
 
-import type { Feed, Starter } from './types';
+import { isAwayAt } from './schedule';
+import type { AwayPeriod, Feed, Starter } from './types';
 
 const HOUR = 3_600_000;
 const DAY = 86_400_000;
@@ -112,3 +113,44 @@ export function formatHours(h: number): string {
   if (hh === 0) return `${mm} min`;
   return mm === 0 ? `${hh} u` : `${hh} u ${String(mm).padStart(2, '0')}`;
 }
+
+// ---------------------------------------------------------------- minder werk
+
+/**
+ * Voedingen die Crumbly zelf moet noteren: elke dag op het vaste uur, vanaf `autoFeedSince`, niet
+ * terwijl je weg bent en niet als er al een voeding (ook een verwijderde) binnen 4 uur van dat uur staat.
+ * Zo komt een voeding die je zelf wegdeed ("niet gevoed") niet terug.
+ */
+export function dueAutoFeeds(starter: Starter, feeds: Feed[], away: AwayPeriod[], now: Date): string[] {
+  if (!starter.autoFeedAt || !starter.autoFeedSince || starter.location === 'koelkast') return [];
+  const [h, m] = starter.autoFeedAt.split(':').map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return [];
+  const earliest = Math.max(parseDay(starter.autoFeedSince).getTime(), dayStart(now) - 14 * DAY);
+  const out: string[] = [];
+  for (let t = earliest; t <= dayStart(now); t += DAY) {
+    const d = new Date(t);
+    const at = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m);
+    if (at.getTime() > now.getTime()) continue;
+    if (isAwayAt(away, at)) continue;
+    if (feeds.some((f) => Math.abs(new Date(f.fedAt).getTime() - at.getTime()) < 4 * HOUR)) continue;
+    out.push(at.toISOString());
+  }
+  return out;
+}
+
+/** Over welke voeding stellen we de ene vraag van de dag: de laatste die 3 tot 30 uur geleden is en nog geen antwoord heeft. */
+export function feedToAsk(feeds: Feed[], now: Date): Feed | null {
+  const list = liveFeeds(feeds).filter((f) => {
+    const age = (now.getTime() - new Date(f.fedAt).getTime()) / HOUR;
+    return !f.peakAt && !f.peakSkipped && age >= 3 && age <= 30;
+  });
+  return list[list.length - 1] ?? null;
+}
+
+/** Antwoorden op "hoe snel verdubbelde hij?": het bovenste uur van het gekozen bereik. */
+export const PEAK_ANSWERS = [
+  { hours: 4, label: 'Binnen 4 u' },
+  { hours: 6, label: 'Binnen 6 u' },
+  { hours: 8, label: 'Binnen 8 u' },
+  { hours: 10, label: 'Trager dan 8 u' },
+] as const;

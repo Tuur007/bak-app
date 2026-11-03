@@ -7,7 +7,9 @@ import type { Feed } from '../../src/domain/types';
 import { useCrumbly } from '../../src/store/store';
 import { Button, Card, Chip, Field, Gap, num, Row, Screen, str, Txt } from '../../src/ui/kit';
 import { colors, space } from '../../src/ui/theme';
-import { PeakChart, TimeStepper, useNow } from '../../src/ui/widgets';
+import { PeakQuestion } from '../../src/ui/PeakQuestion';
+import { HhmmStepper, PeakChart, TimeStepper, useNow } from '../../src/ui/widgets';
+import { Toggle } from '../../src/ui/kit';
 
 function FeedRow({ f, now }: { f: Feed; now: Date }) {
   const [open, setOpen] = useState(false);
@@ -19,7 +21,7 @@ function FeedRow({ f, now }: { f: Feed; now: Date }) {
       <Pressable onPress={() => setOpen(!open)} style={st.feedHead} accessibilityRole="button" accessibilityLabel="voeding aanpassen">
         <View style={st.flex}>
           <Txt v="bold">{fmtDayTime(new Date(f.fedAt), now)}</Txt>
-          <Txt v="note">{f.ratio} · {h ? `verdubbeld na ${formatHours(h)}` : f.peakAt ? 'verdubbeld-tijd klopt niet, pas aan' : 'nog niet verdubbeld aangeduid'}</Txt>
+          <Txt v="note">{f.ratio}{f.auto ? ' · automatisch genoteerd' : ''} · {h ? `verdubbeld ${f.peakApprox ? 'binnen' : 'na'} ${formatHours(h)}` : f.peakAt ? 'verdubbeld-tijd klopt niet, pas aan' : f.peakSkipped ? 'niet bekeken' : 'nog niet verdubbeld aangeduid'}</Txt>
         </View>
         <Txt v="note">{open ? 'sluiten' : 'aanpassen'}</Txt>
       </Pressable>
@@ -67,6 +69,8 @@ export default function Starter() {
         {r.waitingForPeak ? `Tik op "Verdubbeld" zodra ${starter.name} dubbel zo hoog staat. Te laat getikt? Pas het uur aan in de lijst.` : `Na het voeden tik je op "Gevoed". Zo leert de app hoe snel ${starter.name} is.`}
       </Txt>
 
+      <PeakQuestion now={now} />
+
       <Card>
         <Txt v="folio">Uren tot verdubbeling</Txt>
         {series.length >= 3 ? (
@@ -81,6 +85,18 @@ export default function Starter() {
 
       <Card>
         <Txt v="folio">Voeden</Txt>
+        <Toggle
+          value={!!starter.autoFeedAt}
+          onChange={(on) => updateStarter(on ? { autoFeedAt: starter.autoFeedAt ?? '18:00', autoFeedSince: toDayString(new Date()) } : { autoFeedAt: undefined, autoFeedSince: undefined })}
+          label="Voeding zelf laten noteren"
+          note={starter.autoFeedAt ? `Crumbly noteert elke dag om ${starter.autoFeedAt} dat je ${starter.name} voedde, behalve als je weg bent. Voedde je niet, tik dan "Niet gevoed" bij de vraag.` : 'Voed je elke dag rond hetzelfde uur? Dan hoef je niets meer te tikken bij het voeden. Enkel vanaf vandaag.'}
+        />
+        {starter.autoFeedAt ? (
+          <Row style={st.mtSmall}>
+            <Txt v="label">Om</Txt>
+            <HhmmStepper value={starter.autoFeedAt} onChange={(v) => updateStarter({ autoFeedAt: v })} />
+          </Row>
+        ) : null}
         <Row style={st.mt}>
           <Field style={st.flex} label="Starter die je houdt (g)" value={keepG} onChange={setKeepG} numeric />
           <Field style={st.flex} label="Verhouding" value={starter.defaultRatio} onChange={(v) => updateStarter({ defaultRatio: v })} />

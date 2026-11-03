@@ -9,8 +9,9 @@ import { immer } from 'zustand/middleware/immer';
 import { defaultSettings, defaultStarter, exampleRecipe } from '../domain/defaults';
 import { newId } from '../domain/ids';
 import { computeRatios } from '../domain/ratios';
-import { delayOpen, endOf, markDone, planBackward, shiftForReturn, undoDone } from '../domain/schedule';
-import { liveFeeds } from '../domain/starter';
+import { delayOpen, endOf, finishWaitNow, markDone, planBackward, shiftForReturn, undoDone } from '../domain/schedule';
+import { adjustForTemperature } from '../domain/temperature';
+import { dueAutoFeeds, liveFeeds } from '../domain/starter';
 import { mergeRemote, type Kind, type RemoteItem } from './merge';
 import type { AwayPeriod, Bake, BakeResult, Feed, PlannedStep, Recipe, Settings, Starter } from '../domain/types';
 
@@ -32,11 +33,14 @@ export interface CrumblyState {
   updateStarter: (patch: Partial<Starter>) => void;
   feedNow: (at?: Date) => void;
   markPeak: (at?: Date) => void;
+  answerPeak: (feedId: string, answer: number | 'niet-gevoed' | 'niet-gekeken') => void;
+  ensureAutoFeeds: (now?: Date) => number;
   updateFeed: (id: string, patch: Partial<Feed>) => void;
   deleteFeed: (id: string) => void;
   saveRecipe: (r: Recipe) => void;
   deleteRecipe: (id: string) => void;
-  planBake: (recipeId: string, end: Date) => string | null;
+  planBake: (recipeId: string, end: Date, kitchenTempC?: number) => string | null;
+  finishWait: (bakeId: string, stepId: string) => void;
   setStepDone: (bakeId: string, stepId: string, done: boolean) => void;
   setStepAlarm: (bakeId: string, stepId: string, alarm: boolean) => void;
   delayBake: (bakeId: string, minutes: number) => void;
@@ -131,6 +135,32 @@ export const useCrumbly = create<CrumblyState>()(
             touch(s, 'feed', f.id);
           }),
 
+        answerPeak: (feedId, answer) =>
+          set((s) => {
+            const f = s.feeds.find((x) => x.id === feedId);
+            if (!f) return;
+            if (answer === 'niet-gevoed') f.deletedAt = nowIso();
+            else if (answer === 'niet-gekeken') f.peakSkipped = true;
+            else { f.peakAt = new Date(new Date(f.fedAt).getTime() + answer * 3_600_000).toISOString(); f.peakApprox = true; }
+            f.updatedAt = nowIso();
+            touch(s, 'feed', f.id);
+          }),
+
+        ensureAutoFeeds: (now = new Date()) => {
+          const st = get().starter;
+          if (!st) return 0;
+          const due = dueAutoFeeds(st, get().feeds, get().away, now);
+          if (due.length === 0) return 0;
+          set((s) => {
+            for (const at of due) {
+              const f: Feed = { id: newId(), fedAt: at, ratio: s.starter?.defaultRatio ?? '1:5:5', auto: true, updatedAt: nowIso() };
+              s.feeds.push(f);
+              touch(s, 'feed', f.id);
+            }
+          });
+          return due.length;
+        },
+
         updateFeed: (id, patch) =>
           set((s) => {
             const f = s.feeds.find((x) => x.id === id);
@@ -166,15 +196,17 @@ export const useCrumbly = create<CrumblyState>()(
             touch(s, 'recipe', id);
           }),
 
-        planBake: (recipeId, end) => {
+        planBake: (recipeId, end, kitchenTempC) => {
           const r = get().recipes.find((x) => x.id === recipeId && !x.deletedAt);
           if (!r) return null;
           const flourG = r.flours.reduce((a, f) => a + f.grams, 0);
           const ratios = computeRatios({ flourG, waterG: r.waterG, starterG: r.starterG, starterHydration: r.starterHydration, saltG: r.saltG });
-          const steps: PlannedStep[] = planBackward(r.process, end).map((p) => ({ ...p, id: newId() }));
+          const adjusted = adjustForTemperature(r.process, r.refTempC, kitchenTempC, get().settings.tempDoubling);
+          const steps: PlannedStep[] = planBackward(adjusted.process, end).map((p) => ({ ...p, id: newId() }));
           const t = nowIso();
           const b: Bake = {
-            id: newId(), recipeId: r.id, recipeName: r.name, hydration: ratios.hydration, steps,
+            id: newId(), recipeId: r.id, recipeName: r.name, hydration: ratios.hydration,
+            kitchenTempC: r.refTempC !== undefined ? kitchenTempC : undefined, steps,
             endAt: endOf(steps).toISOString(), status: 'gepland', createdAt: t, updatedAt: t,
           };
           set((s) => {
@@ -188,6 +220,8 @@ export const useCrumbly = create<CrumblyState>()(
           withBake(bakeId, (b) => {
             b.steps = done ? markDone(b.steps, stepId, new Date()) : undoDone(b.steps, stepId);
           }),
+
+        finishWait: (bakeId, stepId) => withBake(bakeId, (b) => { b.steps = finishWaitNow(b.steps, stepId, new Date()); }),
 
         setStepAlarm: (bakeId, stepId, alarm) =>
           withBake(bakeId, (b) => {

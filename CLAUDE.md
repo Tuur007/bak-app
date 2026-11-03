@@ -46,7 +46,25 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
   als `https://crumbly.vercel.app` in Supabase, Authentication, URL Configuration, Redirect URLs staat.
 - Foto van het brood: verkleind tot 480 px JPEG (data-URL) in `BakeResult.photo`, synct mee
   in `bak_items` (geen opslagbucket). Ongeveer 2 MB per jaar bij een brood per week.
-- Wekkers naar de server: enkel verschillen (`diffReminders`).
+- Wekkers naar de server: enkel verschillen (`diffReminders`); ids die met `test:` beginnen (de
+  testmelding in Instellingen) worden nooit door de planning gewist. De sync-kern staat in
+  `src/services/syncCore.ts` (getest met een nepdatabank in `tests/sync.test.ts`), `sync.ts` koppelt ze
+  aan de winkel en Supabase. Mislukt synchroniseren verschijnt op het startscherm.
+- Eerlijke wekkers: `src/services/alarmState.ts` zegt of de bel echt kan afgaan (account, meldingen aan,
+  beginscherm). Het bakplan toont anders een uitleg. Instellingen heeft "Stuur mij een testmelding".
+- Stapkaart (`src/ui/StepCard.tsx`, logica in `stepHeadline`): "Nu", "Wachten" (telt af tot het einde van het
+  wachten, met de controle "is het deeg klaar?") en "Volgende stap". "Deeg is klaar" laat de volgende stap nu
+  beginnen en schuift de rest mee (`finishWaitNow`).
+- Keukentemperatuur (`src/domain/temperature.ts`): enkel als een recept `refTempC` heeft, en enkel voor
+  stappen met `tempSensitive`. Grove vuistregel (per 10 graden koeler `tempDoubling` keer langer, standaard 2),
+  geen gemeten tabel; aanpasbaar in Instellingen. Een gebruiker die zelf andere waarden ziet, wint.
+- Minder werk voor de gebruiker (feedback van zus, 3 november): `starter.autoFeedAt` laat Crumbly de dagelijkse
+  voeding zelf noteren (`dueAutoFeeds`, nooit met terugwerkende kracht voor de startdag, niet tijdens weg, een
+  verwijderde voeding komt niet terug), en `PeakQuestion` stelt één vraag per dag ("binnen 4/6/8 u", `feedToAsk`).
+  Antwoorden zijn schattingen (`peakApprox`). Een recept uit het boek omzetten: `src/domain/recipeText.ts`
+  (plakken of "Tekst scannen" op de iPhone), altijd met waarschuwingen om na te kijken.
+- Eerste keer: `app/welkom.tsx` (naam en startdatum van de starter, thuis-momenten, eigen recept, uitleg van
+  de woorden uit `src/domain/glossary.ts`). `settings.onboarded` synct mee, zodat een tweede toestel niet opnieuw begint.
 - Meldingen: `bak_push_subscriptions` + `private.bak_send_due()` (pg_cron elke minuut) ->
   `api/push/send.js` (Vercel, web-push). Zie `crumbly/docs/meldingen-instellen.md`.
 - Tijden altijd als absolute momenten; aftellen rekent vanaf de klok (iOS pauzeert timers).
@@ -59,3 +77,9 @@ Databank: tabellen en wekker-functie staan live (2 november 2026). Kluisgeheimen
 
 ## Testen
 `cd crumbly && npm test && npm run typecheck`. Webbouw: `npx expo export --platform web`.
+CI (`.github/workflows/ci.yml`) draait dit bij elke PR en bij een wijziging op main.
+
+## Bekende grenzen
+- Niet getest op een echte iPhone (meldingen in België, beginscherm, toetsenbord).
+- Het voorbeeldrecept en de tijden zijn een vertrekpunt, geen advies.
+- `npm audit` meldt bekende kwetsbaarheden, vooral in Expo-bouwhulpmiddelen; oplossen vraagt een Expo-upgrade.

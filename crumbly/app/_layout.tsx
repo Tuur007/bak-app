@@ -59,6 +59,16 @@ export default function RootLayout() {
     if (hydrated) seedIfEmpty();
   }, [hydrated, seedIfEmpty]);
   useEffect(() => registerServiceWorker(), []);
+
+  // Vaste voeduur: noteer de voedingen die zijn voorbijgekomen (bij opstarten, bij terugkeer en elke 5 minuten).
+  const ensureAutoFeeds = useCrumbly((s) => s.ensureAutoFeeds);
+  useEffect(() => {
+    if (!hydrated) return;
+    ensureAutoFeeds();
+    const id = setInterval(() => ensureAutoFeeds(), 300_000);
+    const sub = AppState.addEventListener('change', (st) => { if (st === 'active') ensureAutoFeeds(); });
+    return () => { clearInterval(id); sub.remove(); };
+  }, [hydrated, ensureAutoFeeds]);
   useSyncLoop(hydrated);
 
   if (!fontsLoaded || !hydrated) {

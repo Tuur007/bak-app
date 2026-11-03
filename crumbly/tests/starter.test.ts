@@ -65,3 +65,40 @@ test('een verdubbeling binnen een half uur telt niet (vergissing)', () => {
   assert.equal(hoursToPeak(f), null);
   assert.equal(readiness(starter, [f], new Date('2026-11-02T10:00:00')).streak, 0);
 });
+
+import { dueAutoFeeds, feedToAsk } from '../src/domain/starter.ts';
+
+test('automatisch noteren: elke dag op het vaste uur, vanaf de startdag, nooit daarvoor', () => {
+  const auto = { ...starter, autoFeedAt: '18:00', autoFeedSince: '2026-11-01' };
+  const now = new Date('2026-11-03T19:00:00');
+  const due = dueAutoFeeds(auto, [], [], now);
+  assert.deepEqual(due.map((d) => new Date(d).getDate()), [1, 2, 3]);
+  assert.equal(new Date(due[0]).getHours(), 18);
+  assert.deepEqual(dueAutoFeeds(auto, [], [], new Date('2026-11-03T17:00:00')).map((d) => new Date(d).getDate()), [1, 2], 'vandaag pas na 18:00');
+});
+
+test('automatisch noteren: niet dubbel, niet terug na verwijderen, niet tijdens weg, niet in de koelkast', () => {
+  const auto = { ...starter, autoFeedAt: '18:00', autoFeedSince: '2026-11-01' };
+  const now = new Date('2026-11-03T19:00:00');
+  const manual = { id: 'm', fedAt: new Date('2026-11-02T17:30:00').toISOString(), ratio: '1:5:5', updatedAt: '' };
+  assert.deepEqual(dueAutoFeeds(auto, [manual], [], now).map((d) => new Date(d).getDate()), [1, 3], 'een eigen voeding op 2 nov telt');
+  const removed = { ...manual, deletedAt: new Date().toISOString() };
+  assert.deepEqual(dueAutoFeeds(auto, [removed], [], now).map((d) => new Date(d).getDate()), [1, 3], 'verwijderd komt niet terug');
+  const away = [{ id: 'a', from: new Date('2026-11-02T00:00:00').toISOString(), to: new Date('2026-11-04T00:00:00').toISOString(), starterInFridge: true, muteFeedReminders: true, updatedAt: '' }];
+  assert.deepEqual(dueAutoFeeds(auto, [], away, now).map((d) => new Date(d).getDate()), [1]);
+  assert.deepEqual(dueAutoFeeds({ ...auto, location: 'koelkast' }, [], [], now), []);
+  assert.deepEqual(dueAutoFeeds(starter, [], [], now), [], 'uit zolang er geen vast uur is');
+  assert.deepEqual(dueAutoFeeds({ ...auto, autoFeedSince: '2026-09-01' }, [], [], now).length, 15, 'hoogstens twee weken terug');
+});
+
+test('de ene vraag van de dag gaat over de laatste voeding van 3 tot 30 uur geleden zonder antwoord', () => {
+  const now = new Date('2026-11-03T10:00:00');
+  const f = (id: string, h: number, extra: object = {}) => ({ id, fedAt: new Date(now.getTime() - h * 3600000).toISOString(), ratio: '1:5:5', updatedAt: '', ...extra });
+  assert.equal(feedToAsk([f('a', 2)], now), null, 'te vers');
+  assert.equal(feedToAsk([f('a', 5)], now)?.id, 'a');
+  assert.equal(feedToAsk([f('a', 40)], now), null, 'te oud');
+  assert.equal(feedToAsk([f('a', 26), f('b', 2)], now)?.id, 'a', 'de verse is nog te vers, de vorige wacht op antwoord');
+  assert.equal(feedToAsk([f('a', 5, { peakAt: now.toISOString() })], now), null, 'al beantwoord');
+  assert.equal(feedToAsk([f('a', 5, { peakSkipped: true })], now), null, 'niet bekeken');
+  assert.equal(feedToAsk([f('a', 5, { deletedAt: 'x' })], now), null);
+});

@@ -173,3 +173,50 @@ export function bakesHitByAway(bakes: Bake[], period: AwayPeriod): Bake[] {
 export function isAwayAt(periods: AwayPeriod[], at: Date): boolean {
   return activeAway(periods, at) !== null;
 }
+
+/**
+ * "Het deeg is klaar": de wachtstap is nu af en de volgende stap begint nu (ook als dat
+ * eerder of later is dan gepland). Alle stappen daarna schuiven evenveel mee.
+ */
+export function finishWaitNow(steps: PlannedStep[], id: string, now: Date): PlannedStep[] {
+  const i = steps.findIndex((s) => s.id === id);
+  if (i < 0) return steps;
+  const done = steps.map((s, j) => (j === i ? { ...s, doneAt: now.toISOString() } : s));
+  const next = steps[i + 1];
+  if (!next) return done;
+  const delta = Math.round((now.getTime() - new Date(next.startAt).getTime()) / MIN);
+  return delta === 0 ? done : shiftFrom(done, i + 1, delta);
+}
+
+export interface StepHeadline {
+  /** "Nu", "Wachten" of "Volgende stap" */
+  label: 'Nu' | 'Wachten' | 'Volgende stap';
+  title: string;
+  /** Milliseconden tot het moment waarop het ertoe doet; null = nu. */
+  msUntil: number | null;
+  /** Dat moment, om te tonen als het nog ver weg is. */
+  at: Date | null;
+  /** Wat daarna komt. */
+  nextName: string | null;
+  /** De wachtstap is bezig: tijd om naar het deeg te kijken. */
+  waiting: boolean;
+}
+
+/** Wat het startscherm en het plan tonen voor de eerste openstaande stap. */
+export function stepHeadline(steps: PlannedStep[], now: Date): StepHeadline | null {
+  const st = stepState(steps, now);
+  if (!st.step) return null;
+  const nextName = st.next?.name ?? null;
+  if (st.step.kind === 'wacht' && st.due) {
+    // Bezig met wachten: het gaat om het einde van het wachten (begin van de volgende stap).
+    const end = st.next ? new Date(st.next.startAt) : new Date(new Date(st.step.startAt).getTime() + st.step.minutes * MIN);
+    return { label: 'Wachten', title: st.step.name, msUntil: Math.max(0, end.getTime() - now.getTime()), at: end, nextName, waiting: true };
+  }
+  if (st.due) return { label: 'Nu', title: st.step.name, msUntil: null, at: null, nextName, waiting: false };
+  return { label: 'Volgende stap', title: st.step.name, msUntil: st.msUntil, at: new Date(st.step.startAt), nextName, waiting: false };
+}
+
+/** Gaat het om rijzen van deeg (dan is "kijk naar het deeg" de juiste hulp), niet om afkoelen of wachten op de oven. */
+export function isDoughRise(step: { name: string; tempSensitive?: boolean }): boolean {
+  return !!step.tempSensitive || /rijs|rijz|bulk|proef|proof|rust(?!en)/i.test(step.name);
+}

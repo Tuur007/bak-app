@@ -17,6 +17,10 @@ export interface Starter {
   /** Zoveel keer op rij binnen de drempel = klaar om te bakken. */
   streakNeeded: number;
   location: 'kamer' | 'koelkast';
+  /** Vast voeduur ("18:00"): Crumbly noteert de voeding dan zelf. */
+  autoFeedAt?: string;
+  /** Vanaf welke dag (YYYY-MM-DD) automatisch genoteerd wordt; nooit met terugwerkende kracht daarvoor. */
+  autoFeedSince?: string;
   updatedAt: string;
 }
 
@@ -27,6 +31,12 @@ export interface Feed {
   peakAt?: string;
   ratio: string;
   note?: string;
+  /** Door Crumbly genoteerd op het vaste voeduur. */
+  auto?: boolean;
+  /** De verdubbeltijd is een schatting uit een antwoord ("binnen 6 u"). */
+  peakApprox?: boolean;
+  /** De gebruiker zei: niet bekeken. */
+  peakSkipped?: boolean;
   updatedAt: string;
   deletedAt?: string;
 }
@@ -47,6 +57,8 @@ export interface ProcessStep {
   kind: StepKind;
   /** Handwerk in minuten (enkel voor kind 'hand'); de rest van `minutes` is wachten. */
   workMinutes?: number;
+  /** Duurt langer als het koeler is (bv. bulk op de aanrecht). */
+  tempSensitive?: boolean;
   alarm: boolean;
 }
 
@@ -60,6 +72,8 @@ export interface Recipe {
   /** Hydratatie van de starter in procent (100 = evenveel meel als water). */
   starterHydration: number;
   saltG: number;
+  /** De tijden gelden bij zoveel graden in de keuken (leeg = niet aanpassen aan de temperatuur). */
+  refTempC?: number;
   process: ProcessStep[];
   notes?: string;
   isExample?: boolean;
@@ -90,6 +104,8 @@ export interface Bake {
   recipeName: string;
   /** Momentopname van de ratio's op het moment van plannen. */
   hydration: number;
+  /** Keukentemperatuur waarmee de tijden zijn berekend, als het recept daar rekening mee houdt. */
+  kitchenTempC?: number;
   steps: PlannedStep[];
   /** Moment dat het brood klaar is (einde van de laatste stap). */
   endAt: string;
@@ -122,5 +138,11 @@ export interface AwayPeriod {
 export interface Settings {
   homeWindows: HomeWindow[];
   feedReminder: boolean;
+  /** Eerste-keer-hulp is gezien. */
+  onboarded?: boolean;
+  /** Laatst gebruikte keukentemperatuur. */
+  kitchenTempC?: number;
+  /** Hoeveel keer langer het duurt per 10 graden koeler (grove vuistregel, aanpasbaar). */
+  tempDoubling?: number;
   updatedAt: string;
 }

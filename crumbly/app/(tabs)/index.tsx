@@ -1,13 +1,17 @@
 import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { fmtCountdown, fmtDay, fmtDayTime, fmtLongDate, fmtTime } from '../../src/domain/dates';
+import { fmtDay, fmtDayTime, fmtLongDate, fmtTime } from '../../src/domain/dates';
 import { activeAway, stepState, upcomingAway } from '../../src/domain/schedule';
 import { earliestBakeDay, formatHours, liveFeeds, nextFeedDue, readiness } from '../../src/domain/starter';
 import { useSessionEmail } from '../../src/services/auth';
+import { syncNow, useSyncStatus } from '../../src/services/sync';
 import { supabase } from '../../src/services/supabase';
 import { liveRecipes, plannedBakes, useCrumbly } from '../../src/store/store';
 import { Button, Card, Gap, Row, Screen, Txt } from '../../src/ui/kit';
 import { space } from '../../src/ui/theme';
+import { PeakQuestion } from '../../src/ui/PeakQuestion';
+import { StepCard } from '../../src/ui/StepCard';
 import { Arch, Dots, Gear, useNow } from '../../src/ui/widgets';
 
 export default function Vandaag() {
@@ -20,9 +24,19 @@ export default function Vandaag() {
   const bakes = plannedBakes(allBakes);
   const feedNow = useCrumbly((s) => s.feedNow);
   const markPeak = useCrumbly((s) => s.markPeak);
-  const setStepDone = useCrumbly((s) => s.setStepDone);
   const recipes = useCrumbly((s) => s.recipes);
   const sessionEmail = useSessionEmail();
+
+  const sync = useSyncStatus();
+  const onboarded = useCrumbly((s) => s.settings.onboarded);
+  const lastPulledAt = useCrumbly((s) => s.lastPulledAt);
+
+  // Eerste keer: toon de welkom-pagina. Is er een account, wacht dan op de eerste sync, zodat wie
+  // al een bak had op een ander toestel niet opnieuw begint.
+  const needsWelcome = !onboarded && (sessionEmail === null || (typeof sessionEmail === 'string' && lastPulledAt !== null));
+  useEffect(() => {
+    if (needsWelcome) router.replace('/welkom');
+  }, [needsWelcome, router]);
 
   if (!starter) return <Screen title="Crumbly"><Txt>Even geduld...</Txt></Screen>;
 
@@ -47,6 +61,15 @@ export default function Vandaag() {
 
   return (
     <Screen folio={`Dag ${r.ageDays} · ${fmtLongDate(now)}`} title={`Dag ${r.ageDays} met ${starter.name}`} right={<Gear onPress={() => router.push('/instellingen')} />}>
+      {sync.kind === 'fout' ? (
+        <Card tone="blush">
+          <Txt v="folio">Synchroniseren mislukt</Txt>
+          <Txt style={s.mt}>{sync.message} Je gegevens blijven op dit toestel staan en worden later opnieuw verstuurd.</Txt>
+          <Gap />
+          <Row><Button small v="green" label="Probeer opnieuw" onPress={() => void syncNow()} /></Row>
+        </Card>
+      ) : null}
+
       {awayNow ? (
         <Card tone="punch">
           <Txt v="folio" style={s.onPunchMuted}>Je bent weg</Txt>
@@ -59,25 +82,26 @@ export default function Vandaag() {
         <Txt v="note" style={s.center}>{archText}</Txt>
       </Arch>
 
+      <PeakQuestion now={now} />
+
       {bake && st?.step ? (
-        <Card>
-          <Txt v="folio">{st.due ? 'Nu' : 'Volgende stap'} · {bake.recipeName}</Txt>
-          <Txt v="h2" style={s.mt}>{st.step.name}</Txt>
-          <Txt v="title" style={s.count}>{st.due ? 'nu' : st.msUntil < 6 * 3600_000 ? fmtCountdown(st.msUntil) : fmtDayTime(new Date(st.step.startAt), now)}</Txt>
-          {st.due ? <Button label="Gedaan" onPress={() => setStepDone(bake.id, st.step!.id, true)} /> : null}
-          <Button v="outline" label="Naar het bakplan" onPress={() => router.push('/plan')} />
-          <Txt v="note">Brood klaar: {fmtDayTime(new Date(bake.endAt), now)}</Txt>
-        </Card>
+        <StepCard bake={bake} now={now} showName showPlanLink />
       ) : (
         <Card>
           <Txt v="folio">Volgende voeding</Txt>
           <Txt v="h2" style={s.mt}>{nextFeed ? `${fmtDay(nextFeed, now)} ${fmtTime(nextFeed)}` : `Voed ${starter.name} wanneer het je past`}</Txt>
-          <Gap />
-          {r.waitingForPeak ? (
-            <Button v="green" label={`${starter.name} is verdubbeld`} onPress={() => markPeak()} />
-          ) : null}
-          <Button label={`${starter.name} is gevoed`} onPress={() => feedNow()} />
-          <Txt v="note">Eén tik. Zelfde verhouding als altijd ({starter.defaultRatio}).{hasFeeds ? '' : ' Pas ze aan bij je starter.'}</Txt>
+          {starter.autoFeedAt ? (
+            <Txt v="note" style={s.mt}>Crumbly noteert de voeding zelf. Jij hoeft alleen af en toe de vraag hierboven te beantwoorden. Anders gevoed? Pas het aan bij {starter.name}.</Txt>
+          ) : (
+            <>
+              <Gap />
+              {r.waitingForPeak ? (
+                <Button v="green" label={`${starter.name} is verdubbeld`} onPress={() => markPeak()} />
+              ) : null}
+              <Button label={`${starter.name} is gevoed`} onPress={() => feedNow()} />
+              <Txt v="note">Eén tik. Zelfde verhouding als altijd ({starter.defaultRatio}).{hasFeeds ? '' : ' Pas ze aan bij je starter.'}</Txt>
+            </>
+          )}
         </Card>
       )}
 
