@@ -1,5 +1,5 @@
-// Bakkerspercentages. Alles op het TOTALE meel: het meel in het recept plus het meel
-// in de starter. Hydratatie telt het water uit de starter mee. Deterministisch, getest
+// Bakkerspercentages. Standaard zoals in haar boek: op het meel in het recept (zonder starter).
+// Daarnaast `...Total`: op het totale meel, met het meel en water uit de starter meegerekend. Deterministisch, getest
 // in tests/ratios.test.ts.
 
 export interface Formula {
@@ -14,10 +14,14 @@ export interface Formula {
 export interface Ratios {
   totalFlour: number;
   totalWater: number;
-  /** In procent. */
+  /** Zoals in de meeste broodboeken (ook Kometen Brood): in procent van het meel in het recept, zonder het meel en water van de starter. */
   hydration: number;
   starterPct: number;
   saltPct: number;
+  /** Met het meel en water uit de starter meegerekend ("echte" hydratatie). */
+  hydrationTotal: number;
+  starterPctTotal: number;
+  saltPctTotal: number;
   doughWeight: number;
 }
 
@@ -35,12 +39,17 @@ export function computeRatios(f: Formula): Ratios {
   const totalFlour = safe(f.flourG) + sp.flour;
   const totalWater = safe(f.waterG) + sp.water;
   const pct = (x: number): number => (totalFlour > 0 ? (x / totalFlour) * 100 : 0);
+  const recipeFlour = safe(f.flourG);
+  const book = (x: number): number => (recipeFlour > 0 ? (x / recipeFlour) * 100 : 0);
   return {
     totalFlour,
     totalWater,
-    hydration: pct(totalWater),
-    starterPct: pct(safe(f.starterG)),
-    saltPct: pct(safe(f.saltG)),
+    hydration: book(safe(f.waterG)),
+    starterPct: book(safe(f.starterG)),
+    saltPct: book(safe(f.saltG)),
+    hydrationTotal: pct(totalWater),
+    starterPctTotal: pct(safe(f.starterG)),
+    saltPctTotal: pct(safe(f.saltG)),
     doughWeight: safe(f.flourG) + safe(f.waterG) + safe(f.starterG) + safe(f.saltG),
   };
 }

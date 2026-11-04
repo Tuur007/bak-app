@@ -52,7 +52,7 @@ export default function ReceptPlakken() {
             <Txt v="h2" style={st.mt}>{parsed.name || 'Recept zonder naam'}</Txt>
             <Txt style={st.mt}>Meel {parsed.flours.map((f) => `${f.name.toLowerCase()} ${f.grams} g`).join(', ') || 'niet gevonden'}</Txt>
             <Txt>Water {parsed.waterG || '?'} g · starter {parsed.starterG || '?'} g · zout {parsed.saltG || '?'} g</Txt>
-            {q.totalFlour > 0 && parsed.waterG > 0 ? <Txt v="note" style={st.mt}>Hydratatie {formatPct(q.hydration)} · starter {formatPct(q.starterPct)} · zout {formatPct(q.saltPct)}</Txt> : null}
+            {q.totalFlour > 0 && parsed.waterG > 0 ? <Txt v="note" style={st.mt}>Hydratatie {formatPct(q.hydration)} · starter {formatPct(q.starterPct)} · zout {formatPct(q.saltPct)} (zoals in je boek)</Txt> : null}
             {parsed.ignored.length > 0 ? <Txt v="note">Niet herkend: {parsed.ignored.join('; ')}</Txt> : null}
           </Card>
 

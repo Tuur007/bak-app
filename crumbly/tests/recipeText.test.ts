@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { durationMinutes, parseRecipeText } from '../src/domain/recipeText.ts';
+import { recipeRatios } from '../src/domain/ratios.ts';
 
 const SAMPLE1 = `Klassieke bâtard
 
@@ -46,7 +49,7 @@ test('stappen: tijden, wachten of handwerk, en splitsen bij twee tijden in één
   assert.equal(fridge.tempSensitive, undefined, 'koelkast is niet temperatuurgevoelig');
   assert.deepEqual(r.process.filter((s) => /^Bak/.test(s.name)).map((s) => [s.name, s.minutes]), [['Bak 20 minuten met deksel', 20], ['Bak 25 minuten zonder', 25]]);
   assert.equal(by(/Verwarm/).minutes, 5, 'zonder tijd: 5 minuten geschat');
-  assert.ok(r.warnings.some((w) => /geen tijd/.test(w)));
+  assert.ok(r.warnings.some((w) => /zonder tijd/.test(w)));
   assert.ok(r.warnings.some((w) => /midden/.test(w)));
   assert.ok(r.warnings.some((w) => /Controleer de tijden/.test(w)), 'altijd nakijken');
 });
@@ -101,4 +104,47 @@ test('tijden herkennen', () => {
   assert.equal(durationMinutes('twee uur')?.minutes, 120);
   assert.equal(durationMinutes('250 graden'), null);
   assert.equal(durationMinutes('8 - 10 uur')?.minutes, 540);
+});
+
+// Een recept zoals in Kometen Brood: ingrediënten als tabel (gram en %), genummerde stappen met kopjes
+// en "herhaal ... twee keer". De tekst in de fixture is zelf geschreven met dezelfde opbouw.
+const TABEL = readFileSync(join(process.cwd(), 'tests/fixtures/tabelrecept.txt'), 'utf8');
+
+test('tabel met ingrediënten: gram, "500 + 60", en de somrij telt niet dubbel', () => {
+  const r = parseRecipeText(TABEL);
+  assert.equal(r.name, 'Basisbrood');
+  assert.deepEqual(r.flours.map((f) => [f.name, f.grams]), [['Tarwebloem', 680], ['Roggemeel', 90]]);
+  assert.equal(r.waterG, 560);
+  assert.equal(r.starterG, 150);
+  assert.equal(r.saltG, 15);
+  const q = recipeRatios(r);
+  assert.deepEqual([Math.round(q.hydration), Math.round(q.saltPct)], [73, 2], 'zoals de percentages in het boek');
+  assert.equal(r.ignored.length, 0);
+  assert.ok(r.warnings.some((w) => /voor 2 broden/.test(w)));
+});
+
+test('genummerde stappen: kopjes en uitleg worden geen stap, "herhaal twee keer" geeft drie vouwrondes', () => {
+  const r = parseRecipeText(TABEL);
+  const names = r.process.map((s) => s.name);
+  assert.ok(!names.some((n) => /^Kneden|^Rijzen|^Bakken/.test(n)), 'kopjes zijn geen stap');
+  assert.ok(!names.some((n) => /^Na de derde|^Bak zo ook|gaar is/.test(n)), 'uitleg is geen stap');
+  const rests = r.process.filter((s) => s.kind === 'wacht' && s.minutes === 45 && /rusten/i.test(s.name));
+  assert.equal(rests.length, 3, 'drie keer 45 minuten rusten');
+  assert.equal(r.process.filter((s) => /stretch/i.test(s.name)).length, 3);
+  assert.ok(r.process.length >= 18 && r.process.length <= 26, `een leesbaar aantal stappen, kreeg ${r.process.length}`);
+});
+
+test('tabelrecept: tijden en de nacht kloppen', () => {
+  const r = parseRecipeText(TABEL);
+  const wait = (m: number) => r.process.filter((s) => s.kind === 'wacht' && s.minutes === m).length;
+  assert.equal(wait(15), 2, 'eerste rust en afkoelen');
+  assert.equal(wait(30), 2);
+  assert.equal(wait(720), 1, 'tot de volgende ochtend in de koelkast');
+  assert.ok(r.process.some((s) => s.kind === 'hand' && s.minutes === 15 && /^Bak/.test(s.name)), '15 minuten bakken met deksel');
+  assert.ok(r.process.some((s) => s.kind === 'hand' && s.minutes === 18), '15 à 20 minuten zonder deksel: het midden');
+  assert.ok(r.process.every((s) => s.detail && s.detail.length > 0), 'elke stap bewaart de uitleg uit het recept');
+  const night = r.process.find((s) => s.minutes === 720)!;
+  assert.equal(night.tempSensitive, undefined, 'koelkast is niet temperatuurgevoelig');
+  assert.ok(r.warnings.some((w) => /totdat het deeg klaar is/.test(w)), 'geen tijd bij "totdat het aan is": geschat en gemeld');
+  assert.ok(r.warnings.some((w) => /voorverwarmen/.test(w)));
 });

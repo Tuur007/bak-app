@@ -59,6 +59,8 @@ export interface ProcessStep {
   workMinutes?: number;
   /** Duurt langer als het koeler is (bv. bulk op de aanrecht). */
   tempSensitive?: boolean;
+  /** De uitleg uit het recept zelf (uit het boek), om bij de stap te tonen. */
+  detail?: string;
   alarm: boolean;
 }
 

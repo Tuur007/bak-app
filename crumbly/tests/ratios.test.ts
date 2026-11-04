@@ -4,13 +4,25 @@ import { computeRatios, factorForDoughWeight, feedAmounts, formatPct, parseFeedR
 
 const close = (a: number, b: number, eps = 0.05) => assert.ok(Math.abs(a - b) < eps, `${a} ~ ${b}`);
 
-test('hydratatie telt het water uit de starter mee, alles op totaal meel', () => {
+test('zoals in het boek: percentages op het meel in het recept (Kometen Brood: 73 / 20 / 2)', () => {
+  const r = computeRatios({ flourG: 770, waterG: 560, starterG: 150, starterHydration: 100, saltG: 15 });
+  close(r.hydration, 72.73);
+  close(r.starterPct, 19.48);
+  close(r.saltPct, 1.95);
+  assert.equal(Math.round(r.hydration), 73);
+  assert.equal(Math.round(r.starterPct), 19); // het boek rondt 19,5 op naar 20
+});
+
+test('met de starter meegerekend (de echte hydratatie)', () => {
   const r = computeRatios({ flourG: 500, waterG: 350, starterG: 100, starterHydration: 100, saltG: 10 });
   close(r.totalFlour, 550);
   close(r.totalWater, 400);
-  close(r.hydration, 72.73);
-  close(r.starterPct, 18.18);
-  close(r.saltPct, 1.82);
+  close(r.hydrationTotal, 72.73);
+  close(r.starterPctTotal, 18.18);
+  close(r.saltPctTotal, 1.82);
+  close(r.hydration, 70);
+  close(r.starterPct, 20);
+  close(r.saltPct, 2);
   assert.equal(r.doughWeight, 960);
 });
 

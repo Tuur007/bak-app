@@ -117,7 +117,7 @@ export default function ReceptBewerken() {
           <View style={s.resBox}><Txt style={s.resNum}>{formatPct(q.starterPct)}</Txt><Txt v="label">Starter</Txt></View>
           <View style={s.resBox}><Txt style={s.resNum}>{formatPct(q.saltPct)}</Txt><Txt v="label">Zout</Txt></View>
         </View>
-        <Txt v="note">Totaal {Math.round(q.doughWeight)} g deeg, {Math.round(q.totalFlour)} g meel. Alles op het totale meel, het meel en water uit de starter tellen mee.</Txt>
+        <Txt v="note">Totaal {Math.round(q.doughWeight)} g deeg. Percentages op het meel in het recept, zoals in je boek. Met het meel en water uit de starter meegerekend is de hydratatie {formatPct(q.hydrationTotal)}.</Txt>
         <Gap />
         <Row>
           <Field style={s.flex} label="Schalen naar deeggewicht (g)" value={target} onChange={setTarget} numeric placeholder={String(Math.round(q.doughWeight * 2))} />
