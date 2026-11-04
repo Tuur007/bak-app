@@ -37,7 +37,7 @@ PAGE = """<!doctype html>
 </body></html>"""
 
 def nav(cur):
-    items = [("index.html", "Overzicht")] + [("r%d.html" % i, "Richting %d" % i) for i in range(1, 9)] + [("../rapport/index.html", "Rapport")]
+    items = [("index.html", "Overzicht")] + [("r%d.html" % i, "Richting %d" % i) for i in range(1, 10)] + [("../rapport/index.html", "Rapport")]
     return "".join('<a href="%s"%s>%s</a>' % (h, ' class="on"' if h == "r%d.html" % cur else "", t) for h, t in items)
 
 def tabs(labels):
@@ -704,6 +704,52 @@ D[8] = scandi(8, "Scandi donkergroen", "Dezelfde vormen in donkergroen: diepe ac
   ["Zacht voor de ogen bij vroeg of laat bakken, en nog steeds warm en Scandinavisch","Het groen is een eigen kleur, geen 'donkere modus' van een lichte look"],
   ["Foto's van brood zijn in een donker scherm moeilijker te beoordelen","Overdag in een zonnige keuken minder goed leesbaar"],
   "Voor wie 's avonds of 's ochtends vroeg met het deeg bezig is. Zelfde schermen als richting 7, alleen met andere kleuren: je zus mag kiezen welke sfeer ze het fijnst vindt.")
+
+# ---------------------------------------------------------------- 9: AGENDA-PROEF (veel eenvoudiger)
+_d9 = scandi(9, "Agenda-proef", "Veel eenvoudiger: je geeft je recept en een dag, Crumbly zet het bakplan in de agenda van je iPhone. Geen vragen, geen dagelijks bijhouden.",
+  dict(bg="#F6F0E6",card="#FCF9F4",ink="#2A2522",mut="#6A5F57",ter="#B04E33",grn="#2F4A3E",bor="#6B2737",warn="#6B2737",blush="#EBD2C4",line="#E3D8C8",btxt="#FFFFFF"),
+  [("Kalkwit","#F6F0E6"),("Terracotta","#B04E33"),("Donkergroen","#2F4A3E"),("Bordeaux","#6B2737"),("Blush","#EBD2C4")],
+  [("Zelfde palet en contrast als richting 7","")],
+  ["Ze hoeft niets bij te houden: het voordeel komt meteen, niet pas na weken","Alarmen komen van haar eigen iPhone-agenda, en werken ook als Crumbly dicht is"],
+  ["Of de agenda-export vanuit een app op het beginscherm goed werkt op haar iPhone is nog niet getest","Geen overzicht van Jean of grafieken: dat is bewust weggelaten"],
+  "Dit is een voorstel om mee te praten, geen gebouwde app. Het doel: dat je zus er iets aan heeft zonder iets te moeten doen.")
+_d9["screens"] = """
+<div class="scr on"><div class="body">
+<p class="folio">Dinsdag 4 november</p><h2 class="t">Zaterdag brood?</h2><p class="sub">Je bâtard, vers voor de middag.</p>
+<div class="card b"><p class="lbl">Zaterdag om 12:00 klaar</p><p style="font:400 26px 'Young Serif';margin:4px 0">Begin vrijdag om 17:30</p>
+<p class="sub" style="margin:0 0 12px">Alleen handwerk in je avond: zes keer 5 tot 15 minuten. Daartussen mag je gewoon leven.</p>
+<button class="btn" data-s="1">Zet in mijn agenda</button><button class="btn o">Andere dag of uur</button></div>
+<div class="card"><p class="lbl">Jean</p><p style="font:400 22px 'Young Serif';margin:4px 0">Vanavond om 18:00 voeden</p>
+<p class="sub" style="margin:0 0 12px">Houd 20 g starter, voeg 100 g meel en 100 g water toe.</p>
+<button class="btn o">Elke dag als herinnering in mijn agenda</button></div>
+<p class="note2" style="text-align:center">Geen vragen. Geen dagelijks bijhouden.</p>
+</div>%%TABS%%</div>
+
+<div class="scr"><div class="body">
+<p class="folio">Je agenda</p><h2 class="t">Dit komt erin</h2><p class="sub">Je iPhone verwittigt je, ook als Crumbly dicht is.</p>
+<div class="card" style="padding:4px 16px">
+<div class="st"><span class="tm">vr 17:30</span><span><span class="nm">Mengen</span><small>Meng bloem en water en laat 30 minuten rusten.</small></span></div>
+<div class="st"><span class="tm">vr 18:00</span><span><span class="nm">Starter en zout erbij</span><small>Voeg de starter en het zout toe en kneed 5 minuten.</small></span></div>
+<div class="st"><span class="tm">vr 18:30</span><span><span class="nm">Vouwen (4 keer)</span><small>Om de 30 minuten, tot 20:30.</small></span></div>
+<div class="st"><span class="tm">vr 22:30</span><span><span class="nm">Vormen, in de koelkast</span><small>Vorm een bâtard en laat 12 uur rijzen in de koelkast.</small></span></div>
+<div class="st"><span class="tm">za 10:45</span><span><span class="nm">Oven aan</span><small>250 graden met de pan erin.</small></span></div>
+<div class="st" style="border:0"><span class="tm">za 11:30</span><span><span class="nm">Bakken</span><small>20 minuten met deksel, 25 minuten zonder.</small></span></div>
+</div>
+<p class="note2" style="margin-bottom:12px">De uitleg bij elke afspraak komt uit je eigen boek. Je kan elke afspraak daarna in je agenda verschuiven.</p>
+<button class="btn">Zet alles in mijn agenda</button>
+</div>%%TABS%%</div>
+
+<div class="scr"><div class="body">
+<p class="folio">Zaterdag 12:30</p><h2 class="t">Hoe was hij?</h2><p class="sub">Drie tikken, als je er zin in hebt.</p>
+<div class="card"><button class="btn o">Foto van de kruim</button>
+<p class="lbl" style="margin-top:8px">Kruim</p><div><span class="chip">Dicht</span><span class="chip on">Gelijkmatig</span><span class="chip">Open</span></div>
+<p class="lbl">Volgende keer</p><div class="field" style="margin:4px 0 12px"><input value="Bulk 30 min langer"></div><button class="btn">Bewaar</button></div>
+<p class="note2" style="text-align:center">Dit briefje zie je terug als je weer een brood plant.</p>
+</div>%%TABS%%</div>
+"""
+_d9["tabs_labels"] = ["Bakken", "Agenda", "Na het bakken"]
+_d9["tab_labels"] = ["Bakken", "Agenda", "Broden"]
+D[9] = _d9
 
 def swatches(sw):
     out = []

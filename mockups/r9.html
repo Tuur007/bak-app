@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="nl-BE"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agenda-proef - richting 9</title>
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>.screenbox{--bg:#F6F0E6;--card:#FCF9F4;--ink:#2A2522;--mut:#6A5F57;--ter:#B04E33;--grn:#2F4A3E;--bor:#6B2737;--warn:#6B2737;--blush:#EBD2C4;--line:#E3D8C8;--btxt:#FFFFFF}
+.screenbox{background:var(--bg);color:var(--ink);font-family:Figtree,system-ui,sans-serif}
+.statusbar{color:var(--ink)}.homebar{background:var(--ink)}
+h2.t{font:400 30px/1.1 'Young Serif',serif;margin:0 0 4px;color:var(--grn)}
+.folio{font:700 11px Figtree;text-transform:uppercase;letter-spacing:.12em;color:var(--mut);margin-bottom:4px}
+.sub{font-size:14px;color:var(--mut);margin-bottom:16px}
+.card{background:var(--card);border-radius:20px;padding:16px;margin-bottom:12px;border:1px solid var(--line)}
+.card.b{background:var(--blush);border-color:var(--blush)}
+.card.p{background:var(--bor);border-color:var(--bor);color:#F6F0E6}
+.card.p .folio,.card.p .sub{color:#EBD2C4}
+.arch{background:var(--blush);border-radius:999px 999px 20px 20px;padding:40px 24px 20px;text-align:center;margin-bottom:12px;position:relative;overflow:hidden}
+.arch h3{font:400 30px 'Young Serif',serif;color:var(--grn)}
+.arch .bub{position:absolute;border-radius:50%;background:var(--card);opacity:.7}
+.btn{display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:999px;background:var(--ter);color:var(--btxt);font:700 16px Figtree;border:0;width:100%;cursor:pointer;margin-bottom:8px}
+.btn.g{background:var(--grn);color:var(--bg)}.btn.o{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+.chip{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid var(--line);background:var(--card);font:600 14px Figtree;margin:0 8px 8px 0;cursor:pointer}
+.chip.on{background:var(--grn);color:var(--bg);border-color:var(--grn)}
+.tabbar{background:var(--card);border-top:1px solid var(--line);padding:8px 4px 24px}.tabbar button{color:var(--mut);font:700 12px Figtree}.tabbar button.on{color:var(--ter)}.tabbar button.on::before{content:"";display:block;width:24px;height:4px;border-radius:2px;background:var(--bor);margin:0 auto 4px}
+.dots{display:flex;gap:8px;margin:8px 0}.dots i{flex:1;height:8px;border-radius:4px;background:var(--line)}.dots i.f{background:var(--grn)}
+.lbl{font:700 11px Figtree;text-transform:uppercase;letter-spacing:.1em;color:var(--mut)}
+.field{margin-bottom:8px}.field label{display:block;font:700 12px Figtree;color:var(--mut);margin-bottom:4px}
+.field input{width:100%;height:48px;border:1.5px solid var(--line);border-radius:14px;background:var(--card);padding:0 16px;font:700 18px Figtree;color:var(--ink)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.res{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 12px}.res div{background:var(--blush);border-radius:16px;padding:12px 4px;text-align:center;color:var(--ink)}.res b{display:block;font:400 24px 'Young Serif';color:var(--grn)}.res span{font-size:12px;font-weight:700}
+.st{display:grid;grid-template-columns:56px 1fr auto;gap:8px;align-items:center;min-height:56px;border-bottom:1px solid var(--line);padding:4px 0}
+.st .tm{font:700 15px Figtree;color:var(--ter)}.st small{display:block;font-size:12px;color:var(--mut)}
+.st .nm{font-weight:700}.st.wait .nm{font-weight:500;color:var(--mut)}
+.bell{width:44px;height:44px;border-radius:22px;border:1.5px solid var(--line);background:var(--card);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--mut)}
+.bell.on{background:var(--bor);border-color:var(--bor);color:#F6F0E6}
+.day{display:flex;height:24px;border-radius:12px;overflow:hidden;margin:8px 0;background:var(--line)}.day i{display:block;height:100%}
+.hours{display:flex;justify-content:space-between;font-size:11px;color:var(--mut)}
+.seg{display:flex;background:var(--line);border-radius:999px;padding:4px;margin-bottom:12px}.seg button{flex:1;min-height:44px;border:0;border-radius:999px;background:transparent;font:700 14px Figtree;color:var(--ink);cursor:pointer}.seg button.on{background:var(--card)}
+.swt{display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:56px;border-bottom:1px solid var(--line);padding:8px 0}.swt p{font-size:14px;color:var(--mut)}
+.tg{width:52px;height:32px;border-radius:16px;background:var(--line);position:relative;flex:none;cursor:pointer;border:0}.tg::after{content:"";position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:12px;background:var(--card);transition:left .15s}.tg.on{background:var(--grn)}.tg.on::after{left:24px}
+.crust{display:flex;gap:8px;margin:8px 0}.crust i{flex:1;height:44px;border-radius:12px;border:2px solid transparent}.crust i.sel{border-color:var(--ink)}
+.tagx{display:inline-block;background:var(--blush);color:var(--ink);border-radius:999px;padding:2px 12px;font:700 11px Figtree;letter-spacing:.06em}
+.note2{font-size:12px;color:var(--mut);margin-top:4px}
+</style></head>
+<body><div class="page">
+<div class="top"><a href="index.html">Overzicht</a><a href="r1.html">Richting 1</a><a href="r2.html">Richting 2</a><a href="r3.html">Richting 3</a><a href="r4.html">Richting 4</a><a href="r5.html">Richting 5</a><a href="r6.html">Richting 6</a><a href="r7.html">Richting 7</a><a href="r8.html">Richting 8</a><a href="r9.html" class="on">Richting 9</a><a href="../rapport/index.html">Rapport</a></div>
+<div class="layout">
+<div class="info">
+<h1>Richting 9: Agenda-proef</h1>
+<p class="sfeer">Veel eenvoudiger: je geeft je recept en een dag, Crumbly zet het bakplan in de agenda van je iPhone. Geen vragen, geen dagelijks bijhouden.</p>
+<div class="jump"><button>Bakken</button><button>Agenda</button><button>Na het bakken</button></div>
+<h2>Kleurpalet en contrast</h2>
+<div class="sw"><div><i style="background:#F6F0E6"></i><span><b>Kalkwit</b><br>#F6F0E6</span></div><div><i style="background:#B04E33"></i><span><b>Terracotta</b><br>#B04E33</span></div><div><i style="background:#2F4A3E"></i><span><b>Donkergroen</b><br>#2F4A3E</span></div><div><i style="background:#6B2737"></i><span><b>Bordeaux</b><br>#6B2737</span></div><div><i style="background:#EBD2C4"></i><span><b>Blush</b><br>#EBD2C4</span></div></div>
+<h2>Contrast (WCAG)</h2>
+<table class="c"><tr><td>Zelfde palet en contrast als richting 7</td><td></td></tr></table>
+<h2>Lettertypes</h2><p>Young Serif voor titels (zacht, een beetje speels), Figtree voor de rest. Veel witruimte, ronde vormen, een boog als vaste vorm.</p>
+<h2>Waarom dit bij brood past</h2><p>Dit is een voorstel om mee te praten, geen gebouwde app. Het doel: dat je zus er iets aan heeft zonder iets te moeten doen.</p>
+<h2>Sterk</h2><ul class="plus"><li>Ze hoeft niets bij te houden: het voordeel komt meteen, niet pas na weken</li><li>Alarmen komen van haar eigen iPhone-agenda, en werken ook als Crumbly dicht is</li></ul>
+<h2>Zwak</h2><ul class="min"><li>Of de agenda-export vanuit een app op het beginscherm goed werkt op haar iPhone is nog niet getest</li><li>Geen overzicht van Jean of grafieken: dat is bewust weggelaten</li></ul>
+<p class="note">Alle cijfers in de mockup zijn voorbeelden. Tik op de knoppen, de tabbalk, de stappen en de timer; de velden in &quot;Nieuwe bak&quot; rekenen live mee.</p>
+</div>
+<div class="phonewrap"><div class="phone"><div class="screenbox">
+<div class="notch"></div><div class="statusbar"><span>9:41</span><span>5G 87%</span></div>
+
+<div class="scr on"><div class="body">
+<p class="folio">Dinsdag 4 november</p><h2 class="t">Zaterdag brood?</h2><p class="sub">Je bâtard, vers voor de middag.</p>
+<div class="card b"><p class="lbl">Zaterdag om 12:00 klaar</p><p style="font:400 26px 'Young Serif';margin:4px 0">Begin vrijdag om 17:30</p>
+<p class="sub" style="margin:0 0 12px">Alleen handwerk in je avond: zes keer 5 tot 15 minuten. Daartussen mag je gewoon leven.</p>
+<button class="btn" data-s="1">Zet in mijn agenda</button><button class="btn o">Andere dag of uur</button></div>
+<div class="card"><p class="lbl">Jean</p><p style="font:400 22px 'Young Serif';margin:4px 0">Vanavond om 18:00 voeden</p>
+<p class="sub" style="margin:0 0 12px">Houd 20 g starter, voeg 100 g meel en 100 g water toe.</p>
+<button class="btn o">Elke dag als herinnering in mijn agenda</button></div>
+<p class="note2" style="text-align:center">Geen vragen. Geen dagelijks bijhouden.</p>
+</div><div class="tabbar"><button data-s="0">Bakken</button><button data-s="1">Agenda</button><button data-s="2">Broden</button></div></div>
+
+<div class="scr"><div class="body">
+<p class="folio">Je agenda</p><h2 class="t">Dit komt erin</h2><p class="sub">Je iPhone verwittigt je, ook als Crumbly dicht is.</p>
+<div class="card" style="padding:4px 16px">
+<div class="st"><span class="tm">vr 17:30</span><span><span class="nm">Mengen</span><small>Meng bloem en water en laat 30 minuten rusten.</small></span></div>
+<div class="st"><span class="tm">vr 18:00</span><span><span class="nm">Starter en zout erbij</span><small>Voeg de starter en het zout toe en kneed 5 minuten.</small></span></div>
+<div class="st"><span class="tm">vr 18:30</span><span><span class="nm">Vouwen (4 keer)</span><small>Om de 30 minuten, tot 20:30.</small></span></div>
+<div class="st"><span class="tm">vr 22:30</span><span><span class="nm">Vormen, in de koelkast</span><small>Vorm een bâtard en laat 12 uur rijzen in de koelkast.</small></span></div>
+<div class="st"><span class="tm">za 10:45</span><span><span class="nm">Oven aan</span><small>250 graden met de pan erin.</small></span></div>
+<div class="st" style="border:0"><span class="tm">za 11:30</span><span><span class="nm">Bakken</span><small>20 minuten met deksel, 25 minuten zonder.</small></span></div>
+</div>
+<p class="note2" style="margin-bottom:12px">De uitleg bij elke afspraak komt uit je eigen boek. Je kan elke afspraak daarna in je agenda verschuiven.</p>
+<button class="btn">Zet alles in mijn agenda</button>
+</div><div class="tabbar"><button data-s="0">Bakken</button><button data-s="1">Agenda</button><button data-s="2">Broden</button></div></div>
+
+<div class="scr"><div class="body">
+<p class="folio">Zaterdag 12:30</p><h2 class="t">Hoe was hij?</h2><p class="sub">Drie tikken, als je er zin in hebt.</p>
+<div class="card"><button class="btn o">Foto van de kruim</button>
+<p class="lbl" style="margin-top:8px">Kruim</p><div><span class="chip">Dicht</span><span class="chip on">Gelijkmatig</span><span class="chip">Open</span></div>
+<p class="lbl">Volgende keer</p><div class="field" style="margin:4px 0 12px"><input value="Bulk 30 min langer"></div><button class="btn">Bewaar</button></div>
+<p class="note2" style="text-align:center">Dit briefje zie je terug als je weer een brood plant.</p>
+</div><div class="tabbar"><button data-s="0">Bakken</button><button data-s="1">Agenda</button><button data-s="2">Broden</button></div></div>
+
+<div class="homebar"></div>
+</div></div></div>
+</div></div>
+<script src="shared.js"></script>
+</body></html>
