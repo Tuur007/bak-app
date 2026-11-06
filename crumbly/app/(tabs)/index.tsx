@@ -10,6 +10,7 @@ import { supabase } from '../../src/services/supabase';
 import { liveRecipes, plannedBakes, useCrumbly } from '../../src/store/store';
 import { Button, Card, Gap, Row, Screen, Txt } from '../../src/ui/kit';
 import { space } from '../../src/ui/theme';
+import { StarterOverview } from '../../src/ui/StarterOverview';
 import { PeakQuestion } from '../../src/ui/PeakQuestion';
 import { StepCard } from '../../src/ui/StepCard';
 import { Arch, Dots, Gear, useNow } from '../../src/ui/widgets';
@@ -76,6 +77,8 @@ export default function Vandaag() {
           <Txt v="bold" style={s.onPunch}>Tot {fmtDayTime(new Date(awayNow.to), now)}.{awayNow.starterInFridge ? ` ${starter.name} rust in de koelkast.` : ''}</Txt>
         </Card>
       ) : null}
+
+      <StarterOverview now={now} />
 
       <Arch label="Klaar om te bakken?" title={archTitle}>
         <Dots filled={Math.min(r.streak, r.needed)} total={r.needed} />

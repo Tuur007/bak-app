@@ -8,6 +8,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { defaultSettings, defaultStarter, exampleRecipe } from '../domain/defaults';
 import { newId } from '../domain/ids';
+import type { PeerData } from '../domain/peers';
 import { computeRatios } from '../domain/ratios';
 import { delayOpen, endOf, finishWaitNow, markDone, planBackward, shiftForReturn, undoDone } from '../domain/schedule';
 import { adjustForTemperature } from '../domain/temperature';
@@ -28,6 +29,8 @@ export interface CrumblyState {
   settings: Settings;
   dirty: string[];
   lastPulledAt: string | null;
+  /** Starters van gekoppelde accounts: enkel lezen, nooit in `dirty`, nooit naar de server. */
+  peers: PeerData[];
 
   seedIfEmpty: () => void;
   updateStarter: (patch: Partial<Starter>) => void;
@@ -52,6 +55,7 @@ export interface CrumblyState {
   updateSettings: (patch: Partial<Settings>) => void;
   applyRemote: (items: RemoteItem[], pulledAt: string) => void;
   clearDirty: (keys: string[]) => void;
+  setPeers: (peers: PeerData[]) => void;
   replaceAll: (data: BackupData) => void;
 }
 
@@ -95,6 +99,7 @@ export const useCrumbly = create<CrumblyState>()(
         settings: defaultSettings(new Date(0).toISOString()),
         dirty: [],
         lastPulledAt: null,
+        peers: [],
 
         seedIfEmpty: () =>
           set((s) => {
@@ -278,6 +283,8 @@ export const useCrumbly = create<CrumblyState>()(
             s.lastPulledAt = pulledAt;
           }),
 
+        setPeers: (peers) => set((s) => { s.peers = peers; }),
+
         clearDirty: (keys) => set((s) => { s.dirty = s.dirty.filter((k) => !keys.includes(k)); }),
 
         replaceAll: (data) =>
@@ -304,7 +311,7 @@ export const useCrumbly = create<CrumblyState>()(
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({
         seeded: s.seeded, starter: s.starter, feeds: s.feeds, recipes: s.recipes, bakes: s.bakes,
-        away: s.away, settings: s.settings, dirty: s.dirty, lastPulledAt: s.lastPulledAt,
+        away: s.away, settings: s.settings, dirty: s.dirty, lastPulledAt: s.lastPulledAt, peers: s.peers,
       }),
     },
   ),

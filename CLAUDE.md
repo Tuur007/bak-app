@@ -41,7 +41,8 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
 - `src/services/sync.ts`: upsert naar `bak_items` (sleutel user_id+id), ophalen op
   `server_updated_at`, laatste wijziging wint (ook in de databank, trigger). Daarna de
   openstaande wekkers vervangen in `bak_reminders`.
-- Account: aanmelden, account maken en wachtwoord vergeten in Instellingen (`src/services/auth.ts`).
+- Account: eerst aanmelden voor je iets van de app ziet (`AanmeldScherm` in `app/_layout.tsx`, formulier in
+  `src/ui/AuthForm.tsx`; zonder Supabase-gegevens, bv. lokaal testen, geldt dit niet). Services in `src/services/auth.ts`.
   Zelfde `auth.users` als Recepten, Tuin en Op reis. De bevestigingsmail stuurt terug naar de site
   als `https://crumbly.vercel.app` in Supabase, Authentication, URL Configuration, Redirect URLs staat.
 - Foto van het brood: verkleind tot 480 px JPEG (data-URL) in `BakeResult.photo`, synct mee
@@ -65,6 +66,14 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
   (plakken of "Tekst scannen" op de iPhone), altijd met waarschuwingen om na te kijken.
 - Eerste keer: `app/welkom.tsx` (naam en startdatum van de starter, thuis-momenten, eigen recept, uitleg van
   de woorden uit `src/domain/glossary.ts`). `settings.onboarded` synct mee, zodat een tweede toestel niet opnieuw begint.
+- Koppelen (twee accounts, enkel lezen): `bak_links` + `bak_link_codes` + functies `bak_create_link_code`,
+  `bak_redeem_link_code`, `bak_get_linked` (migratie `20261106120000_crumbly_koppelen.sql`, test
+  `supabase/tests/crumbly_koppelen_test.sql`). De ander krijgt enkel `starter`- en `feed`-rijen, via de functie; de
+  RLS van `bak_items` blijft eigen rijen. Lokaal staat dat apart in `store.peers` (`src/domain/peers.ts`,
+  `src/services/peers.ts`), nooit in `dirty` en nooit door `mergeRemote` (alle starters hebben hetzelfde vaste id en
+  zouden de eigen starter overschrijven). Tabblad Starter heeft een keuze tussen eigen en gekoppelde starter
+  (`PeerView`); het startscherm toont bovenaan wie welke starter heeft (`StarterOverview`, met naam kiezen en weg naar
+  `app/koppelen.tsx`); de koppelcode staat in `src/ui/Koppelen.tsx` (ook in Instellingen). `Starter.splitFrom/splitOn` noteert waarvan je gesplitst bent.
 - Meldingen: `bak_push_subscriptions` + `private.bak_send_due()` (pg_cron elke minuut) ->
   `api/push/send.js` (Vercel, web-push). Zie `crumbly/docs/meldingen-instellen.md`.
 - Tijden altijd als absolute momenten; aftellen rekent vanaf de klok (iOS pauzeert timers).

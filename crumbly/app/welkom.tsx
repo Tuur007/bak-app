@@ -42,7 +42,8 @@ export default function Welkom() {
     <Screen folio="Welkom" title="Welkom bij Crumbly" sub="Drie korte vragen, dan kan je beginnen. Alles kan je later aanpassen.">
       <Card>
         <Txt v="folio">1. Je starter</Txt>
-        <Field label="Hoe heet hij?" value={name} onChange={setName} />
+        <Field label="Hoe heet hij?" value={name} onChange={setName} placeholder="bv. Jean Tuur" />
+        <Txt v="note">Deel je een starter met iemand, geef hem dan een eigen naam (bv. Jean Tuur en Jean Flore). Je kan hem later nog hernoemen.</Txt>
         <Txt v="label">Wanneer ben je gestart?</Txt>
         <Row style={st.row}>
           <Button small v="outline" label="-1 dag" onPress={() => updateStarter({ startedOn: toDayString(addDays(started, -1)) })} />

@@ -8,7 +8,10 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { AppState, Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useSessionEmail } from '../src/services/auth';
 import { registerServiceWorker } from '../src/services/push';
+import { supabase } from '../src/services/supabase';
+import { AanmeldScherm } from '../src/ui/AuthForm';
 import { syncNow } from '../src/services/sync';
 import { useCrumbly } from '../src/store/store';
 import { colors } from '../src/ui/theme';
@@ -54,6 +57,7 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts({ YoungSerif_400Regular, Figtree_400Regular, Figtree_600SemiBold, Figtree_700Bold });
   const hydrated = useHydrated();
   const seedIfEmpty = useCrumbly((s) => s.seedIfEmpty);
+  const sessionEmail = useSessionEmail();
 
   useEffect(() => {
     if (hydrated) seedIfEmpty();
@@ -70,12 +74,26 @@ export default function RootLayout() {
     return () => { clearInterval(id); sub.remove(); };
   }, [hydrated, ensureAutoFeeds]);
   useSyncLoop(hydrated);
+  // Net aangemeld: meteen synchroniseren, zodat je gegevens en die van de ander er zijn.
+  useEffect(() => {
+    if (hydrated && typeof sessionEmail === 'string') void syncNow();
+  }, [hydrated, sessionEmail]);
 
-  if (!fontsLoaded || !hydrated) {
+  // Eerst aanmelden: zonder account zie je niets van de app. Zonder Supabase-gegevens (lokaal testen) geldt dit niet.
+  const checkingSession = !!supabase && sessionEmail === undefined;
+  if (!fontsLoaded || !hydrated || checkingSession) {
     return (
       <View style={st.boot}>
         <Text style={st.bootText}>Crumbly</Text>
       </View>
+    );
+  }
+  if (supabase && sessionEmail === null) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar style="dark" />
+        <AanmeldScherm />
+      </SafeAreaProvider>
     );
   }
   return (
