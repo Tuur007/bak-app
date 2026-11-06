@@ -12,7 +12,7 @@ import { getSyncStatus, onSyncStatus, syncNow, type SyncStatus } from '../src/se
 import { useCrumbly } from '../src/store/store';
 import { Gezin } from '../src/ui/Gezin';
 import { Koppelen } from '../src/ui/Koppelen';
-import { Button, Card, Field, Gap, Row, Screen, Segmented, Toggle, Txt } from '../src/ui/kit';
+import { Button, Card, Field, Gap, Row, Screen, Toggle, Txt } from '../src/ui/kit';
 import { colors, space } from '../src/ui/theme';
 import { HhmmStepper } from '../src/ui/widgets';
 

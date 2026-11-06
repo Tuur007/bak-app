@@ -31,3 +31,28 @@ jobs:
         env:
           EXPO_PUBLIC_SUPABASE_URL: https://example.invalid
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ci
+
+  # De databank-tests (toegangsregels, koppelen, gezin, wekkers) in een echte, lege Postgres met nagemaakte
+  # Supabase-onderdelen. Raakt het echte project nooit.
+  databank:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: ci
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Migraties en databanktests
+        run: crumbly/supabase/tests/run-local.sh

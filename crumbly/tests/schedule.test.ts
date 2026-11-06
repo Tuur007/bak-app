@@ -96,7 +96,9 @@ test('wekkers: enkel wat verandert gaat naar de server', async () => {
     { id: 'b', due_at: '2026-11-05T10:30:00+00:00', title: 'Bâtard', body: 'Nu: vouwen 2', url: '/plan' },
     { id: 'c', due_at: '2026-11-05T12:00:00+00:00', title: 'Bâtard', body: 'oud', url: '/plan' },
   ];
-  const d = diffReminders(existing, w);
+  const d = diffReminders(existing, w, new Date('2026-11-05T08:00:00Z'));
   assert.deepEqual(d.remove, ['c']);
   assert.deepEqual(d.upsert.map((x) => x.id), ['b']);
+  // Is het uur van 'c' voorbij, dan is hij van de server (verzenden of herkansen) en wist de planning hem niet.
+  assert.deepEqual(diffReminders(existing, w, new Date('2026-11-05T12:30:00Z')).remove, []);
 });

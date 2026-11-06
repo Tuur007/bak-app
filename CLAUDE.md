@@ -96,6 +96,19 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
   eigenaar, ze hebben dezelfde vaste id's). `claimForAccount(dataId)` wist het toestel bij een andere gegevensbron.
   Wekkers en meldingen blijven per account. `Feed.by` = wie voedde (enkel met een gezin; lid: naam uit het
   lidmaatschap, eigenaar: `user_metadata.crumbly_name`). Gekoppelde starters (`bak_links`) blijven apart en enkel kijken.
+- Synchronisatie (`syncCore.ts`, regressietests `tests/sync_betrouwbaar.test.ts`): de upsert vraagt de bewaarde rij terug
+  (een geweigerde oudere wijziging brengt de cloudversie mee terug), een item dat tijdens het versturen opnieuw werd
+  aangepast blijft in de wachtrij, en het ophalen pagineert op (servertijd, id) met een overlap van 30 s (now() is
+  per transactie constant). De cursor is `lastPulledAt` + `lastPulledId` en gaat nooit achteruit. Tijden altijd als
+  MOMENT vergelijken (`sameInstant`): de app stuurt `…123Z`, PostgREST geeft `…123+00:00` terug; als tekst zijn die
+  verschillend. Begrijpt de server de samengestelde `or`-cursor niet, dan valt de sync terug op `gte` (best effort).
+- Receptparser (`recipeText.ts`): onzekere stappen hebben `ProcessStep.check`; een uit tekst gemaakt recept is een
+  concept (`recipeDraft.ts`) dat pas in de editor wordt bewaard. Een wachtstap zonder tijd is een wachtstap van 1 uur
+  zonder wekker, nooit een handstap van 5 minuten.
+- Wekkers: de planning wist geen wekker waarvan het uur voorbij is (de server herkanst). Migratie
+  `20261106150000_crumbly_wekkers_betrouwbaar.sql` (herkansing, controle van antwoorden, verlopen abonnementen wissen)
+  is nog niet toegepast (net als `20261106160000_crumbly_gezin_ketting.sql`). `refreshPushSubscription` herstelt een
+  weggevallen abonnement bij het openen.
 - Foutmeldingen in gewone taal: `src/domain/errors.ts` (netwerkfout, VPN).
 - Meldingen: `bak_push_subscriptions` + `private.bak_send_due()` (pg_cron elke minuut) ->
   `api/push/send.js` (Vercel, web-push). Zie `crumbly/docs/meldingen-instellen.md`.
@@ -109,7 +122,10 @@ Databank: tabellen en wekker-functie staan live (2 november 2026). Kluisgeheimen
 
 ## Testen
 `cd crumbly && npm test && npm run typecheck`. Webbouw: `npx expo export --platform web`.
-CI (`.github/workflows/ci.yml`) draait dit bij elke PR en bij een wijziging op main.
+CI (`.github/workflows/ci.yml`) draait dit bij elke PR en bij een wijziging op main, plus de databanktests
+(`crumbly/supabase/tests/run-local.sh`: lege Postgres met nagemaakte Supabase-onderdelen, alle migraties en tests).
+Welke migraties echt in de databank staan: `crumbly/docs/databank-status.md`. Nog te testen op een echte iPhone:
+`crumbly/docs/iphone-test.md`.
 
 ## Bekende grenzen
 - Niet getest op een echte iPhone (meldingen in België, beginscherm, toetsenbord).

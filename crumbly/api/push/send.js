@@ -54,19 +54,27 @@ module.exports = async function handler(req, res) {
   let sent = 0;
   let failed = 0;
   const gone = [];
+  // Per foutcode tellen (zonder inhoud): zo ziet de controle in de databank en wie het logboek leest waarom het misging
+  // (bv. 401/403 = verkeerde VAPID-sleutels, 429/5xx = de pushdienst heeft een storing).
+  const errors = {};
   await Promise.all(
     items.flatMap((it) =>
       it.subs.map(async (sub) => {
         try {
-          await webpush.sendNotification(sub, JSON.stringify({ title: it.title, body: it.body, url: it.url, tag: it.tag }), { TTL: 60 * 30, urgency: 'high' });
+          // De timeout blijft onder die van pg_net (20 s), anders weet de database niet of het lukte.
+          await webpush.sendNotification(sub, JSON.stringify({ title: it.title, body: it.body, url: it.url, tag: it.tag }), { TTL: 60 * 30, urgency: 'high', timeout: 10000 });
           sent++;
         } catch (e) {
           const code = e && e.statusCode;
           if (code === 404 || code === 410) gone.push(sub.endpoint);
-          else failed++;
+          else {
+            failed++;
+            const key = String(code || (e && e.code) || 'onbekend');
+            errors[key] = (errors[key] || 0) + 1;
+          }
         }
       }),
     ),
   );
-  return res.status(200).json({ sent, failed, gone: gone.length, goneEndpoints: gone });
+  return res.status(200).json({ sent, failed, gone: gone.length, goneEndpoints: gone, errors });
 };

@@ -48,6 +48,36 @@ export async function turnPushOn(): Promise<{ ok: boolean; message: string }> {
   return { ok: true, message: 'Meldingen staan aan.' };
 }
 
+/**
+ * Houdt de meldingen in orde zonder dat je iets tikt. Heb je ooit "Meldingen aanzetten" gekozen en is de toestemming nog
+ * aan, dan zorgen we dat de server een geldig abonnement van dit toestel heeft: de server wist verlopen abonnementen, en
+ * iOS laat een abonnement soms vallen. Zonder dit komen er stilletjes geen meldingen meer. Doet niets als je meldingen
+ * uitzette of nooit aanzette. Geeft terug wat er gebeurde (voor de tests).
+ */
+export async function refreshPushSubscription(): Promise<'niets' | 'bevestigd' | 'hersteld' | 'mislukt'> {
+  try {
+    if (!supabase || !VAPID_PUBLIC_KEY || !supported() || Notification.permission !== 'granted') return 'niets';
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (!reg) return 'niets';
+    let sub = await reg.pushManager.getSubscription();
+    let restored = false;
+    if (!sub) {
+      // De toestemming is er nog, het abonnement niet meer: opnieuw aanmaken mag zonder tik.
+      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyToBytes(VAPID_PUBLIC_KEY) as BufferSource });
+      restored = true;
+    }
+    const json = sub.toJSON();
+    const { error } = await supabase.from('bak_push_subscriptions').upsert(
+      { endpoint: sub.endpoint, p256dh: json.keys?.p256dh ?? '', auth: json.keys?.auth ?? '' },
+      { onConflict: 'endpoint' },
+    );
+    if (error) return 'mislukt';
+    return restored ? 'hersteld' : 'bevestigd';
+  } catch {
+    return 'mislukt';
+  }
+}
+
 export async function turnPushOff(): Promise<void> {
   if (!supported()) return;
   const reg = await navigator.serviceWorker.getRegistration();

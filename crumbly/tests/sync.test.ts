@@ -21,14 +21,23 @@ class Query {
   private rows: Row[] = [];
   private conflict = 'user_id,id';
   private lim = Infinity;
-  private sortBy: string | null = null;
+  private sortBy: string[] = [];
+  private returning = false;
   constructor(private db: FakeDb, private table: string) {}
-  select() { this.op = 'select'; return this; }
+  // na upsert() geeft select() de bewaarde rijen terug, zoals PostgREST
+  select() { if (this.op === 'upsert') this.returning = true; else this.op = 'select'; return this; }
   delete() { this.op = 'delete'; return this; }
   upsert(rows: Row[], opts?: { onConflict?: string }) { this.op = 'upsert'; this.rows = rows; if (opts?.onConflict) this.conflict = opts.onConflict; return this; }
-  order(col: string) { this.sortBy = col; return this; }
+  order(col: string) { this.sortBy.push(col); return this; }
   limit(n: number) { this.lim = n; return this; }
   gt(col: string, v: string) { this.filters.push((r) => String(r[col]) > v); return this; }
+  or(expr: string) {
+    const m = expr.match(/^(\w+)\.gt\.(.+?),and\((\w+)\.eq\.(.+?),(\w+)\.gt\.(.+)\)$/);
+    if (!m) throw new Error(`or-filter niet ondersteund: ${expr}`);
+    const [, c1, v1, c2, v2, c3, v3] = m;
+    this.filters.push((r) => String(r[c1]) > v1 || (String(r[c2]) === v2 && String(r[c3]) > v3));
+    return this;
+  }
   eq(col: string, v: string) { this.filters.push((r) => String(r[col]) === v); return this; }
   is(col: string, v: null) { this.filters.push((r) => (r[col] ?? null) === v); return this; }
   in(col: string, vs: string[]) { this.filters.push((r) => vs.includes(String(r[col]))); return this; }
@@ -47,11 +56,12 @@ class Query {
           t[i] = { ...t[i], ...r, ...(this.table === 'bak_items' ? { server_updated_at: String(++this.db.clock) } : {}) };
         } else t.push({ ...r, ...(this.table === 'bak_items' ? { server_updated_at: String(++this.db.clock) } : {}) });
       }
-      return { data: null, error: null };
+      const stored = this.returning ? this.rows.map((r) => ({ ...t.find((x) => keys.every((k) => x[k] === r[k]))! })) : null;
+      return { data: stored, error: null };
     }
     const hit = t.filter((r) => this.filters.every((f) => f(r)));
     if (this.op === 'delete') { this.db.tables[this.table] = t.filter((r) => !hit.includes(r)); return { data: null, error: null }; }
-    const sorted = this.sortBy ? [...hit].sort((a, b) => String(a[this.sortBy!]).localeCompare(String(b[this.sortBy!]), undefined, { numeric: true })) : hit;
+    const sorted = this.sortBy.length > 0 ? [...hit].sort((a, b) => { for (const c of this.sortBy) { const d = String(a[c]).localeCompare(String(b[c]), undefined, { numeric: true }); if (d !== 0) return d; } return 0; }) : hit;
     return { data: sorted.slice(0, this.lim), error: null };
   }
 }
@@ -90,19 +100,21 @@ test('mislukt versturen: de fout komt boven en niets wordt als verstuurd gemarke
   assert.deepEqual(log.cleared, [], 'wijziging blijft in de wachtrij');
 });
 
-test('ophalen op servertijd: eerst alles, daarna enkel wat nieuw is', async () => {
+test('ophalen op servertijd: eerst alles, daarna enkel wat nieuw is (plus een kort overlappend venster)', async () => {
   const db = new FakeDb();
+  const t = (min: number) => new Date(Date.UTC(2026, 10, 6, 10, min)).toISOString();
   db.tables.bak_items = [
-    { user_id: 'u1', id: 'a', kind: 'feed', data: { id: 'a', updatedAt: '1' }, updated_at: '1', server_updated_at: '10' },
-    { user_id: 'u1', id: 'b', kind: 'feed', data: { id: 'b', updatedAt: '2' }, updated_at: '2', server_updated_at: '20' },
+    { user_id: 'u1', id: 'a', kind: 'feed', data: { id: 'a', updatedAt: '1' }, updated_at: '1', server_updated_at: t(0) },
+    { user_id: 'u1', id: 'b', kind: 'feed', data: { id: 'b', updatedAt: '2' }, updated_at: '2', server_updated_at: t(10) },
   ];
   const { io, log } = makeIO();
   let r = await runSync(asClient(db), 'u1', io);
   assert.equal(r.pulled, 2);
-  assert.equal(log.serverTime, '20');
-  db.tables.bak_items.push({ user_id: 'u1', id: 'c', kind: 'feed', data: { id: 'c', updatedAt: '3' }, updated_at: '3', server_updated_at: '30' });
+  assert.equal(log.serverTime, t(10));
+  db.tables.bak_items.push({ user_id: 'u1', id: 'c', kind: 'feed', data: { id: 'c', updatedAt: '3' }, updated_at: '3', server_updated_at: t(20) });
   r = await runSync(asClient(db), 'u1', io);
-  assert.equal(r.pulled, 1, 'enkel het nieuwe item');
+  // a (10 minuten geleden) komt niet opnieuw; b ligt binnen het overlappende venster van 30 seconden en komt nog eens mee.
+  assert.deepEqual(log.applied.slice(2).map((x) => x.id), ['b', 'c']);
   assert.equal(log.applied.at(-1)?.id, 'c');
 });
 
@@ -123,7 +135,7 @@ test('wekkers: nieuwe erbij, verdwenen weg, ongewijzigde met rust gelaten', asyn
     { user_id: 'u1', id: 'oud', due_at: '2026-11-05T09:00:00+00:00', title: 'Bâtard', body: 'Nu: vouwen', url: '/plan', sent_at: null },
     { user_id: 'u1', id: 'verstuurd', due_at: '2026-11-01T09:00:00+00:00', title: 'Bâtard', body: 'x', url: '/plan', sent_at: '2026-11-01T09:00:10Z' },
   ];
-  await syncReminders(asClient(db), [rem('a', '2026-11-05T10:00:00.000Z'), rem('b', '2026-11-05T11:00:00.000Z')]);
+  await syncReminders(asClient(db), [rem('a', '2026-11-05T10:00:00.000Z'), rem('b', '2026-11-05T11:00:00.000Z')], new Date('2026-11-05T08:00:00Z'));
   assert.deepEqual(db.tables.bak_reminders.map((r) => r.id).sort(), ['a', 'b', 'verstuurd']);
   assert.ok(db.calls.filter((c) => c === 'upsert:bak_reminders').length === 1, 'enkel b is geschreven');
 });
@@ -174,4 +186,16 @@ test('gezin: een lid schrijft en leest op de gegevens van de eigenaar, niet op z
   assert.ok(db.tables.bak_items.some((x) => x.user_id === 'eigenaar' && x.id === 'f2'), 'geschreven bij de eigenaar');
   assert.ok(!db.tables.bak_items.some((x) => x.user_id === 'lid' && x.id === 'f2'), 'niet bij het lid zelf');
   assert.deepEqual(log.applied.map((x) => x.id).sort(), ['f1', 'f2'], 'enkel de rijen van de eigenaar komen binnen, niet x van het lid');
+});
+
+test('wekkers: een wekker waarvan het uur voorbij is, wordt door de planning niet gewist (de server probeert hem opnieuw)', async () => {
+  const db = new FakeDb();
+  const past = new Date(Date.now() - 5 * 60_000).toISOString();
+  const future = new Date(Date.now() + 60 * 60_000).toISOString();
+  db.tables.bak_reminders = [
+    { user_id: 'u1', id: 'voorbij', due_at: past, title: 'Bâtard', body: 'x', url: '/plan', sent_at: null },
+    { user_id: 'u1', id: 'verdwenen', due_at: future, title: 'Bâtard', body: 'x', url: '/plan', sent_at: null },
+  ];
+  await syncReminders(asClient(db), []);
+  assert.deepEqual(db.tables.bak_reminders.map((r) => r.id), ['voorbij'], 'enkel de toekomstige, niet meer gewenste wekker verdwijnt');
 });

@@ -11,6 +11,14 @@ de uren staan altijd in het bakplan.
 3. De route verstuurt de melding naar elk toestel van die gebruiker (web-push).
 Een melding kan een paar minuten later komen. Wat meer dan 30 minuten te laat is, vervalt.
 
+**Betrouwbaarheid** (migratie `20261106150000_crumbly_wekkers_betrouwbaar.sql`, na toepassen): de database leest elke minuut de
+antwoorden van de route (`private.bak_push_check()`, taak `crumbly-wekkers-controle`). Verlopen abonnementen (404/410) worden gewist.
+Kwam er niets aan (fout, time-out, geen antwoord), dan volgt een nieuwe poging, hoogstens 3, zolang de wekker niet meer dan 30
+minuten te laat is. Kwam hij bij minstens één toestel aan, dan is hij bevestigd en volgt er geen herhaling (geen dubbele meldingen).
+Wat niet lukte, blijft zichtbaar in `bak_reminders.last_error`. Zonder die migratie wordt een wekker vóór het verzenden als
+verstuurd gemarkeerd en gaat hij bij een storing stilletjes verloren. De app zelf herstelt een weggevallen abonnement bij het
+openen (`refreshPushSubscription`).
+
 Op een iPhone werkt dit enkel als Crumbly op het beginscherm staat (iOS 16.4 of nieuwer), en de
 toestemming komt uit een tik op "Meldingen aanzetten" in Instellingen. Of het in België
 betrouwbaar werkt, moet op haar toestel getest worden.

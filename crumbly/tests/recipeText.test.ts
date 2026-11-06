@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { durationMinutes, parseRecipeText } from '../src/domain/recipeText.ts';
+import { durationMinutes, normalizeNumbers, parseIngredientLine, parseRecipeText } from '../src/domain/recipeText.ts';
 
 const SAMPLE1 = `Klassieke bâtard
 
@@ -101,4 +101,81 @@ test('tijden herkennen', () => {
   assert.equal(durationMinutes('twee uur')?.minutes, 120);
   assert.equal(durationMinutes('250 graden'), null);
   assert.equal(durationMinutes('8 - 10 uur')?.minutes, 540);
+});
+
+const BASIS = 'Brood\n500 g bloem\n350 g water\n100 g starter\n10 g zout\nBereiding\n';
+
+test('ingrediënten met de hoeveelheid achteraan (naam eerst, ook met dubbele punt en type)', () => {
+  const r = parseRecipeText('Landbrood\nBloem 500 g\nWater: 350 ml\nStarter 100 g\nZout 10 g\nBereiding\nLaat 4 uur rijzen.');
+  assert.deepEqual([r.flours[0].grams, r.waterG, r.starterG, r.saltG], [500, 350, 100, 10]);
+  assert.equal(r.warnings.some((w) => /Ik vond geen/.test(w)), false);
+  assert.deepEqual(parseIngredientLine('bloem T65 500 g'), { grams: 500, rest: 'bloem T65', unit: 'g' });
+  assert.equal(parseIngredientLine('Bloem 500 g')?.grams, 500, 'het getal wordt niet in tweeën geknipt (50 en 0)');
+  assert.equal(parseIngredientLine('Water 350'), null, 'zonder eenheid geen ingrediënt');
+});
+
+test('breuken: ½, 1½ en 1/2', () => {
+  assert.equal(normalizeNumbers('1½ dl water ½ kg bloem 1/2 theelepel'), '1.5 dl water 0.5 kg bloem 0.5 theelepel');
+  assert.equal(normalizeNumbers('op 5/11 gestart'), 'op 5/11 gestart', 'een datum blijft een datum');
+  const r = parseRecipeText('Brood\n1½ dl water\n½ kg tarwebloem\n100 g starter\n10 g zout\nBereiding\nLaat 2 uur rijzen.');
+  assert.equal(r.waterG, 150);
+  assert.equal(r.flours[0].grams, 500);
+});
+
+test('samengestelde tijden: 1 uur en 30 minuten, 1u30, anderhalf uur', () => {
+  assert.equal(durationMinutes('Laat 1 uur en 30 minuten rijzen')?.minutes, 90);
+  assert.equal(durationMinutes('Rust 1u30')?.minutes, 90);
+  assert.equal(durationMinutes('Laat anderhalf uur staan')?.minutes, 90);
+  assert.equal(durationMinutes('Rust 2 uur 15 min')?.minutes, 135);
+  assert.equal(durationMinutes('Laat 4 tot 5 uur rijzen')?.minutes, 270, 'een bereik blijft het midden');
+  assert.equal(durationMinutes('Laat 1,5 uur rijzen')?.minutes, 90);
+  const r = parseRecipeText(`${BASIS}Laat 1 uur en 30 minuten rijzen. Rust nog 1u30.`);
+  assert.deepEqual(r.process.map((p) => p.minutes), [90, 90], 'geen losse stap van 60 en 30');
+});
+
+test('een wachtstap zonder tijd is geen handstap van 5 minuten met een wekker', () => {
+  const r = parseRecipeText(`${BASIS}Meng alles. Laat het deeg rijzen tot het verdubbeld is. Vorm het brood.`);
+  const wait = r.process.find((p) => /rijzen/.test(p.name))!;
+  assert.equal(wait.kind, 'wacht');
+  assert.equal(wait.alarm, false);
+  assert.equal(wait.minutes, 60);
+  assert.match(wait.check ?? '', /Geen tijd/);
+  assert.ok(r.warnings.some((w) => /geen tijd/.test(w) && /1 uur/.test(w)));
+  const hand = r.process.find((p) => /Vorm/.test(p.name))!;
+  assert.equal(hand.kind, 'hand');
+  assert.match(hand.check ?? '', /5 minuten/);
+});
+
+test('onzekere stappen worden gemarkeerd: bereik en een nacht', () => {
+  const r = parseRecipeText(`${BASIS}Laat 4 tot 5 uur rijzen. Laat het een hele nacht in de koelkast staan.`);
+  assert.match(r.process[0].check ?? '', /bereik/);
+  assert.match(r.process[1].check ?? '', /12 uur/);
+  assert.equal(parseRecipeText(`${BASIS}Laat 3 uur rijzen.`).process[0].check, undefined, 'een duidelijke tijd heeft geen markering');
+});
+
+test('herhaling: "4 keer, elk half uur" wordt vier vouwstappen, geen onzin', () => {
+  const r = parseRecipeText(`${BASIS}Vouw het deeg 4 keer, elk half uur. Laat daarna 2 uur rijzen.`);
+  assert.deepEqual(r.process.map((p) => [p.kind, p.minutes]), [['hand', 30], ['hand', 30], ['hand', 30], ['hand', 30], ['wacht', 120]]);
+  assert.match(r.process[0].name, /\(1 van 4\)/);
+  assert.match(r.process[0].check ?? '', /Herhaling/);
+  assert.ok(r.warnings.some((w) => /herhaling/i.test(w)));
+});
+
+test('eenheden die we niet kennen (kopjes) worden niet stil overgeslagen', () => {
+  const r = parseRecipeText(`Brood\n3 kopjes bloem\n1 kopje water\n100 g starter\n10 g zout\nBereiding\nLaat 3 uur rijzen.`);
+  assert.ok(r.warnings.some((w) => /3 kopjes bloem/.test(w) && /niet in gram/.test(w)));
+  assert.ok(r.ignored.includes('3 kopjes bloem'));
+  // een stap met een tijd is geen ingrediënt, ook al staat er 'water' in
+  const ok = parseRecipeText(`${BASIS}2 uur wachten. Giet 1 kop water erbij en laat 10 minuten rusten.`);
+  assert.equal(ok.warnings.some((w) => /niet in gram/.test(w)), false);
+});
+
+test('"Laat daarna 2 uur rijzen" is één stap', () => {
+  const r = parseRecipeText(`${BASIS}Meng alles. Laat daarna 2 uur rijzen.`);
+  assert.deepEqual(r.process.map((p) => [p.kind, p.minutes]), [['hand', 5], ['wacht', 120]]);
+});
+
+test('bestaande werkende voorbeelden blijven hetzelfde', () => {
+  const r = parseRecipeText(SAMPLE1);
+  assert.deepEqual(r.process.map((p) => [p.kind, p.minutes]), [['hand', 5], ['wacht', 30], ['hand', 5], ['hand', 5], ['wacht', 270], ['hand', 5], ['wacht', 720], ['hand', 5], ['hand', 20], ['hand', 25]]);
 });
