@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { fmtCountdown, fmtDay, fmtDayTime, fmtDuration, fmtLongDate, fmtTime, sameDay } from '../../src/domain/dates';
+import { fmtDay, fmtDayTime, fmtDuration, fmtLongDate, fmtTime, sameDay } from '../../src/domain/dates';
 import { formatPct, recipeRatios } from '../../src/domain/ratios';
 import { endOf, findFittingEnd, homeConflicts, planBackward, stepState, totalMinutes, workMinutes } from '../../src/domain/schedule';
 import { adjustForTemperature } from '../../src/domain/temperature';

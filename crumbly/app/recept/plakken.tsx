@@ -7,7 +7,7 @@ import { formatPct, recipeRatios } from '../../src/domain/ratios';
 import { parseRecipeText } from '../../src/domain/recipeText';
 import { setRecipeDraft } from '../../src/domain/recipeDraft';
 import { totalMinutes } from '../../src/domain/schedule';
-import { Button, Card, Field, Gap, Row, Screen, Txt } from '../../src/ui/kit';
+import { Button, Card, Field, Gap, Screen, Txt } from '../../src/ui/kit';
 import { colors, space } from '../../src/ui/theme';
 
 /** Een recept plakken (of scannen) en er een bakschema van laten maken. */
