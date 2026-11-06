@@ -10,7 +10,7 @@ De SQL-bestanden in `supabase/migrations/` zijn wat we *willen*. Of de databank 
 | `20261102120100_crumbly_wekkers.sql` | `private.bak_send_due()`, pg_cron-taak `crumbly-wekkers` (elke minuut), kluisgeheimen `bak_push_secret` en `bak_push_url` | toegepast |
 | `20261106120000_crumbly_koppelen.sql` | `bak_links`, `bak_link_codes`, `bak_create_link_code`, `bak_redeem_link_code`, `bak_get_linked` | toegepast |
 | `20261106140000_crumbly_gezin.sql` | `bak_household_members`, `bak_household_codes`, extra regels op `bak_items`, functies voor het gezin | toegepast |
-| `20261106130000_crumbly_koppelcode_blijft.sql` | blijvende koppelcode, `bak_my_link_code` | **niet toegepast** |
+| `20261106130000_crumbly_koppelcode_blijft.sql` | blijvende koppelcode, `bak_my_link_code` | **niet toegepast** (de app staat al in `main` en werkt zonder: "Maak een koppelcode" werkt, "Nieuwe code" en dezelfde code op elk toestel pas na deze SQL) |
 | `20261106150000_crumbly_wekkers_betrouwbaar.sql` | herkansing en controle van wekkers, verlopen abonnementen wissen | toegepast (6 november 2026; kolommen, functies en pg_cron-taak `crumbly-wekkers-controle` staan er, beide taken lopen zonder fout). De proef met een echte melding op een toestel moet nog. |
 | `20261106160000_crumbly_gezin_ketting.sql` | `bak_join_household` weigert een code van iemand die zelf al in een gezin zit (geen ketting) | toegepast (6 november 2026) |
 

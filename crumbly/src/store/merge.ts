@@ -62,3 +62,23 @@ export function mergeRemote(s: MergeTarget, items: RemoteItem[]): number {
   }
   return changed;
 }
+
+
+/**
+ * Gegevens uit een back-up krijgen een nieuwe wijzigingstijd. Anders winnen de nieuwere gegevens in de cloud ("laatste
+ * wijziging wint") en wordt het terugzetten bij de volgende synchronisatie stilletjes teruggedraaid. Wat verwijderd was
+ * in de back-up blijft verwijderd (deletedAt blijft staan). Items die na de back-up zijn bijgekomen en er niet in
+ * staan, blijven bestaan: terugzetten overschrijft wat in de back-up staat, het wist niets extra.
+ */
+export function stampForRestore<T extends { starter: { updatedAt: string } | null; feeds: { updatedAt: string }[]; recipes: { updatedAt: string }[]; bakes: { updatedAt: string }[]; away: { updatedAt: string }[]; settings: { updatedAt: string } }>(data: T, nowIso: string): T {
+  const stamp = <U extends { updatedAt: string }>(x: U): U => ({ ...x, updatedAt: nowIso });
+  return {
+    ...data,
+    starter: data.starter ? stamp(data.starter) : null,
+    feeds: data.feeds.map(stamp),
+    recipes: data.recipes.map(stamp),
+    bakes: data.bakes.map(stamp),
+    away: data.away.map(stamp),
+    settings: stamp(data.settings),
+  };
+}

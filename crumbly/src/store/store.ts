@@ -15,7 +15,7 @@ import { delayOpen, endOf, finishWaitNow, markDone, planBackward, shiftForReturn
 import { adjustForTemperature } from '../domain/temperature';
 import { dueAutoFeeds, liveFeeds } from '../domain/starter';
 import { awayFridgeMove, bakeProcess, moveStarter } from '../domain/location';
-import { mergeRemote, type Kind, type RemoteItem } from './merge';
+import { mergeRemote, stampForRestore, type Kind, type RemoteItem } from './merge';
 import type { AwayPeriod, Bake, BakeResult, Feed, PlannedStep, Recipe, Settings, Starter, StarterLocation } from '../domain/types';
 
 export type { Kind, RemoteItem } from './merge';
@@ -382,19 +382,21 @@ export const useCrumbly = create<CrumblyState>()(
 
         replaceAll: (data) =>
           set((s) => {
-            s.starter = data.starter;
-            s.feeds = data.feeds;
-            s.recipes = data.recipes;
-            s.bakes = data.bakes;
-            s.away = data.away;
-            s.settings = data.settings;
+            // Nieuwe wijzigingstijd, anders wint de cloud en wordt het terugzetten bij de volgende sync teruggedraaid.
+            const d = stampForRestore(data, nowIso());
+            s.starter = d.starter;
+            s.feeds = d.feeds;
+            s.recipes = d.recipes;
+            s.bakes = d.bakes;
+            s.away = d.away;
+            s.settings = d.settings;
             s.seeded = true;
             s.dirty = [];
-            if (data.starter) touch(s, 'starter', data.starter.id);
-            data.feeds.forEach((x) => touch(s, 'feed', x.id));
-            data.recipes.forEach((x) => touch(s, 'recipe', x.id));
-            data.bakes.forEach((x) => touch(s, 'bake', x.id));
-            data.away.forEach((x) => touch(s, 'away', x.id));
+            if (d.starter) touch(s, 'starter', d.starter.id);
+            d.feeds.forEach((x) => touch(s, 'feed', x.id));
+            d.recipes.forEach((x) => touch(s, 'recipe', x.id));
+            d.bakes.forEach((x) => touch(s, 'bake', x.id));
+            d.away.forEach((x) => touch(s, 'away', x.id));
             touch(s, 'settings', SETTINGS_ID);
           }),
       };

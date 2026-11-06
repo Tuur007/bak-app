@@ -146,7 +146,7 @@ function BackUp() {
       <Field label="Back-up terugzetten: plak de inhoud van het bestand" value={text} onChange={(v) => { setText(v); setConfirm(false); setMsg(''); }} multiline />
       {confirm ? (
         <>
-          <Txt v="bold" style={st.warn}>Dit vervangt alles op dit toestel. Zeker?</Txt>
+          <Txt v="bold" style={st.warn}>Dit zet de gegevens uit de back-up terug, ook in de cloud en op je andere toestellen. Wat je daarna maakte en niet in de back-up staat, blijft staan. Zeker?</Txt>
           <Row>
             <Button small v="danger" label="Ja, terugzetten" onPress={() => { const d = parseBackup(text); if (d) { replaceAll(d); setMsg('Teruggezet.'); setText(''); } else setMsg('Dit is geen geldige back-up van Crumbly.'); setConfirm(false); }} />
             <Button small v="ghost" label="Nee" onPress={() => setConfirm(false)} />
