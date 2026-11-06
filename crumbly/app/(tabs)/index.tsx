@@ -78,6 +78,7 @@ export default function Vandaag() {
     .filter((b) => !b.deletedAt && b.result?.nextTime)
     .sort((a, b) => (b.result?.at ?? '').localeCompare(a.result?.at ?? ''))[0];
   const hasFeeds = liveFeeds(feeds).length > 0;
+  const hadBread = allBakes.some((b) => !b.deletedAt && b.status === 'klaar');
 
   const archTitle = r.ready ? 'Ja, hij lijkt klaar' : r.tooYoung && r.streak >= r.needed ? 'Bijna, nog even jong' : 'Nog niet helemaal';
   const archText = r.ready
@@ -124,7 +125,16 @@ export default function Vandaag() {
       <PeakQuestion now={now} />
 
       {bake && st?.step ? (
-        <StepCard bake={bake} now={now} showName showPlanLink />
+        <>
+          <StepCard bake={bake} now={now} showName showPlanLink />
+          {/* Voeden hoort ook tijdens een bak bereikbaar te zijn (bv. de levain voeden). */}
+          {starter.autoFeedAt && starter.location !== 'koelkast' ? null : (
+            <>
+              <Button v="outline" label={`${starter.name} is gevoed`} onPress={feed} />
+              {feedNote}
+            </>
+          )}
+        </>
       ) : (
         <Card>
           <Txt v="folio">Volgende voeding</Txt>
@@ -165,11 +175,11 @@ export default function Vandaag() {
 
       {!bake ? (
         <Card tone="blush">
-          <Txt v="folio">Eerste brood</Txt>
+          <Txt v="folio">{hadBread ? 'Volgend brood' : 'Eerste brood'}</Txt>
           <Txt style={s.mt}>
             {r.ready
               ? `${starter.name} lijkt klaar. Kies een recept en plan je bak.`
-              : earliest
+              : earliest && !hadBread
                 ? `Op zijn vroegst rond ${fmtLongDate(earliest)}. Een jonge starter heeft vaak 2 tot 4 weken nodig. Dit is een schatting: jij ziet het aan ${starter.name}.`
                 : 'Plan je bak wanneer je er klaar voor bent.'}
           </Txt>

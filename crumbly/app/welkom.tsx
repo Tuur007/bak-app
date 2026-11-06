@@ -1,10 +1,13 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { createElement, useEffect, useRef, useState } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 import { addDays, fmtLongDate, toDayString } from '../src/domain/dates';
 import { GLOSSARY } from '../src/domain/glossary';
 import { parseDay } from '../src/domain/starter';
 import type { HomeWindow } from '../src/domain/types';
+import { useSessionEmail } from '../src/services/auth';
+import { supabase } from '../src/services/supabase';
+import { GezinJoin } from '../src/ui/Gezin';
 import { HhmmStepper } from '../src/ui/widgets';
 import { useCrumbly } from '../src/store/store';
 import { Button, Card, Chip, Field, Gap, Row, Screen, Txt } from '../src/ui/kit';
@@ -29,15 +32,33 @@ export default function Welkom() {
   // null = niet aangeraakt: dan tonen we de naam zoals hij nu is (ook als die net uit de cloud binnenkwam)
   // en schrijven we hem niet terug. Zo zet het welkomscherm nooit een echte naam terug op "Jean".
   const [name, setName] = useState<string | null>(null);
+  const household = useCrumbly((s) => s.household);
+  const sessionEmail = useSessionEmail();
+  // Met een account komt eerst één vraag: werk je samen met iemand aan dezelfde starter? Dan geef je geen starter een
+  // naam en vul je geen startdatum in: je werkt op die van de ander.
+  const canJoin = !!supabase && typeof sessionEmail === 'string';
+  // Pas als je zelf kiest, onthouden we de route; tot dan volgt ze of er een account is (dat blijkt soms pas na het eerste tekenen).
+  const [chosen, setRoute] = useState<'kiezen' | 'gezin' | 'zelf' | null>(null);
+  const route = chosen ?? (canJoin ? 'kiezen' : 'zelf');
   const finishing = useRef(false);
   // Blijkt uit de cloud dat je al begonnen bent (bv. op een ander toestel), dan is dit scherm overbodig.
   useEffect(() => {
     if (onboarded && !finishing.current) router.replace('/');
   }, [onboarded, router]);
+  // Zit je al in een gezin (bv. net bij een gezin gekomen), dan werk je op de gegevens van de ander: geen welkomvragen.
+  useEffect(() => {
+    if (household && household.role !== 'geen' && !finishing.current) {
+      finishing.current = true;
+      if (!useCrumbly.getState().settings.onboarded) updateSettings({ onboarded: true });
+      router.replace('/');
+    }
+  }, [household, router, updateSettings]);
   const [pattern, setPattern] = useState<Pattern>('week-avond');
   const [feedAt, setFeedAt] = useState<string | null>(null);
   if (!starter) return <Screen title="Even geduld"><Txt>...</Txt></Screen>;
   const started = parseDay(starter.startedOn);
+  const today = toDayString(new Date());
+  const startedOnToday = starter.startedOn === today;
 
   const shownName = name ?? starter.name;
   const done = (target: '/recept/plakken' | '/recepten' | '/'): void => {
@@ -53,18 +74,66 @@ export default function Welkom() {
     router.replace(target);
   };
 
+  if (route === 'kiezen') {
+    return (
+      <Screen folio="Welkom" title="Welkom bij Crumbly" sub="Eerst één vraag. Alles kan je later nog aanpassen.">
+        <Card>
+          <Txt v="folio">Werk je samen met iemand?</Txt>
+          <Txt style={st.mt}>Zorgen jullie samen voor dezelfde starter en dezelfde broden? Dan ga je bij het gezin van de ander. Je geeft dan geen eigen starter een naam: je ziet en voedt dezelfde starter.</Txt>
+          <Gap />
+          <Button label="Ja, ik werk samen met iemand" onPress={() => setRoute('gezin')} />
+          <Button v="outline" label="Nee, ik begin mijn eigen starter" onPress={() => setRoute('zelf')} />
+          <Txt v="note">Je kan dit later nog doen in Instellingen, bij Delen.</Txt>
+        </Card>
+      </Screen>
+    );
+  }
+
+  if (route === 'gezin') {
+    return (
+      <Screen folio="Welkom" title="Bij een gezin komen" sub="Je werkt op dezelfde starter als de ander." right={<Button small v="ghost" label="Terug" onPress={() => setRoute('kiezen')} />}>
+        <Card tone="blush">
+          <Txt v="folio">Eerst de code</Txt>
+          <Txt style={st.mt}>De ander maakt een gezinscode: in Crumbly op Instellingen, bij Delen, "Maak een gezinscode". Die geeft ze aan jou. De code werkt één keer en één dag.</Txt>
+        </Card>
+        <Card>
+          <GezinJoin onJoined={() => {
+            finishing.current = true;
+            if (!useCrumbly.getState().settings.onboarded) updateSettings({ onboarded: true });
+            router.replace('/');
+          }} />
+        </Card>
+        <Button v="ghost" label="Toch een eigen starter beginnen" onPress={() => setRoute('zelf')} />
+      </Screen>
+    );
+  }
+
   return (
-    <Screen folio="Welkom" title="Welkom bij Crumbly" sub="Drie korte vragen, dan kan je beginnen. Alles kan je later aanpassen.">
+    <Screen folio="Welkom" title="Welkom bij Crumbly" sub="Drie korte vragen, dan kan je beginnen. Alles kan je later aanpassen." right={canJoin ? <Button small v="ghost" label="Terug" onPress={() => setRoute('kiezen')} /> : undefined}>
       <Card>
         <Txt v="folio">1. Je starter</Txt>
         <Field label="Hoe heet hij?" value={shownName} onChange={setName} placeholder="bv. Jean Tuur" />
-        <Txt v="note">Deel je een starter met iemand, geef hem dan een eigen naam (bv. Jean Tuur en Jean Flore). Je kan hem later nog hernoemen.</Txt>
+        <Txt v="note">Heb je een eigen starter, los van de starter van een ander? Geef hem dan een eigen naam (bv. Jean van Louise). Werken jullie samen aan één starter, ga dan terug en kies "Ja, ik werk samen met iemand". Je kan de naam later nog veranderen.</Txt>
         <Txt v="label">Wanneer ben je gestart?</Txt>
         <Row style={st.row}>
           <Button small v="outline" label="-1 dag" onPress={() => updateStarter({ startedOn: toDayString(addDays(started, -1)) })} />
           <Txt v="bold" style={st.mid}>{fmtLongDate(started)}</Txt>
           <Button small v="outline" label="+1 dag" onPress={() => updateStarter({ startedOn: toDayString(addDays(started, 1)) })} />
         </Row>
+        <Row style={st.row}>
+          {startedOnToday ? null : <Button small v="green" label="Ik begin vandaag" onPress={() => updateStarter({ startedOn: today })} />}
+          {Platform.OS === 'web'
+            ? createElement('input', {
+                type: 'date',
+                value: starter.startedOn,
+                max: today,
+                'aria-label': 'Kies de dag waarop je startte',
+                onChange: (e: { target: { value: string } }) => { if (/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)) updateStarter({ startedOn: e.target.value }); },
+                style: { minHeight: 44, fontSize: 16, padding: '0 12px', borderRadius: 14, border: '1.5px solid #857B72', background: '#FCF9F4', color: '#2A2522', fontFamily: 'Figtree_400Regular, sans-serif' },
+              })
+            : null}
+        </Row>
+        <Txt v="note">Begon je vandaag, tik dan op "Ik begin vandaag". Anders kies je de dag waarop je jouw starter maakte.</Txt>
       </Card>
 
       <Card>

@@ -41,7 +41,7 @@ export function AuthForm() {
 /** Het volledige scherm dat je ziet zolang je niet aangemeld bent. */
 export function AanmeldScherm() {
   return (
-    <Screen folio="Crumbly" title="Meld je aan" sub="Met je account staat je starter veilig in de cloud op elk toestel, en kan je de starter van de ander zien. Zelfde account als de Recepten-app.">
+    <Screen folio="Crumbly" title="Meld je aan" sub="Met je account staat je starter veilig in de cloud op elk toestel, en kan je de starter van de ander zien. Heb je al een account voor Recepten of Tuin? Gebruik dat. Anders maak je hier een nieuw account.">
       <AuthForm />
       <Gap />
       <Txt v="note" style={st.note}>Nog geen account? Kies bovenaan "Account maken".</Txt>

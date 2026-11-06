@@ -72,7 +72,7 @@ export function StarterOverview({ now }: { now: Date }) {
       {shouldName ? (
         <View style={st.name}>
           <Txt v="note">{clash ? 'Jullie starters heten hetzelfde. Geef de jouwe een eigen naam, bv. Jean Tuur.' : 'Geef je starter een eigen naam zodat je hem kan onderscheiden, bv. Jean Tuur. Je kan dit later nog veranderen.'}</Txt>
-          <Field label="Naam van jouw starter" value={starter.name} onChange={(v) => updateStarter({ name: v })} />
+          <Field label="Naam van jouw starter" value={starter.name} onChange={(v) => updateStarter({ name: v })} onBlur={() => { if (starter.name.trim() === '') updateStarter({ name: 'Jean' }); }} />
           {naming ? <Button small v="green" label="Klaar" onPress={() => setNaming(false)} /> : null}
         </View>
       ) : generic ? (
@@ -81,7 +81,7 @@ export function StarterOverview({ now }: { now: Date }) {
         </Row>
       ) : null}
 
-      {peers.length === 0 ? (
+      {peers.length === 0 && (!household || household.role === 'geen') ? (
         <>
           <Gap />
           <Txt v="note">Werk je samen met iemand aan dezelfde starter (gezin), of wil je de starter van een ander zien? Open Delen.</Txt>

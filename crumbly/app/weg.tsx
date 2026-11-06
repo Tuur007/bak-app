@@ -61,7 +61,8 @@ function MeerdereDagen() {
   const [to, setTo] = useState<Date>(() => atTime(addDays(new Date(), 4), '18:00'));
   const [fridge, setFridge] = useState(true);
   const [mute, setMute] = useState(true);
-  const [cancelHit, setCancelHit] = useState(true);
+  // Standaard houden we de bak: wie niets kiest, verliest niets.
+  const [cancelHit, setCancelHit] = useState(false);
   const name = starter?.name ?? 'je starter';
   const valid = to.getTime() > from.getTime();
   const draft = { id: 'x', from: from.toISOString(), to: to.toISOString(), starterInFridge: fridge, muteFeedReminders: mute, updatedAt: '' };
@@ -82,7 +83,7 @@ function MeerdereDagen() {
         <Toggle value={fridge} onChange={setFridge} label={`${name} naar de koelkast`} note={`Voed ${name} een paar uur voor je vertrekt (bijvoorbeeld 1:5:5 of meer meel), laat hem wat rijzen en zet hem dan in de koelkast. Volgens bakkersblogs houdt hij het zo 2 tot 3 weken.`} />
         <Toggle value={mute} onChange={setMute} label="Geen voedingsmeldingen" note="Zolang je weg bent." />
         {hit.length > 0 ? (
-          <Toggle value={cancelHit} onChange={setCancelHit} label={`${hit.length} geplande ${hit.length === 1 ? 'bak' : 'bakken'} annuleren`} note={hit.map((b) => `${b.recipeName}, klaar ${fmtDayTime(new Date(b.endAt), now)}`).join('; ')} />
+          <Toggle value={cancelHit} onChange={setCancelHit} label={`${hit.length} geplande ${hit.length === 1 ? 'bak' : 'bakken'} annuleren`} note={`${hit.map((b) => `${b.recipeName}, klaar ${fmtDayTime(new Date(b.endAt), now)}`).join('; ')}. Staat dit uit, dan blijft de bak gepland en schuif je hem zelf.`} />
         ) : null}
       </Card>
       <Card tone="blush">

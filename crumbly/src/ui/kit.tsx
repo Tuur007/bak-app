@@ -115,13 +115,14 @@ export function Segmented<T extends string>({ options, value, onChange }: { opti
 
 // ---------------------------------------------------------------- invoer
 
-export function Field({ label, value, onChange, numeric, placeholder, multiline, secure, email, style }: { label: string; value: string; onChange: (v: string) => void; numeric?: boolean; placeholder?: string; multiline?: boolean; secure?: boolean; email?: boolean; style?: StyleProp<ViewStyle> }) {
+export function Field({ label, value, onChange, onBlur, numeric, placeholder, multiline, secure, email, style }: { label: string; value: string; onChange: (v: string) => void; onBlur?: () => void; numeric?: boolean; placeholder?: string; multiline?: boolean; secure?: boolean; email?: boolean; style?: StyleProp<ViewStyle> }) {
   return (
     <View style={[s.field, style]}>
       <Txt v="label" style={s.fieldLabel}>{label}</Txt>
       <TextInput
         value={value}
         onChangeText={onChange}
+        onBlur={onBlur}
         accessibilityLabel={label.trim() || placeholder}
         inputMode={numeric ? 'decimal' : 'text'}
         keyboardType={numeric ? 'decimal-pad' : 'default'}
@@ -134,6 +135,35 @@ export function Field({ label, value, onChange, numeric, placeholder, multiline,
         style={[s.input, multiline && s.inputMulti]}
       />
     </View>
+  );
+}
+
+/**
+ * Een getal dat je rustig kan typen: tijdens het typen blijft de tekst staan zoals jij ze schrijft (ook leeg), en een
+ * geldig getal wordt meteen bewaard. Pas bij het verlaten van het veld wordt een leeg of onmogelijk getal teruggezet
+ * naar de laatste goede waarde. (Vroeger werd elke toets meteen begrensd: wissen gaf "1" en typen "12" gaf "112".)
+ */
+export function NumberField({ label, value, onCommit, min = 0, integer, placeholder, style }: { label: string; value: number; onCommit: (n: number) => void; min?: number; integer?: boolean; placeholder?: string; style?: StyleProp<ViewStyle> }) {
+  const [text, setText] = React.useState<string | null>(null);
+  const parse = (v: string): number | null => {
+    if (v.trim() === '') return null;
+    const n = Number(v.replace(',', '.'));
+    return Number.isFinite(n) ? (integer ? Math.round(n) : n) : null;
+  };
+  return (
+    <Field
+      style={style}
+      label={label}
+      numeric
+      placeholder={placeholder}
+      value={text ?? str(value)}
+      onChange={(v) => {
+        setText(v);
+        const n = parse(v);
+        if (n !== null && n >= min) onCommit(n);
+      }}
+      onBlur={() => setText(null)}
+    />
   );
 }
 
@@ -181,7 +211,7 @@ const s = StyleSheet.create({
   chipText: { fontFamily: fonts.semi, fontSize: 14, color: colors.ink },
   chipTextOn: { color: colors.bg },
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: space(2), minHeight: 56, paddingVertical: space(1) },
-  track: { width: 52, height: 32, borderRadius: 16, backgroundColor: colors.line, padding: 4 },
+  track: { width: 52, height: 32, borderRadius: 16, backgroundColor: colors.edge, padding: 4 },
   trackOn: { backgroundColor: colors.grn },
   knob: { width: 24, height: 24, borderRadius: 12, backgroundColor: colors.card },
   knobOn: { transform: [{ translateX: 20 }] },
@@ -191,6 +221,6 @@ const s = StyleSheet.create({
   segText: { fontFamily: fonts.bold, fontSize: 14, color: colors.ink },
   field: { marginBottom: space(1) },
   fieldLabel: { marginBottom: 4 },
-  input: { minHeight: 48, borderWidth: 1.5, borderColor: colors.line, borderRadius: radius.field, backgroundColor: colors.card, paddingHorizontal: space(2), fontFamily: fonts.bold, fontSize: 18, color: colors.ink },
+  input: { minHeight: 48, borderWidth: 1.5, borderColor: colors.edge, borderRadius: radius.field, backgroundColor: colors.card, paddingHorizontal: space(2), fontFamily: fonts.bold, fontSize: 18, color: colors.ink },
   inputMulti: { minHeight: 88, paddingTop: 12, fontFamily: fonts.body, fontSize: 16, textAlignVertical: 'top' },
 });

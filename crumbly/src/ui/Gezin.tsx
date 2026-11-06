@@ -11,14 +11,48 @@ import { useCrumbly } from '../store/store';
 import { Button, Card, Field, Gap, Row, Txt } from './kit';
 import { colors, space } from './theme';
 
+/**
+ * Bij een gezin komen: gezinscode van de eigenaar en je eigen naam (die komt bij wat je noteert). Gebruikt in Instellingen,
+ * Delen en in het welkomscherm. `onJoined` loopt nadat de gegevens van het gezin zijn opgehaald.
+ */
+export function GezinJoin({ onJoined }: { onJoined?: () => void | Promise<void> }) {
+  const setHousehold = useCrumbly((s) => s.setHousehold);
+  const [code, setCode] = useState('');
+  const [name, setName] = useState('');
+  const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
+  if (!supabase) return null;
+  return (
+    <>
+      <Field label="Gezinscode van de ander" value={code} onChange={setCode} placeholder="bv. 3F9A12BC07" />
+      <Field label="Jouw naam (komt bij elke voeding die jij noteert)" value={name} onChange={setName} placeholder="bv. Louise" />
+      <Txt v="note">Je werkt dan op de gegevens van de ander: dezelfde starter, voedingen, recepten en bakken. Je eigen Crumbly-gegevens op dit toestel worden vervangen, ze blijven wel bewaard in je account.</Txt>
+      <Button small v="green" label={busy ? 'Even geduld...' : 'Ga bij het gezin'} disabled={busy || code.trim() === '' || name.trim() === ''} onPress={async () => {
+        setBusy(true); setMsg('');
+        const r = await joinHousehold(supabase!, code, name);
+        if ('error' in r) { setMsg(r.error); setBusy(false); return; }
+        setCode('');
+        setMsg('Je zit nu in het gezin. De gegevens worden opgehaald.');
+        await syncNow();
+        try {
+          const { data } = await supabase!.auth.getSession();
+          const me = data.session?.user.id;
+          if (me) setHousehold(await fetchHousehold(supabase!, me));
+        } catch { /* de laatst bekende stand blijft */ }
+        await onJoined?.();
+        setBusy(false);
+      }} />
+      {msg ? <Txt v="bold" style={{ color: colors.bor, marginVertical: space(1) }}>{msg}</Txt> : null}
+    </>
+  );
+}
+
 export function Gezin() {
   const user = useSessionEmail();
   const household = useCrumbly((s) => s.household);
   const setHousehold = useCrumbly((s) => s.setHousehold);
   const ownerName = useCrumbly((s) => s.ownerName);
   const [code, setCode] = useState<HouseholdCode | null>(null);
-  const [joinCode, setJoinCode] = useState('');
-  const [name, setName] = useState('');
   const [myName, setMyName] = useState<string | null>(null);
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
@@ -159,16 +193,7 @@ export function Gezin() {
             <>
               <Gap />
               <Txt v="label">Of ga zelf bij een gezin</Txt>
-              <Field label="Gezinscode van de eigenaar" value={joinCode} onChange={setJoinCode} placeholder="bv. 3F9A12BC07" />
-              <Field label="Jouw naam" value={name} onChange={setName} placeholder="bv. Louise" />
-              <Txt v="note">Je werkt dan op de gegevens van de eigenaar. Je eigen Crumbly-gegevens op dit toestel worden vervangen, ze blijven wel bewaard in je account.</Txt>
-              <Button small v="green" label={busy ? 'Even geduld...' : 'Ga bij het gezin'} disabled={busy || joinCode.trim() === '' || name.trim() === ''} onPress={async () => {
-                setBusy(true); setMsg('');
-                const r = await joinHousehold(supabase!, joinCode, name);
-                if ('error' in r) setMsg(r.error);
-                else { setJoinCode(''); setMsg('Je zit nu in het gezin. De gegevens worden opgehaald.'); await syncNow(); await reload(); }
-                setBusy(false);
-              }} />
+              <GezinJoin onJoined={reload} />
             </>
           ) : null}
         </>

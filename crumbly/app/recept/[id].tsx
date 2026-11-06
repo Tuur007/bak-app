@@ -58,6 +58,7 @@ export default function ReceptBewerken() {
   const draft = !existing && id === 'nieuw' ? peekRecipeDraft() : null;
   const [r, setR] = useState<Recipe>(() => (existing ? JSON.parse(JSON.stringify(existing)) as Recipe : draft ? JSON.parse(JSON.stringify(draft.recipe)) as Recipe : blank()));
   const [target, setTarget] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [showSteps, setShowSteps] = useState(!!draft);
   const [draftInfo] = useState(() => (draft ? { warnings: draft.warnings, ignored: draft.ignored } : null));
   // Het concept is overgenomen: wissen zodat een volgend "nieuw recept" niet opnieuw het concept toont.
@@ -173,7 +174,17 @@ export default function ReceptBewerken() {
       <Gap />
       <Button label="Bewaar en plan deze bak" onPress={() => save(true)} />
       <Button v="outline" label="Bewaar" onPress={() => save(false)} />
-      {existing ? <Button v="danger" label="Recept verwijderen" onPress={() => { deleteRecipe(r.id); router.back(); }} /> : null}
+      {existing && confirmDelete ? (
+        <>
+          <Txt v="bold" style={s.warn}>Dit recept verdwijnt, ook op je andere toestellen. Zeker?</Txt>
+          <Row>
+            <Button small v="danger" label="Ja, verwijder het recept" onPress={() => { deleteRecipe(r.id); router.back(); }} />
+            <Button small v="ghost" label="Nee" onPress={() => setConfirmDelete(false)} />
+          </Row>
+        </>
+      ) : existing ? (
+        <Button v="danger" label="Recept verwijderen" onPress={() => setConfirmDelete(true)} />
+      ) : null}
     </Screen>
   );
 }
@@ -192,5 +203,6 @@ const s = StyleSheet.create({
   mbNote: { marginBottom: space(1) },
   mtNote: { marginTop: 4 },
   check: { color: colors.bor, marginBottom: 4 },
+  warn: { color: colors.bor, marginVertical: space(1) },
   step: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space(1), marginTop: space(1) },
 });
