@@ -31,6 +31,8 @@ export interface CrumblyState {
   settings: Settings;
   dirty: string[];
   lastPulledAt: string | null;
+  /** Id van het laatst opgehaalde item (samen met `lastPulledAt` de cursor van het ophalen). */
+  lastPulledId: string | null;
   /** Starters van gekoppelde accounts: enkel lezen, nooit in `dirty`, nooit naar de server. */
   peers: PeerData[];
   /** Van wie de gegevens op dit toestel zijn (null = nog nooit aangemeld): mijn account, of de eigenaar van mijn gezin. */
@@ -66,7 +68,7 @@ export interface CrumblyState {
   addAway: (p: Omit<AwayPeriod, 'id' | 'updatedAt'>) => void;
   deleteAway: (id: string) => void;
   updateSettings: (patch: Partial<Settings>) => void;
-  applyRemote: (items: RemoteItem[], pulledAt: string) => void;
+  applyRemote: (items: RemoteItem[], pulledAt: string | null, lastId?: string | null) => void;
   clearDirty: (keys: string[]) => void;
   setPeers: (peers: PeerData[]) => void;
   setHousehold: (h: HouseholdState | null, ownerName?: string | null) => void;
@@ -120,6 +122,7 @@ export const useCrumbly = create<CrumblyState>()(
         settings: defaultSettings(new Date(0).toISOString()),
         dirty: [],
         lastPulledAt: null,
+        lastPulledId: null,
         peers: [],
         ownerId: null,
         household: null,
@@ -327,10 +330,15 @@ export const useCrumbly = create<CrumblyState>()(
 
         // Laatste wijziging wint (per item). Lokale wijzigingen die nog niet verstuurd
         // zijn en nieuwer zijn, blijven staan.
-        applyRemote: (items, pulledAt) =>
+        applyRemote: (items, pulledAt, lastId) =>
           set((s) => {
             mergeRemote(s, items);
-            s.lastPulledAt = pulledAt;
+            // De cursor gaat nooit achteruit (de ophaalronde begint met opzet iets vóór de cursor) en blijft staan als er
+            // enkel samengevoegd werd (pulledAt null).
+            if (pulledAt !== null && (s.lastPulledAt === null || pulledAt >= s.lastPulledAt)) {
+              s.lastPulledAt = pulledAt;
+              s.lastPulledId = lastId ?? null;
+            }
           }),
 
         setPeers: (peers) => set((s) => { s.peers = peers; }),
@@ -360,6 +368,7 @@ export const useCrumbly = create<CrumblyState>()(
             s.peers = [];
             s.household = null;
             s.lastPulledAt = null;
+            s.lastPulledId = null;
             s.seeded = true;
             s.dirty = [];
             touch(s, 'starter', s.starter.id);
@@ -395,7 +404,7 @@ export const useCrumbly = create<CrumblyState>()(
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({
         seeded: s.seeded, starter: s.starter, feeds: s.feeds, recipes: s.recipes, bakes: s.bakes,
-        away: s.away, settings: s.settings, dirty: s.dirty, lastPulledAt: s.lastPulledAt, peers: s.peers, ownerId: s.ownerId, household: s.household, ownerName: s.ownerName,
+        away: s.away, settings: s.settings, dirty: s.dirty, lastPulledAt: s.lastPulledAt, lastPulledId: s.lastPulledId, peers: s.peers, ownerId: s.ownerId, household: s.household, ownerName: s.ownerName,
       }),
     },
   ),

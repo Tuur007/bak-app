@@ -80,7 +80,8 @@ export async function syncNow(): Promise<SyncStatus> {
       itemFor: (k) => itemForKey(useCrumbly.getState(), k),
       clearDirty: (keys) => useCrumbly.getState().clearDirty(keys),
       lastPulledAt: () => useCrumbly.getState().lastPulledAt,
-      applyRemote: (items, serverTime) => useCrumbly.getState().applyRemote(items, serverTime),
+      lastPulledId: () => useCrumbly.getState().lastPulledId,
+      applyRemote: (items, serverTime, lastId) => useCrumbly.getState().applyRemote(items, serverTime, lastId),
       applyPeers: (peers) => useCrumbly.getState().setPeers(peers),
       wantedReminders: () => {
         const s = useCrumbly.getState();
