@@ -2,7 +2,7 @@
 
 De SQL-bestanden in `supabase/migrations/` zijn wat we *willen*. Of de databank ze ook heeft, controleer je in Supabase
 (project `lvxvmubvvlujjmhdqzrk`, gedeeld met Recepten, Tuin en Op reis). Stand gecontroleerd op **6 november 2026**
-(enkel gelezen, niets gewijzigd):
+(enkel gelezen, niets gewijzigd; de laatste twee migraties zijn die avond na Tuurs ok toegepast en daarna gecontroleerd):
 
 | Migratie | Inhoud | Stand |
 | --- | --- | --- |
@@ -11,8 +11,8 @@ De SQL-bestanden in `supabase/migrations/` zijn wat we *willen*. Of de databank 
 | `20261106120000_crumbly_koppelen.sql` | `bak_links`, `bak_link_codes`, `bak_create_link_code`, `bak_redeem_link_code`, `bak_get_linked` | toegepast |
 | `20261106140000_crumbly_gezin.sql` | `bak_household_members`, `bak_household_codes`, extra regels op `bak_items`, functies voor het gezin | toegepast |
 | `20261106130000_crumbly_koppelcode_blijft.sql` (staat in PR #9, nog niet in `main`) | blijvende koppelcode, `bak_my_link_code` | **niet toegepast** |
-| `20261106150000_crumbly_wekkers_betrouwbaar.sql` | herkansing en controle van wekkers, verlopen abonnementen wissen | **niet toegepast** |
-| `20261106160000_crumbly_gezin_ketting.sql` | `bak_join_household` weigert een code van iemand die zelf al in een gezin zit (geen ketting) | **niet toegepast** |
+| `20261106150000_crumbly_wekkers_betrouwbaar.sql` | herkansing en controle van wekkers, verlopen abonnementen wissen | toegepast (6 november 2026; kolommen, functies en pg_cron-taak `crumbly-wekkers-controle` staan er, beide taken lopen zonder fout). De proef met een echte melding op een toestel moet nog. |
+| `20261106160000_crumbly_gezin_ketting.sql` | `bak_join_household` weigert een code van iemand die zelf al in een gezin zit (geen ketting) | toegepast (6 november 2026) |
 
 De migraties van Supabase zelf (`list_migrations`) tonen deze niet: ze zijn via de SQL-editor uitgevoerd. Vergelijk daarom
 de objecten, niet de lijst.

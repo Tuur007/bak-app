@@ -12,8 +12,8 @@
 --    laat is. Kwam hij bij minstens een toestel aan, dan is hij bevestigd (geen dubbele meldingen).
 -- 3. Wat niet lukte, blijft zichtbaar in last_error, in plaats van te verdwijnen.
 --
--- Raakt enkel bak_*-tabellen en private-functies van Crumbly. NIET TOEGEPAST: eerst testen met
--- supabase/tests/crumbly_wekkers_betrouwbaar_test.sql (draait zichzelf terug), pas toepassen na Tuurs ok.
+-- Raakt enkel bak_*-tabellen en private-functies van Crumbly. TOEGEPAST op 6 november 2026 na Tuurs ok
+-- (gecontroleerd). Test: supabase/tests/crumbly_wekkers_betrouwbaar_test.sql (lokaal, met nagemaakte pg_net).
 
 alter table public.bak_reminders
   add column if not exists attempts integer not null default 0,
