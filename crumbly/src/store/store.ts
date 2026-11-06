@@ -335,7 +335,7 @@ export const useCrumbly = create<CrumblyState>()(
             mergeRemote(s, items);
             // De cursor gaat nooit achteruit (de ophaalronde begint met opzet iets vóór de cursor) en blijft staan als er
             // enkel samengevoegd werd (pulledAt null).
-            if (pulledAt !== null && (s.lastPulledAt === null || pulledAt >= s.lastPulledAt)) {
+            if (pulledAt !== null && (s.lastPulledAt === null || new Date(pulledAt).getTime() >= new Date(s.lastPulledAt).getTime() || Number.isNaN(new Date(pulledAt).getTime()))) {
               s.lastPulledAt = pulledAt;
               s.lastPulledId = lastId ?? null;
             }

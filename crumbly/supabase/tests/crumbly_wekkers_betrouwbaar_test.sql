@@ -121,6 +121,23 @@ begin
   r := pg_temp.rij(a, 'bak:8');
   if r.last_error <> 'te laat' or r.request_id is not null then raise exception 'te late wekker: %', r; end if;
 
+  -- 11. De app past een wekker aan (zelfde id, andere tekst of tijd) en zet daarbij enkel sent_at weer op leeg: de oude
+  --     bevestiging en poging mogen een nieuwe verzending niet blokkeren, en mislukt die, dan volgt een herkansing.
+  perform pg_temp.rem(a, 'bak:10', interval '-1 minute');
+  req := private.bak_send_due();
+  perform pg_temp.antwoord(req, 200, '{"sent":1,"failed":0,"gone":0,"goneEndpoints":[]}');
+  perform private.bak_push_check();
+  if (pg_temp.rij(a, 'bak:10')).confirmed_at is null then raise exception 'wekker 10 niet bevestigd'; end if;
+  update public.bak_reminders set sent_at = null, body = 'Nu: vouwen (aangepast)', due_at = now() - interval '1 minute' where user_id = a::uuid and id = 'bak:10';
+  req := private.bak_send_due();
+  if req is null then raise exception 'een aangepaste wekker werd niet opnieuw verstuurd'; end if;
+  r := pg_temp.rij(a, 'bak:10');
+  if r.confirmed_at is not null or r.attempts <> 1 then raise exception 'de oude bevestiging blokkeert de nieuwe verzending: %', r; end if;
+  perform pg_temp.antwoord(req, 500, 'storing');
+  perform private.bak_push_check();
+  r := pg_temp.rij(a, 'bak:10');
+  if r.sent_at is not null or r.last_error is null then raise exception 'mislukte verzending van een aangepaste wekker wordt niet herkanst: %', r; end if;
+
   -- 10. Een wekker in de toekomst wacht.
   perform pg_temp.rem(a, 'bak:9', interval '10 minutes');
   perform private.bak_send_due();

@@ -17,7 +17,7 @@ check() {
 }
 
 "${PSQL[@]}" -f shims/supabase_basis.sql >/dev/null
-for m in 20261102120000_crumbly 20261106120000_crumbly_koppelen 20261106140000_crumbly_gezin 20261106150000_crumbly_wekkers_betrouwbaar; do
+for m in 20261102120000_crumbly 20261106120000_crumbly_koppelen 20261106140000_crumbly_gezin 20261106150000_crumbly_wekkers_betrouwbaar 20261106160000_crumbly_gezin_ketting; do
   echo "== migratie: $m"
   "${PSQL[@]}" -f "../migrations/$m.sql" >/dev/null 2>&1 || { "${PSQL[@]}" -f "../migrations/$m.sql"; exit 1; }
 done
@@ -33,4 +33,5 @@ check_flags crumbly_koppelen_test.sql
 check_flags crumbly_test.sql
 check crumbly_gezin_test.sql
 check crumbly_wekkers_betrouwbaar_test.sql
+check crumbly_gezin_ketting_test.sql
 echo "Alle databanktests geslaagd."

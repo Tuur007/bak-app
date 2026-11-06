@@ -99,13 +99,16 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
 - Synchronisatie (`syncCore.ts`, regressietests `tests/sync_betrouwbaar.test.ts`): de upsert vraagt de bewaarde rij terug
   (een geweigerde oudere wijziging brengt de cloudversie mee terug), een item dat tijdens het versturen opnieuw werd
   aangepast blijft in de wachtrij, en het ophalen pagineert op (servertijd, id) met een overlap van 30 s (now() is
-  per transactie constant). De cursor is `lastPulledAt` + `lastPulledId` en gaat nooit achteruit.
+  per transactie constant). De cursor is `lastPulledAt` + `lastPulledId` en gaat nooit achteruit. Tijden altijd als
+  MOMENT vergelijken (`sameInstant`): de app stuurt `…123Z`, PostgREST geeft `…123+00:00` terug; als tekst zijn die
+  verschillend. Begrijpt de server de samengestelde `or`-cursor niet, dan valt de sync terug op `gte` (best effort).
 - Receptparser (`recipeText.ts`): onzekere stappen hebben `ProcessStep.check`; een uit tekst gemaakt recept is een
   concept (`recipeDraft.ts`) dat pas in de editor wordt bewaard. Een wachtstap zonder tijd is een wachtstap van 1 uur
   zonder wekker, nooit een handstap van 5 minuten.
 - Wekkers: de planning wist geen wekker waarvan het uur voorbij is (de server herkanst). Migratie
   `20261106150000_crumbly_wekkers_betrouwbaar.sql` (herkansing, controle van antwoorden, verlopen abonnementen wissen)
-  is nog niet toegepast. `refreshPushSubscription` herstelt een weggevallen abonnement bij het openen.
+  is nog niet toegepast (net als `20261106160000_crumbly_gezin_ketting.sql`). `refreshPushSubscription` herstelt een
+  weggevallen abonnement bij het openen.
 - Foutmeldingen in gewone taal: `src/domain/errors.ts` (netwerkfout, VPN).
 - Meldingen: `bak_push_subscriptions` + `private.bak_send_due()` (pg_cron elke minuut) ->
   `api/push/send.js` (Vercel, web-push). Zie `crumbly/docs/meldingen-instellen.md`.

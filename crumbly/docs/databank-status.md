@@ -12,6 +12,7 @@ De SQL-bestanden in `supabase/migrations/` zijn wat we *willen*. Of de databank 
 | `20261106140000_crumbly_gezin.sql` | `bak_household_members`, `bak_household_codes`, extra regels op `bak_items`, functies voor het gezin | toegepast |
 | `20261106130000_crumbly_koppelcode_blijft.sql` (staat in PR #9, nog niet in `main`) | blijvende koppelcode, `bak_my_link_code` | **niet toegepast** |
 | `20261106150000_crumbly_wekkers_betrouwbaar.sql` | herkansing en controle van wekkers, verlopen abonnementen wissen | **niet toegepast** |
+| `20261106160000_crumbly_gezin_ketting.sql` | `bak_join_household` weigert een code van iemand die zelf al in een gezin zit (geen ketting) | **niet toegepast** |
 
 De migraties van Supabase zelf (`list_migrations`) tonen deze niet: ze zijn via de SQL-editor uitgevoerd. Vergelijk daarom
 de objecten, niet de lijst.

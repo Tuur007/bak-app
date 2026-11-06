@@ -58,12 +58,15 @@ begin
   with due as (
     select r.user_id, r.id
     from public.bak_reminders r
-    where r.sent_at is null and r.due_at <= now() and r.attempts < 3
+    -- Een wekker met een oude bevestiging is door de app aangepast en opnieuw klaargezet (sent_at leeg): die telt opnieuw.
+    where r.sent_at is null and r.due_at <= now() and (r.attempts < 3 or r.confirmed_at is not null)
       and exists (select 1 from public.bak_push_subscriptions s where s.user_id = r.user_id)
     for update skip locked
   )
   update public.bak_reminders r
-  set sent_at = now(), attempts = r.attempts + 1, batch_id = v_batch, request_id = null, last_error = null
+  set sent_at = now(),
+      attempts = case when r.confirmed_at is not null then 1 else r.attempts + 1 end,
+      confirmed_at = null, batch_id = v_batch, request_id = null, last_error = null
   from due
   where r.user_id = due.user_id and r.id = due.id;
 

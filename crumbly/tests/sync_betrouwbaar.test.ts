@@ -12,14 +12,30 @@ import { defaultSettings, defaultStarter } from '../src/domain/defaults.ts';
 import type { Feed } from '../src/domain/types.ts';
 
 type Row = Record<string, unknown>;
+
+/** PostgREST geeft timestamptz terug als "2026-11-06T10:00:00.123+00:00", niet als "...123Z" zoals de app ze stuurt. */
+function asPostgrest(r: Row): Row {
+  const conv = (v: unknown): unknown => (typeof v === 'string' ? v.replace(/Z$/, '+00:00') : v);
+  return { ...r, updated_at: conv(r.updated_at), server_updated_at: conv(r.server_updated_at) };
+}
+
 class Db {
   items: Row[] = [];
   /** De 'transactietijd' van de volgende opdracht (ISO). */
   now = '2026-11-06T10:00:00.000Z';
+  /** Een server die de samengestelde `or`-cursor niet begrijpt (antwoordt met een fout). */
+  failOr = false;
   /** Wordt aangeroepen midden in een upsert (na het lezen, voor het antwoord): een gebruiker die intussen iets wijzigt. */
   duringPush: (() => void) | null = null;
   from(table: string) { return new Q(this, table); }
 }
+// Postgres vergelijkt tijden als momenten, niet als tekst: "…Z" en "…+00:00" zijn hetzelfde moment.
+const TIME_COLS = new Set(['server_updated_at', 'updated_at']);
+const cmp = (col: string, a: unknown, b: unknown): number => {
+  if (TIME_COLS.has(col)) return new Date(String(a)).getTime() - new Date(String(b)).getTime();
+  return String(a).localeCompare(String(b));
+};
+
 class Q {
   private op: 'select' | 'upsert' = 'select';
   private rows: Row[] = [];
@@ -27,35 +43,39 @@ class Q {
   private orders: string[] = [];
   private lim = Infinity;
   private returning = false;
+  private failed = false;
   constructor(private db: Db, private table: string) {}
   select() { if (this.op === 'upsert') this.returning = true; else this.op = 'select'; return this; }
   upsert(rows: Row[]) { this.op = 'upsert'; this.rows = rows; return this; }
-  eq(c: string, v: string) { this.filters.push((r) => String(r[c]) === v); return this; }
-  gt(c: string, v: string) { this.filters.push((r) => String(r[c]) > v); return this; }
+  eq(c: string, v: string) { this.filters.push((r) => cmp(c, r[c], v) === 0); return this; }
+  gte(c: string, v: string) { this.filters.push((r) => cmp(c, r[c], v) >= 0); return this; }
+  gt(c: string, v: string) { this.filters.push((r) => cmp(c, r[c], v) > 0); return this; }
   order(c: string) { this.orders.push(c); return this; }
   limit(n: number) { this.lim = n; return this; }
   is() { return this; }
   // enkel de vorm die de app gebruikt: "a.gt.X,and(a.eq.X,b.gt.Y)"
   or(expr: string) {
+    if (this.db.failOr) { this.failed = true; return this; }
     const m = expr.match(/^(\w+)\.gt\.(.+?),and\((\w+)\.eq\.(.+?),(\w+)\.gt\.(.+)\)$/);
     if (!m) throw new Error(`or-filter niet ondersteund: ${expr}`);
     const [, c1, v1, c2, v2, c3, v3] = m;
-    this.filters.push((r) => String(r[c1]) > v1 || (String(r[c2]) === v2 && String(r[c3]) > v3));
+    this.filters.push((r) => cmp(c1, r[c1], v1) > 0 || (cmp(c2, r[c2], v2) === 0 && cmp(c3, r[c3], v3) > 0));
     return this;
   }
   then(resolve: (v: { data: Row[] | null; error: { message: string } | null }) => void) { resolve(this.exec()); }
   private exec() {
     if (this.table === 'bak_reminders') return { data: [], error: null };
     if (this.table === 'bak_links') return { data: [], error: null };
+    if (this.failed) return { data: null, error: { message: 'unknown filter syntax' } };
     if (this.op === 'upsert') {
       const stored: Row[] = [];
       for (const r of this.rows) {
         const i = this.db.items.findIndex((x) => x.user_id === r.user_id && x.id === r.id);
         if (i >= 0) {
           // de trigger: een oudere wijziging verandert niets; de bestaande rij blijft staan
-          if (String(r.updated_at) >= String(this.db.items[i].updated_at)) this.db.items[i] = { ...r, server_updated_at: this.db.now };
+          if (cmp('updated_at', r.updated_at, this.db.items[i].updated_at) >= 0) this.db.items[i] = { ...r, server_updated_at: this.db.now };
         } else this.db.items.push({ ...r, server_updated_at: this.db.now });
-        stored.push({ ...this.db.items.find((x) => x.user_id === r.user_id && x.id === r.id)! });
+        stored.push(asPostgrest({ ...this.db.items.find((x) => x.user_id === r.user_id && x.id === r.id)! }));
       }
       this.db.duringPush?.();
       this.db.duringPush = null;
@@ -63,13 +83,14 @@ class Q {
     }
     let list = this.db.items.filter((r) => this.filters.every((f) => f(r)));
     list = [...list].sort((a, b) => {
-      for (const c of this.orders) { const d = String(a[c]).localeCompare(String(b[c])); if (d !== 0) return d; }
+      for (const c of this.orders) { const d = cmp(c, a[c], b[c]); if (d !== 0) return d; }
       return 0;
     });
-    return { data: list.slice(0, this.lim).map((r) => ({ id: r.id, kind: r.kind, data: r.data, updated_at: r.updated_at, server_updated_at: r.server_updated_at })), error: null };
+    return { data: list.slice(0, this.lim).map((r) => asPostgrest({ id: r.id, kind: r.kind, data: r.data, updated_at: r.updated_at, server_updated_at: r.server_updated_at })), error: null };
   }
 }
 const asClient = (db: Db): SupabaseClient => db as unknown as SupabaseClient;
+
 
 // Een toestel: lokale winkel in het klein (de echte winkel gebruikt dezelfde samenvoeging).
 class Device {
@@ -95,7 +116,7 @@ class Device {
       lastPulledId: () => this.cursorId,
       applyRemote: (items: RemoteItem[], serverTime: string | null, lastId?: string | null) => {
         mergeRemote(this.state, items);
-        if (serverTime !== null && (this.cursorAt === null || serverTime >= this.cursorAt)) { this.cursorAt = serverTime; this.cursorId = lastId ?? null; }
+        if (serverTime !== null && (this.cursorAt === null || new Date(serverTime).getTime() >= new Date(this.cursorAt).getTime())) { this.cursorAt = serverTime; this.cursorId = lastId ?? null; }
       },
       wantedReminders: () => [],
     } as SyncIO;
@@ -152,7 +173,7 @@ test('een rij die later vastgelegd wordt maar een iets oudere servertijd heeft, 
   const a = new Device();
   db.items.push({ user_id: 'u1', id: 'nieuw', kind: 'feed', data: feed('nieuw', 'B', '2026-11-06T09:59:50.000Z'), updated_at: '2026-11-06T09:59:50.000Z', server_updated_at: '2026-11-06T10:00:10.000Z' });
   await a.sync(db);
-  assert.equal(a.cursorAt, '2026-11-06T10:00:10.000Z');
+  assert.equal(new Date(a.cursorAt!).getTime(), new Date('2026-11-06T10:00:10.000Z').getTime());
   // Een transactie die om 10:00:00 begon, wordt pas na de ophaalronde vastgelegd.
   db.items.push({ user_id: 'u1', id: 'laat', kind: 'feed', data: feed('laat', 'C', '2026-11-06T09:59:55.000Z'), updated_at: '2026-11-06T09:59:55.000Z', server_updated_at: '2026-11-06T10:00:00.000Z' });
   await a.sync(db);
@@ -184,4 +205,28 @@ test('dezelfde voeding op twee toestellen: de laatste wijziging wint, op beide t
   assert.equal(a.feed('f')?.by, 'B2');
   assert.equal(b.feed('f')?.by, 'B2');
   assert.equal((db.items.find((r) => r.id === 'f')?.data as Feed).by, 'B2');
+});
+
+test('begrijpt de server de samengestelde cursor niet, dan valt de sync terug op "vanaf dezelfde servertijd" en lukt het toch', async () => {
+  const db = new Db();
+  db.failOr = true;
+  // 700 rijen met verschillende servertijden: meer dan één pagina, de tweede pagina gebruikt de samengestelde cursor.
+  for (let i = 0; i < 700; i++) {
+    const t = new Date(Date.UTC(2026, 10, 6, 9, 0, 0, i * 7)).toISOString();
+    db.items.push({ user_id: 'u1', id: `id-${String(i).padStart(5, '0')}`, kind: 'feed', data: feed(`id-${String(i).padStart(5, '0')}`, 'X', t), updated_at: t, server_updated_at: t });
+  }
+  const a = new Device();
+  await a.sync(db);
+  assert.equal(a.state.feeds.length, 700, 'alle rijen staan op het toestel, ook zonder de samengestelde cursor');
+});
+
+test('de terugval loopt niet eindeloos als een hele pagina dezelfde servertijd heeft', async () => {
+  const db = new Db();
+  db.failOr = true;
+  for (let i = 0; i < 1200; i++) {
+    db.items.push({ user_id: 'u1', id: `id-${String(i).padStart(5, '0')}`, kind: 'feed', data: feed(`id-${String(i).padStart(5, '0')}`, 'X', '2026-11-06T09:00:00.000Z'), updated_at: '2026-11-06T09:00:00.000Z', server_updated_at: '2026-11-06T09:00:00.000Z' });
+  }
+  const a = new Device();
+  const r = await a.sync(db); // moet eindigen (best effort: dit geval vraagt de samengestelde cursor)
+  assert.ok(r.pulled >= 500);
 });
