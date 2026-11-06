@@ -8,7 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { AppState, Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useSessionEmail } from '../src/services/auth';
+import { useAuthGate, useSessionEmail } from '../src/services/auth';
 import { registerServiceWorker } from '../src/services/push';
 import { supabase } from '../src/services/supabase';
 import { AanmeldScherm } from '../src/ui/AuthForm';
@@ -58,6 +58,7 @@ export default function RootLayout() {
   const hydrated = useHydrated();
   const seedIfEmpty = useCrumbly((s) => s.seedIfEmpty);
   const sessionEmail = useSessionEmail();
+  const gate = useAuthGate();
 
   useEffect(() => {
     if (hydrated) seedIfEmpty();
@@ -80,7 +81,7 @@ export default function RootLayout() {
   }, [hydrated, sessionEmail]);
 
   // Eerst aanmelden: zonder account zie je niets van de app. Zonder Supabase-gegevens (lokaal testen) geldt dit niet.
-  const checkingSession = !!supabase && sessionEmail === undefined;
+  const checkingSession = gate === 'laden';
   if (!fontsLoaded || !hydrated || checkingSession) {
     return (
       <View style={st.boot}>
@@ -88,7 +89,7 @@ export default function RootLayout() {
       </View>
     );
   }
-  if (supabase && sessionEmail === null) {
+  if (supabase && gate === 'uit') {
     return (
       <SafeAreaProvider>
         <StatusBar style="dark" />

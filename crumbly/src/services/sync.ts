@@ -42,7 +42,13 @@ export async function syncNow(): Promise<SyncStatus> {
     emit({ kind: 'uit', reason: 'Sync is niet ingesteld (geen Supabase-gegevens). Alles staat veilig op dit toestel.' });
     return lastStatus;
   }
-  const { data: sess } = await supabase.auth.getSession();
+  // getSession ververst een verlopen sessie via het netwerk en kan lang wachten: geef na 15 seconden op.
+  const result = await Promise.race([supabase.auth.getSession(), new Promise<null>((resolve) => setTimeout(() => resolve(null), 15_000))]);
+  if (!result) {
+    emit({ kind: 'fout', message: 'Geen verbinding met de server. Je gegevens blijven op dit toestel en worden later verstuurd.' });
+    return lastStatus;
+  }
+  const sess = result.data;
   if (!sess.session) {
     emit({ kind: 'uit', reason: 'Meld je aan om je gegevens te bewaren in de cloud.' });
     return lastStatus;

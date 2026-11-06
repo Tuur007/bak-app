@@ -14,6 +14,16 @@ export const supabase: SupabaseClient | null =
       })
     : null;
 
+/** Sleutel waaronder supabase-js de sessie op het toestel bewaart (zelfde regel als in de bibliotheek). */
+export const authStorageKey: string | null = (() => {
+  if (!URL) return null;
+  try {
+    return `sb-${new globalThis.URL(URL).hostname.split('.')[0]}-auth-token`;
+  } catch {
+    return null;
+  }
+})();
+
 export const VAPID_PUBLIC_KEY = process.env.EXPO_PUBLIC_VAPID_PUBLIC_KEY ?? '';
 
 /** Supabase geeft Engelse foutteksten; vertaal de gewone. */
