@@ -5,34 +5,37 @@ import { fmtDuration } from '../../src/domain/dates';
 import { newId } from '../../src/domain/ids';
 import { formatPct, recipeRatios } from '../../src/domain/ratios';
 import { parseRecipeText } from '../../src/domain/recipeText';
+import { setRecipeDraft } from '../../src/domain/recipeDraft';
 import { totalMinutes } from '../../src/domain/schedule';
-import { useCrumbly } from '../../src/store/store';
-import { Button, Card, Field, Gap, Row, Screen, Txt } from '../../src/ui/kit';
+import { Button, Card, Field, Gap, Screen, Txt } from '../../src/ui/kit';
 import { colors, space } from '../../src/ui/theme';
 
 /** Een recept plakken (of scannen) en er een bakschema van laten maken. */
 export default function ReceptPlakken() {
   const router = useRouter();
-  const saveRecipe = useCrumbly((s) => s.saveRecipe);
   const [text, setText] = useState('');
   const parsed = useMemo(() => (text.trim().length > 20 ? parseRecipeText(text) : null), [text]);
 
-  const save = (): void => {
+  // Niet bewaren: eerst nakijken en verbeteren in de editor. Pas daar bewaar je het recept.
+  const review = (): void => {
     if (!parsed) return;
-    const id = newId();
-    saveRecipe({
-      id,
-      name: parsed.name || 'Recept uit mijn boek',
-      source: 'Uit tekst gemaakt: controleer de tijden',
-      flours: parsed.flours.length > 0 ? parsed.flours : [{ id: newId(), name: 'Bloem', grams: 0 }],
-      waterG: parsed.waterG,
-      starterG: parsed.starterG,
-      starterHydration: parsed.starterHydration,
-      saltG: parsed.saltG,
-      process: parsed.process,
-      updatedAt: new Date().toISOString(),
+    setRecipeDraft({
+      recipe: {
+        id: newId(),
+        name: parsed.name || 'Recept uit mijn boek',
+        source: 'Uit tekst gemaakt',
+        flours: parsed.flours.length > 0 ? parsed.flours : [{ id: newId(), name: 'Bloem', grams: 0 }],
+        waterG: parsed.waterG,
+        starterG: parsed.starterG,
+        starterHydration: parsed.starterHydration,
+        saltG: parsed.saltG,
+        process: parsed.process,
+        updatedAt: new Date().toISOString(),
+      },
+      warnings: parsed.warnings,
+      ignored: parsed.ignored,
     });
-    router.replace(`/recept/${id}`);
+    router.push('/recept/nieuw');
   };
 
   const q = parsed ? recipeRatios({ flours: parsed.flours, waterG: parsed.waterG, starterG: parsed.starterG, starterHydration: parsed.starterHydration, saltG: parsed.saltG }) : null;
@@ -64,6 +67,7 @@ export default function ReceptPlakken() {
                 <View style={st.flex}>
                   <Txt>{s.name}</Txt>
                   <Txt v="note">{s.kind === 'wacht' ? 'wachten' : 'handwerk'}{s.tempSensitive ? ', gevoelig voor temperatuur' : ''}</Txt>
+                  {s.check ? <Txt v="note" style={st.check}>Nakijken: {s.check}</Txt> : null}
                 </View>
               </View>
             ))}
@@ -74,8 +78,8 @@ export default function ReceptPlakken() {
             {parsed.warnings.map((w) => <Txt key={w} style={st.mt}>{w}</Txt>)}
           </Card>
 
-          <Button label="Bewaar en bekijk het recept" onPress={save} />
-          <Txt v="note" style={st.center}>Je kan alles daarna nog aanpassen: tijden, volgorde en welke stap een wekker heeft.</Txt>
+          <Button label="Nakijken en verbeteren" onPress={review} />
+          <Txt v="note" style={st.center}>Er wordt nog niets bewaard. In het volgende scherm pas je ingrediënten, tijden, volgorde en wekkers aan, en bewaar je het recept zelf.</Txt>
         </>
       ) : (
         <Txt v="note">Plak eerst de tekst van je recept (minstens een paar regels).</Txt>
@@ -91,4 +95,5 @@ const st = StyleSheet.create({
   step: { flexDirection: 'row', gap: space(2), paddingVertical: space(1), borderTopWidth: 1, borderTopColor: colors.line, marginTop: space(1) },
   min: { width: 72 },
   center: { textAlign: 'center' },
+  check: { color: colors.bor },
 });

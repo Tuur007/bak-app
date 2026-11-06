@@ -3,6 +3,13 @@
 
 export type Id = string;
 
+export type StarterLocation = 'kamer' | 'koelkast';
+
+export interface LocationMove {
+  at: string;
+  location: StarterLocation;
+}
+
 export interface Starter {
   id: Id;
   name: string;
@@ -16,7 +23,11 @@ export interface Starter {
   thresholdHours: number;
   /** Zoveel keer op rij binnen de drempel = klaar om te bakken. */
   streakNeeded: number;
-  location: 'kamer' | 'koelkast';
+  location: StarterLocation;
+  /** Wanneer de starter verplaatst werd (oudste eerst). Leeg = altijd op `location` geweest. */
+  locationLog?: LocationMove[];
+  /** In de koelkast: om de hoeveel dagen voeden (standaard 7). */
+  fridgeFeedDays?: number;
   /** Vast voeduur ("18:00"): Crumbly noteert de voeding dan zelf. */
   autoFeedAt?: string;
   /** Vanaf welke dag (YYYY-MM-DD) automatisch genoteerd wordt; nooit met terugwerkende kracht daarvoor. */
@@ -37,6 +48,8 @@ export interface Feed {
   note?: string;
   /** Door Crumbly genoteerd op het vaste voeduur. */
   auto?: boolean;
+  /** Wie voedde (naam binnen het gezin), enkel als er een gezin is. */
+  by?: string;
   /** De verdubbeltijd is een schatting uit een antwoord ("binnen 6 u"). */
   peakApprox?: boolean;
   /** De gebruiker zei: niet bekeken. */
@@ -64,6 +77,8 @@ export interface ProcessStep {
   /** Duurt langer als het koeler is (bv. bulk op de aanrecht). */
   tempSensitive?: boolean;
   alarm: boolean;
+  /** Uit een tekst afgeleid en onzeker: wat de gebruiker moet nakijken. Verdwijnt zodra hij de stap aanpast. */
+  check?: string;
 }
 
 export interface Recipe {

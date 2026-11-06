@@ -47,11 +47,15 @@ export interface StoredReminder {
 }
 
 /** Wat er op de server moet veranderen: welke openstaande wekkers weg, welke nieuw of anders. */
-export function diffReminders(existing: StoredReminder[], wanted: Reminder[]): { remove: string[]; upsert: Reminder[] } {
+export function diffReminders(existing: StoredReminder[], wanted: Reminder[], now: Date = new Date()): { remove: string[]; upsert: Reminder[] } {
   const byId = new Map(existing.map((e) => [e.id, e]));
   const wantedIds = new Set(wanted.map((w) => w.id));
   // Testmeldingen (id begint met 'test:') zijn van de gebruiker en worden nooit door de planning gewist.
-  const remove = existing.filter((e) => !wantedIds.has(e.id) && !e.id.startsWith('test:')).map((e) => e.id);
+  // Een wekker waarvan het uur voorbij is, is van de server: die verstuurt hem, probeert hem opnieuw als het niet lukte of
+  // laat hem verlopen. Wissen we hem hier, dan gaat een herkansing verloren (buildReminders geeft enkel toekomstige wekkers).
+  const remove = existing
+    .filter((e) => !wantedIds.has(e.id) && !e.id.startsWith('test:') && new Date(e.due_at).getTime() > now.getTime())
+    .map((e) => e.id);
   const upsert = wanted.filter((w) => {
     const e = byId.get(w.id);
     return !e || new Date(e.due_at).getTime() !== new Date(w.dueAt).getTime() || e.title !== w.title || e.body !== w.body || e.url !== w.url;

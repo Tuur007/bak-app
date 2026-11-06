@@ -5,8 +5,8 @@
 -- bak_get_linked() aan beiden de rijen kind 'starter' en 'feed' van de ander. Recepten, bakken,
 -- foto's en instellingen blijven privé. De RLS van bak_items blijft ongewijzigd: de ander krijgt
 -- geen rechtstreekse toegang, enkel via de functie.
--- NIET TOEGEPAST: eerst testen met supabase/tests/crumbly_koppelen_test.sql (draait zichzelf
--- terug), dan pas na Tuurs ok uitvoeren.
+-- TOEGEPAST op 6 november 2026 na Tuurs ok (gecontroleerd). Test: supabase/tests/crumbly_koppelen_test.sql (draait
+-- zichzelf terug).
 
 -- 1. Koppelingen: een paar accounts, genormaliseerd (user_a < user_b) zodat ze maar eenmaal bestaan.
 create table if not exists public.bak_links (

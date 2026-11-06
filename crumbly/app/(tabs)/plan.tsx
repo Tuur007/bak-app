@@ -1,10 +1,13 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { fmtCountdown, fmtDay, fmtDayTime, fmtDuration, fmtTime, sameDay } from '../../src/domain/dates';
+import { fmtDay, fmtDayTime, fmtDuration, fmtLongDate, fmtTime, sameDay } from '../../src/domain/dates';
 import { formatPct, recipeRatios } from '../../src/domain/ratios';
 import { endOf, findFittingEnd, homeConflicts, planBackward, stepState, totalMinutes, workMinutes } from '../../src/domain/schedule';
 import { adjustForTemperature } from '../../src/domain/temperature';
+import { bakeProcess } from '../../src/domain/location';
+import { stepsToCheck } from '../../src/domain/recipeDraft';
+import { earliestBakeDay } from '../../src/domain/starter';
 import type { Bake, HomeWindow, PlannedStep, ProcessStep } from '../../src/domain/types';
 import { liveRecipes, plannedBakes, useCrumbly } from '../../src/store/store';
 import { Button, Card, Chip, Gap, Row, Screen, Txt } from '../../src/ui/kit';
@@ -122,6 +125,30 @@ function defaultEnd(process: ProcessStep[], windows: HomeWindow[], now: Date): D
   return findFittingEnd(process, noon, windows, now) ?? noon;
 }
 
+/** Is de starter op de bakdag waarschijnlijk klaar? Een schatting op basis van zijn recente verdubbelingen. */
+function StarterOnBakeDay({ end, now }: { end: Date; now: Date }) {
+  const starter = useCrumbly((s) => s.starter);
+  const feeds = useCrumbly((s) => s.feeds);
+  if (!starter) return null;
+  const earliest = earliestBakeDay(starter, feeds, now);
+  const fridge = starter.location === 'koelkast';
+  const ok = earliest === null || end.getTime() >= earliest.getTime();
+  return (
+    <Card tone={ok ? 'card' : 'blush'}>
+      <Txt v="folio">{starter.name} op je bakdag</Txt>
+      <Txt style={p.mt}>
+        {earliest === null
+          ? `${starter.name} lijkt nu al klaar. Voed hem zoals gewoonlijk tot je bakt.`
+          : ok
+            ? `Waarschijnlijk klaar: op zijn vroegst rond ${fmtLongDate(earliest)}, en je bakt later.`
+            : `Misschien nog niet klaar: op zijn vroegst rond ${fmtLongDate(earliest)}. Kies een latere dag, of kijk zelf hoe hij verdubbelt.`}
+      </Txt>
+      {fridge ? <Txt v="note" style={p.mt}>Hij staat in de koelkast. Het schema begint daarom met hem eruit te halen en te laten opwarmen.</Txt> : null}
+      <Txt v="note">Een schatting op basis van zijn laatste verdubbelingen. Jij ziet het aan {starter.name}.</Txt>
+    </Card>
+  );
+}
+
 function Planner({ initialRecipe, onDone }: { initialRecipe?: string; onDone: () => void }) {
   const router = useRouter();
   const now = useNow(60_000);
@@ -130,6 +157,7 @@ function Planner({ initialRecipe, onDone }: { initialRecipe?: string; onDone: ()
   const planBake = useCrumbly((s) => s.planBake);
   const settings = useCrumbly((s) => s.settings);
   const updateSettings = useCrumbly((s) => s.updateSettings);
+  const starter = useCrumbly((s) => s.starter);
   const [recipeId, setRecipeId] = useState<string | undefined>(initialRecipe ?? recipes[0]?.id);
   const recipe = recipes.find((r) => r.id === recipeId) ?? recipes[0];
   const [end, setEnd] = useState<Date>(() => defaultEnd(recipe?.process ?? [], windows, new Date()));
@@ -147,7 +175,9 @@ function Planner({ initialRecipe, onDone }: { initialRecipe?: string; onDone: ()
     () => (recipe ? adjustForTemperature(recipe.process, recipe.refTempC, kitchen, settings.tempDoubling) : null),
     [recipe, kitchen, settings.tempDoubling],
   );
-  const steps = useMemo(() => (recipe && adjusted ? planBackward(adjusted.process, end) : []), [recipe, adjusted, end]);
+  // Zelfde schema als bij "Plan deze bak": met de koelkaststap als de starter in de koelkast staat.
+  const process = useMemo(() => (adjusted ? bakeProcess(adjusted.process, starter) : []), [adjusted, starter]);
+  const steps = useMemo(() => (recipe ? planBackward(process, end) : []), [recipe, process, end]);
   if (!recipe) {
     return (
       <Card>
@@ -171,6 +201,14 @@ function Planner({ initialRecipe, onDone }: { initialRecipe?: string; onDone: ()
         ))}
       </Row>
       <Txt v="note" style={p.mb}>Hydratatie {formatPct(q.hydration)} · duurt {fmtDuration(totalMinutes(adjusted?.process ?? recipe.process))}</Txt>
+      {stepsToCheck(recipe) > 0 ? (
+        <Card tone="blush">
+          <Txt v="folio">Nog nakijken</Txt>
+          <Txt style={p.mt}>{stepsToCheck(recipe)} {stepsToCheck(recipe) === 1 ? 'stap' : 'stappen'} van dit recept {stepsToCheck(recipe) === 1 ? 'komt' : 'komen'} uit een tekst en {stepsToCheck(recipe) === 1 ? 'is' : 'zijn'} nog niet nagekeken. Het schema en de wekkers kunnen dan afwijken.</Txt>
+          <Gap />
+          <Row><Button small v="green" label="Recept nakijken" onPress={() => router.push(`/recept/${recipe.id}`)} /></Row>
+        </Card>
+      ) : null}
       {refTemp !== undefined && kitchen !== undefined ? (
         <>
           <Txt v="label">Temperatuur in je keuken</Txt>
@@ -195,7 +233,7 @@ function Planner({ initialRecipe, onDone }: { initialRecipe?: string; onDone: ()
       <Card tone={tooEarly || conflicts.length > 0 ? 'blush' : 'card'}>
         <Txt v="folio">Dan begin je</Txt>
         <Txt v="h2">{fmtDayTime(start, now)}</Txt>
-        <Txt v="note">met: {steps[0]?.name.toLowerCase()}</Txt>
+        <Txt v="note">met: {steps[0] ? (starter && steps[0].name.startsWith(starter.name) ? steps[0].name : steps[0].name.toLowerCase()) : ''}</Txt>
         {tooEarly ? <Txt style={p.mt}>Dat is al voorbij. Kies een later uur.</Txt> : null}
         {!tooEarly && windows.length > 0 ? (
           conflicts.length === 0 ? (
@@ -205,7 +243,7 @@ function Planner({ initialRecipe, onDone }: { initialRecipe?: string; onDone: ()
               <Txt style={p.mt}>Niet thuis bij: {conflicts.slice(0, 4).map((c) => `${c.name.toLowerCase()} (${fmtDayTime(new Date(c.startAt), now)})`).join(', ')}{conflicts.length > 4 ? ' ...' : ''}.</Txt>
               <Gap />
               <Button small v="green" label="Zoek een moment dat past" onPress={() => {
-                const fit = findFittingEnd(recipe.process, end, windows, now);
+                const fit = findFittingEnd(process, end, windows, now);
                 if (fit) { setEnd(fit); setMsg(`Gevonden: klaar ${fmtDayTime(fit, now)}.`); }
                 else setMsg('Niets gevonden binnen een week. Pas je thuis-momenten of de tijden van het recept aan.');
               }} />
@@ -214,6 +252,8 @@ function Planner({ initialRecipe, onDone }: { initialRecipe?: string; onDone: ()
         ) : null}
         {msg ? <Txt v="note" style={p.mt}>{msg}</Txt> : null}
       </Card>
+
+      {starter ? <StarterOnBakeDay end={end} now={now} /> : null}
 
       <Card style={p.list}>
         {steps.filter((s) => s.kind === 'hand').map((s) => (

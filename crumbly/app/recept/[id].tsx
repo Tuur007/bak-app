@@ -1,9 +1,10 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { batardProcess } from '../../src/domain/defaults';
 import { fmtDuration } from '../../src/domain/dates';
 import { newId } from '../../src/domain/ids';
+import { clearRecipeDraft, peekRecipeDraft, stepsToCheck } from '../../src/domain/recipeDraft';
 import { computeRatios, factorForDoughWeight, formatPct, roundGrams } from '../../src/domain/ratios';
 import { totalMinutes } from '../../src/domain/schedule';
 import type { ProcessStep, Recipe } from '../../src/domain/types';
@@ -22,6 +23,7 @@ function blank(): Recipe {
 function StepEditor({ step, onChange, onMove, onDelete }: { step: ProcessStep; onChange: (p: Partial<ProcessStep>) => void; onMove: (d: -1 | 1) => void; onDelete: () => void }) {
   return (
     <View style={s.step}>
+      {step.check ? <Txt v="bold" style={s.check}>Nakijken: {step.check}</Txt> : null}
       <Row>
         <Field style={s.flex} label="Stap" value={step.name} onChange={(v) => onChange({ name: v })} />
         <Bell on={step.alarm} onPress={() => onChange({ alarm: !step.alarm })} />
@@ -52,14 +54,21 @@ export default function ReceptBewerken() {
   const existing = useCrumbly((s) => s.recipes.find((r) => r.id === id));
   const saveRecipe = useCrumbly((s) => s.saveRecipe);
   const deleteRecipe = useCrumbly((s) => s.deleteRecipe);
-  const [r, setR] = useState<Recipe>(() => (existing ? JSON.parse(JSON.stringify(existing)) as Recipe : blank()));
+  // Een uit tekst gemaakt recept komt hier als concept binnen: nog niet bewaard, met wat nagekeken moet worden.
+  const draft = !existing && id === 'nieuw' ? peekRecipeDraft() : null;
+  const [r, setR] = useState<Recipe>(() => (existing ? JSON.parse(JSON.stringify(existing)) as Recipe : draft ? JSON.parse(JSON.stringify(draft.recipe)) as Recipe : blank()));
   const [target, setTarget] = useState('');
-  const [showSteps, setShowSteps] = useState(false);
+  const [showSteps, setShowSteps] = useState(!!draft);
+  const [draftInfo] = useState(() => (draft ? { warnings: draft.warnings, ignored: draft.ignored } : null));
+  // Het concept is overgenomen: wissen zodat een volgend "nieuw recept" niet opnieuw het concept toont.
+  useEffect(() => () => clearRecipeDraft(), []);
 
   const flourG = r.flours.reduce((a, f) => a + (f.grams || 0), 0);
   const q = useMemo(() => computeRatios({ flourG, waterG: r.waterG, starterG: r.starterG, starterHydration: r.starterHydration, saltG: r.saltG }), [flourG, r]);
   const patch = (p: Partial<Recipe>): void => setR((x) => ({ ...x, ...p }));
-  const patchStep = (i: number, p: Partial<ProcessStep>): void => setR((x) => ({ ...x, process: x.process.map((s2, j) => (j === i ? { ...s2, ...p } : s2)) }));
+  // Past de gebruiker de tijd, de soort of de naam van een onzekere stap aan, dan is die nagekeken.
+  const patchStep = (i: number, p: Partial<ProcessStep>): void =>
+    setR((x) => ({ ...x, process: x.process.map((s2, j) => (j === i ? { ...s2, ...p, ...('minutes' in p || 'kind' in p || 'name' in p ? { check: undefined } : {}) } : s2)) }));
   const moveStep = (i: number, d: -1 | 1): void =>
     setR((x) => {
       const j = i + d;
@@ -87,6 +96,20 @@ export default function ReceptBewerken() {
 
   return (
     <Screen folio={existing ? 'Recept' : 'Nieuw recept'} title={r.name || 'Recept'} right={<Button small v="ghost" label="Sluiten" onPress={() => router.back()} />}>
+      {draftInfo ? (
+        <Card tone="blush">
+          <Txt v="folio">Nog niet bewaard: kijk dit na</Txt>
+          <Txt style={s.mtNote}>Dit recept is uit je tekst gemaakt. Controleer de ingrediënten en de werkwijze hieronder en verbeter wat niet klopt. Het staat pas in je recepten als je op "Bewaar" tikt.</Txt>
+          {draftInfo.warnings.map((w) => <Txt key={w} v="note" style={s.mtNote}>{w}</Txt>)}
+          {draftInfo.ignored.length > 0 ? <Txt v="note" style={s.mtNote}>Niet herkend: {draftInfo.ignored.join('; ')}</Txt> : null}
+        </Card>
+      ) : null}
+      {!draftInfo && stepsToCheck(r) > 0 ? (
+        <Card tone="blush">
+          <Txt v="folio">Nog nakijken</Txt>
+          <Txt style={s.mtNote}>{stepsToCheck(r)} {stepsToCheck(r) === 1 ? 'stap komt' : 'stappen komen'} uit een tekst en {stepsToCheck(r) === 1 ? 'is' : 'zijn'} nog niet nagekeken. Open "Werkwijze en tijden" en pas de tijd aan, dan verdwijnt de markering.</Txt>
+        </Card>
+      ) : null}
       {existing?.isExample ? (
         <Card tone="blush"><Txt>Dit is een voorbeeld. Vul je eigen recept in (bijvoorbeeld uit Kometen Brood) en bewaar.</Txt></Card>
       ) : null}
@@ -167,5 +190,7 @@ const s = StyleSheet.create({
   stepsHead: { flexDirection: 'row', alignItems: 'center', minHeight: 44 },
   link: { color: colors.ter },
   mbNote: { marginBottom: space(1) },
+  mtNote: { marginTop: 4 },
+  check: { color: colors.bor, marginBottom: 4 },
   step: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space(1), marginTop: space(1) },
 });

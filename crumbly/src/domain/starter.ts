@@ -3,6 +3,7 @@
 // een paar uur na het voeden, meerdere keren op rij; een jonge starter heeft vaak minstens
 // 14 dagen nodig. De drempel en het aantal keer zijn instelbaar. Getest in tests/starter.test.ts.
 
+import { countsForReadiness, feedIntervalHours, locationAt } from './location';
 import { isAwayAt } from './schedule';
 import type { AwayPeriod, Feed, Starter } from './types';
 
@@ -55,7 +56,8 @@ export interface Readiness {
 export function readiness(starter: Starter, feeds: Feed[], now: Date): Readiness {
   const list = liveFeeds(feeds);
   const last = list[list.length - 1];
-  const measuredList = list.filter((f) => hoursToPeak(f) !== null);
+  // Voedingen in de koelkast en de eerste na het uithalen tellen niet mee (zie location.ts).
+  const measuredList = list.filter((f) => hoursToPeak(f) !== null && countsForReadiness(starter, f, list));
   let streak = 0;
   for (let i = measuredList.length - 1; i >= 0; i--) {
     const h = hoursToPeak(measuredList[i]);
@@ -70,7 +72,8 @@ export function readiness(starter: Starter, feeds: Feed[], now: Date): Readiness
     ready: streak >= starter.streakNeeded && age >= MIN_AGE_DAYS,
     lastHours: lastMeasured ? hoursToPeak(lastMeasured) : null,
     measured: measuredList.length,
-    waitingForPeak: !!last && !last.peakAt,
+    // In de koelkast verdubbelt hij niet echt: daar wachten we niet op.
+    waitingForPeak: !!last && !last.peakAt && locationAt(starter, last.fedAt) !== 'koelkast',
     ageDays: age,
     tooYoung: age < MIN_AGE_DAYS,
   };
@@ -85,6 +88,7 @@ export function earliestBakeDay(starter: Starter, feeds: Feed[], now: Date): Dat
   if (r.ready) return null;
   const minDay = parseDay(starter.startedOn).getTime() + MIN_AGE_DAYS * DAY;
   const missing = Math.max(0, r.needed - r.streak);
+  // Bakken doe je met een starter op kamertemperatuur: reken met dat ritme, ook als hij nu in de koelkast staat.
   const intervalDays = Math.max(1, Math.round(starter.feedIntervalHours / 24));
   const byStreak = dayStart(now) + missing * intervalDays * DAY;
   return new Date(Math.max(minDay, byStreak, dayStart(now)));
@@ -94,7 +98,7 @@ export function nextFeedDue(starter: Starter, feeds: Feed[]): Date | null {
   const list = liveFeeds(feeds);
   const last = list[list.length - 1];
   if (!last) return null;
-  return new Date(new Date(last.fedAt).getTime() + starter.feedIntervalHours * HOUR);
+  return new Date(new Date(last.fedAt).getTime() + feedIntervalHours(starter) * HOUR);
 }
 
 /** Punten voor de grafiek: de laatste n gemeten voedingen. */
@@ -132,6 +136,7 @@ export function dueAutoFeeds(starter: Starter, feeds: Feed[], away: AwayPeriod[]
     const at = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m);
     if (at.getTime() > now.getTime()) continue;
     if (isAwayAt(away, at)) continue;
+    if (locationAt(starter, at) === 'koelkast') continue;
     if (feeds.some((f) => Math.abs(new Date(f.fedAt).getTime() - at.getTime()) < 4 * HOUR)) continue;
     out.push(at.toISOString());
   }
@@ -139,8 +144,9 @@ export function dueAutoFeeds(starter: Starter, feeds: Feed[], away: AwayPeriod[]
 }
 
 /** Over welke voeding stellen we de ene vraag van de dag: de laatste die 3 tot 30 uur geleden is en nog geen antwoord heeft. */
-export function feedToAsk(feeds: Feed[], now: Date): Feed | null {
+export function feedToAsk(feeds: Feed[], now: Date, starter?: Starter): Feed | null {
   const list = liveFeeds(feeds).filter((f) => {
+    if (starter && locationAt(starter, f.fedAt) === 'koelkast') return false;
     const age = (now.getTime() - new Date(f.fedAt).getTime()) / HOUR;
     return !f.peakAt && !f.peakSkipped && age >= 3 && age <= 30;
   });

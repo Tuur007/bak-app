@@ -78,8 +78,41 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
   zouden de eigen starter overschrijven). Tabblad Starter heeft een keuze tussen eigen en gekoppelde starter
   (`PeerView`); het startscherm toont bovenaan wie welke starter heeft (`StarterOverview`, met naam kiezen en weg naar
   `app/koppelen.tsx`); de koppelcode staat in `src/ui/Koppelen.tsx` (ook in Instellingen). Een geldige code blijft bestaan (migratie
-  `20261106130000_crumbly_koppelcode_blijft.sql`): `bak_create_link_code()` geeft je bestaande code terug, enkel
-  `p_new => true` maakt een nieuwe; `bak_my_link_code()` toont ze op elk toestel. `Starter.splitFrom/splitOn` noteert waarvan je gesplitst bent.
+  `20261106130000_crumbly_koppelcode_blijft.sql`, nog niet toegepast zolang de status in `docs/databank-status.md` dat zegt):
+  `bak_create_link_code()` geeft je bestaande code terug, enkel `p_new => true` maakt een nieuwe; `bak_my_link_code()` toont
+  ze op elk toestel. `Starter.splitFrom/splitOn` noteert waarvan je gesplitst bent.
+- Koelkast of kamertemperatuur (`src/domain/location.ts`, getest): elke verplaatsing in `starter.locationLog`
+  (geen databankwijziging, gaat mee met de starter, ook naar de gekoppelde ander). In de koelkast: voeden om de
+  `fridgeFeedDays` (standaard 7) dagen, geen vraag naar verdubbeling, geen automatische voeding. Voedingen in de
+  koelkast en de eerste na het uithalen tellen niet mee voor "klaar om te bakken" (`countsForReadiness`).
+  "Ik ben weg" met de starter in de koelkast noteert de verplaatsing bij vertrek (`awayFridgeMove`); bij terugkomst
+  een herinnering op het startscherm. Een bak met de starter in de koelkast begint met "uit de koelkast halen"
+  (`bakeProcess`, ook in de voorvertoning). Bediening: `LocationControl` in `src/ui/StarterActions.tsx` (startscherm
+  en starterscherm), samen met "Gevoed" met ongedaan maken (`useFeedWithUndo`) en het logboek (`StarterLog`).
+- Gezin (samen op één starter, `bak_household_members` + `bak_household_codes`, migratie
+  `20261106140000_crumbly_gezin.sql`, test `supabase/tests/crumbly_gezin_test.sql`): een lid werkt op de rijen van de
+  eigenaar (`user_id` = eigenaar). De RLS van `bak_items` krijgt extra regels (select/insert/update voor leden, nooit
+  delete: wissen is `deleted_at`); de eigen-rijen-regel blijft. Gezinscode (eenmalig, 1 dag) via
+  `bak_create_household_code` / `bak_join_household(code, naam)`. In de app: `src/domain/household.ts`,
+  `src/services/household.ts`, `src/ui/Gezin.tsx` (scherm Delen). `sync.ts` bepaalt eerst `dataId` (eigen id of die van de
+  eigenaar); de pull filtert altijd op `user_id = dataId` (anders komen de eigen rijen van een lid door die van de
+  eigenaar, ze hebben dezelfde vaste id's). `claimForAccount(dataId)` wist het toestel bij een andere gegevensbron.
+  Wekkers en meldingen blijven per account. `Feed.by` = wie voedde (enkel met een gezin; lid: naam uit het
+  lidmaatschap, eigenaar: `user_metadata.crumbly_name`). Gekoppelde starters (`bak_links`) blijven apart en enkel kijken.
+- Synchronisatie (`syncCore.ts`, regressietests `tests/sync_betrouwbaar.test.ts`): de upsert vraagt de bewaarde rij terug
+  (een geweigerde oudere wijziging brengt de cloudversie mee terug), een item dat tijdens het versturen opnieuw werd
+  aangepast blijft in de wachtrij, en het ophalen pagineert op (servertijd, id) met een overlap van 30 s (now() is
+  per transactie constant). De cursor is `lastPulledAt` + `lastPulledId` en gaat nooit achteruit. Tijden altijd als
+  MOMENT vergelijken (`sameInstant`): de app stuurt `…123Z`, PostgREST geeft `…123+00:00` terug; als tekst zijn die
+  verschillend. Begrijpt de server de samengestelde `or`-cursor niet, dan valt de sync terug op `gte` (best effort).
+- Receptparser (`recipeText.ts`): onzekere stappen hebben `ProcessStep.check`; een uit tekst gemaakt recept is een
+  concept (`recipeDraft.ts`) dat pas in de editor wordt bewaard. Een wachtstap zonder tijd is een wachtstap van 1 uur
+  zonder wekker, nooit een handstap van 5 minuten.
+- Wekkers: de planning wist geen wekker waarvan het uur voorbij is (de server herkanst). Migratie
+  `20261106150000_crumbly_wekkers_betrouwbaar.sql` (herkansing, controle van antwoorden, verlopen abonnementen wissen)
+  staat in de databank (net als `20261106160000_crumbly_gezin_ketting.sql`, toegepast 6 november 2026); de proef met een
+  echte melding op een iPhone moet nog. `refreshPushSubscription` herstelt een weggevallen abonnement bij het openen.
+- Foutmeldingen in gewone taal: `src/domain/errors.ts` (netwerkfout, VPN).
 - Meldingen: `bak_push_subscriptions` + `private.bak_send_due()` (pg_cron elke minuut) ->
   `api/push/send.js` (Vercel, web-push). Zie `crumbly/docs/meldingen-instellen.md`.
 - Tijden altijd als absolute momenten; aftellen rekent vanaf de klok (iOS pauzeert timers).
@@ -92,7 +125,10 @@ Databank: tabellen en wekker-functie staan live (2 november 2026). Kluisgeheimen
 
 ## Testen
 `cd crumbly && npm test && npm run typecheck`. Webbouw: `npx expo export --platform web`.
-CI (`.github/workflows/ci.yml`) draait dit bij elke PR en bij een wijziging op main.
+CI (`.github/workflows/ci.yml`) draait dit bij elke PR en bij een wijziging op main, plus de databanktests
+(`crumbly/supabase/tests/run-local.sh`: lege Postgres met nagemaakte Supabase-onderdelen, alle migraties en tests).
+Welke migraties echt in de databank staan: `crumbly/docs/databank-status.md`. Nog te testen op een echte iPhone:
+`crumbly/docs/iphone-test.md`.
 
 ## Bekende grenzen
 - Niet getest op een echte iPhone (meldingen in België, beginscherm, toetsenbord).

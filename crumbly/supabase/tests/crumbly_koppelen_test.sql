@@ -1,3 +1,6 @@
+-- LET OP: draai deze test VOOR 20261106130000_crumbly_koppelcode_blijft.sql. Hij bevat zijn migratie zelf en maakt daarbij
+-- bak_create_link_code() zonder parameter opnieuw aan; naast de nieuwere versie is die functie dan dubbelzinnig.
+-- Na die migratie gebruik je crumbly_koppelcode_blijft_test.sql.
 -- Test voor de koppel-migratie. Draait in een transactie en draait zichzelf terug:
 -- plak het geheel in de SQL-editor; elke regel "ok_..." moet true zijn.
 -- De migratie staat hieronder letterlijk mee in (bij een wijziging opnieuw kopiëren).

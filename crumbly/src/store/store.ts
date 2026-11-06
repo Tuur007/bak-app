@@ -9,12 +9,14 @@ import { immer } from 'zustand/middleware/immer';
 import { defaultSettings, defaultStarter, exampleRecipe } from '../domain/defaults';
 import { newId } from '../domain/ids';
 import type { PeerData } from '../domain/peers';
+import { feederName, type HouseholdState } from '../domain/household';
 import { computeRatios } from '../domain/ratios';
 import { delayOpen, endOf, finishWaitNow, markDone, planBackward, shiftForReturn, undoDone } from '../domain/schedule';
 import { adjustForTemperature } from '../domain/temperature';
 import { dueAutoFeeds, liveFeeds } from '../domain/starter';
+import { awayFridgeMove, bakeProcess, moveStarter } from '../domain/location';
 import { mergeRemote, type Kind, type RemoteItem } from './merge';
-import type { AwayPeriod, Bake, BakeResult, Feed, PlannedStep, Recipe, Settings, Starter } from '../domain/types';
+import type { AwayPeriod, Bake, BakeResult, Feed, PlannedStep, Recipe, Settings, Starter, StarterLocation } from '../domain/types';
 
 export type { Kind, RemoteItem } from './merge';
 export const SETTINGS_ID = '00000000-0000-4000-8000-00000000c0de';
@@ -29,14 +31,25 @@ export interface CrumblyState {
   settings: Settings;
   dirty: string[];
   lastPulledAt: string | null;
+  /** Id van het laatst opgehaalde item (samen met `lastPulledAt` de cursor van het ophalen). */
+  lastPulledId: string | null;
   /** Starters van gekoppelde accounts: enkel lezen, nooit in `dirty`, nooit naar de server. */
   peers: PeerData[];
-  /** Account waarvan de gegevens op dit toestel zijn (null = nog nooit aangemeld). */
+  /** Van wie de gegevens op dit toestel zijn (null = nog nooit aangemeld): mijn account, of de eigenaar van mijn gezin. */
   ownerId: string | null;
+  /** Mijn plaats in het gezin (null = nog niet opgehaald). */
+  household: HouseholdState | null;
+  /** Mijn naam als eigenaar van een gezin (komt uit mijn account), voor 'door ...' bij een voeding. */
+  ownerName: string | null;
 
   seedIfEmpty: () => void;
   updateStarter: (patch: Partial<Starter>) => void;
-  feedNow: (at?: Date) => void;
+  /** Noteert een voeding en geeft haar id (om ongedaan te maken). */
+  feedNow: (at?: Date) => string;
+  /** Zet de starter in de koelkast of op kamertemperatuur, met het moment in het logboek. */
+  moveStarterTo: (to: StarterLocation, at?: Date) => void;
+  /** "Ik ben weg" met de starter in de koelkast: noteer dat hij bij vertrek in de koelkast ging. */
+  ensureAwayFridge: (now?: Date) => void;
   markPeak: (at?: Date) => void;
   answerPeak: (feedId: string, answer: number | 'niet-gevoed' | 'niet-gekeken') => void;
   ensureAutoFeeds: (now?: Date) => number;
@@ -55,9 +68,10 @@ export interface CrumblyState {
   addAway: (p: Omit<AwayPeriod, 'id' | 'updatedAt'>) => void;
   deleteAway: (id: string) => void;
   updateSettings: (patch: Partial<Settings>) => void;
-  applyRemote: (items: RemoteItem[], pulledAt: string) => void;
+  applyRemote: (items: RemoteItem[], pulledAt: string | null, lastId?: string | null) => void;
   clearDirty: (keys: string[]) => void;
   setPeers: (peers: PeerData[]) => void;
+  setHousehold: (h: HouseholdState | null, ownerName?: string | null) => void;
   /**
    * Koppelt de gegevens op dit toestel aan een account. Eerste aanmelding: de gegevens horen bij dat account
    * (ook wat je offline al deed). Een ander account: begin opnieuw met de startgegevens en haal alles op,
@@ -77,6 +91,7 @@ export interface BackupData {
 }
 
 const nowIso = (): string => new Date().toISOString();
+
 const key = (kind: Kind, id: string): string => `${kind}:${id}`;
 
 export const useCrumbly = create<CrumblyState>()(
@@ -107,8 +122,11 @@ export const useCrumbly = create<CrumblyState>()(
         settings: defaultSettings(new Date(0).toISOString()),
         dirty: [],
         lastPulledAt: null,
+        lastPulledId: null,
         peers: [],
         ownerId: null,
+        household: null,
+        ownerName: null,
 
         seedIfEmpty: () =>
           set((s) => {
@@ -131,12 +149,37 @@ export const useCrumbly = create<CrumblyState>()(
             touch(s, 'starter', s.starter.id);
           }),
 
-        feedNow: (at = new Date()) =>
+        feedNow: (at = new Date()) => {
+          const id = newId();
           set((s) => {
-            const f: Feed = { id: newId(), fedAt: at.toISOString(), ratio: s.starter?.defaultRatio ?? '1:5:5', updatedAt: nowIso() };
+            const by = feederName(s.household, s.ownerName);
+            const f: Feed = { id, fedAt: at.toISOString(), ratio: s.starter?.defaultRatio ?? '1:5:5', ...(by ? { by } : {}), updatedAt: nowIso() };
             s.feeds.push(f);
             touch(s, 'feed', f.id);
+          });
+          return id;
+        },
+
+        moveStarterTo: (to, at = new Date()) =>
+          set((s) => {
+            if (!s.starter) return;
+            const patch = moveStarter(s.starter, to, at);
+            if (!patch) return;
+            Object.assign(s.starter, patch, { updatedAt: nowIso() });
+            touch(s, 'starter', s.starter.id);
           }),
+
+        ensureAwayFridge: (now = new Date()) => {
+          const st = get().starter;
+          if (!st) return;
+          const patch = awayFridgeMove(st, get().away, now);
+          if (!patch) return;
+          set((s) => {
+            if (!s.starter) return;
+            Object.assign(s.starter, patch, { updatedAt: nowIso() });
+            touch(s, 'starter', s.starter.id);
+          });
+        },
 
         markPeak: (at = new Date()) =>
           set((s) => {
@@ -216,7 +259,8 @@ export const useCrumbly = create<CrumblyState>()(
           const flourG = r.flours.reduce((a, f) => a + f.grams, 0);
           const ratios = computeRatios({ flourG, waterG: r.waterG, starterG: r.starterG, starterHydration: r.starterHydration, saltG: r.saltG });
           const adjusted = adjustForTemperature(r.process, r.refTempC, kitchenTempC, get().settings.tempDoubling);
-          const steps: PlannedStep[] = planBackward(adjusted.process, end).map((p) => ({ ...p, id: newId() }));
+          const process = bakeProcess(adjusted.process, get().starter);
+          const steps: PlannedStep[] = planBackward(process, end).map((p) => ({ ...p, id: newId() }));
           const t = nowIso();
           const b: Bake = {
             id: newId(), recipeId: r.id, recipeName: r.name, hydration: ratios.hydration,
@@ -286,13 +330,24 @@ export const useCrumbly = create<CrumblyState>()(
 
         // Laatste wijziging wint (per item). Lokale wijzigingen die nog niet verstuurd
         // zijn en nieuwer zijn, blijven staan.
-        applyRemote: (items, pulledAt) =>
+        applyRemote: (items, pulledAt, lastId) =>
           set((s) => {
             mergeRemote(s, items);
-            s.lastPulledAt = pulledAt;
+            // De cursor gaat nooit achteruit (de ophaalronde begint met opzet iets vóór de cursor) en blijft staan als er
+            // enkel samengevoegd werd (pulledAt null).
+            if (pulledAt !== null && (s.lastPulledAt === null || new Date(pulledAt).getTime() >= new Date(s.lastPulledAt).getTime() || Number.isNaN(new Date(pulledAt).getTime()))) {
+              s.lastPulledAt = pulledAt;
+              s.lastPulledId = lastId ?? null;
+            }
           }),
 
         setPeers: (peers) => set((s) => { s.peers = peers; }),
+
+        setHousehold: (h, ownerName) =>
+          set((s) => {
+            s.household = h;
+            if (ownerName !== undefined) s.ownerName = ownerName;
+          }),
 
         claimForAccount: (userId) => {
           const owner = get().ownerId;
@@ -311,7 +366,9 @@ export const useCrumbly = create<CrumblyState>()(
             s.away = [];
             s.settings = defaultSettings();
             s.peers = [];
+            s.household = null;
             s.lastPulledAt = null;
+            s.lastPulledId = null;
             s.seeded = true;
             s.dirty = [];
             touch(s, 'starter', s.starter.id);
@@ -347,7 +404,7 @@ export const useCrumbly = create<CrumblyState>()(
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({
         seeded: s.seeded, starter: s.starter, feeds: s.feeds, recipes: s.recipes, bakes: s.bakes,
-        away: s.away, settings: s.settings, dirty: s.dirty, lastPulledAt: s.lastPulledAt, peers: s.peers, ownerId: s.ownerId,
+        away: s.away, settings: s.settings, dirty: s.dirty, lastPulledAt: s.lastPulledAt, lastPulledId: s.lastPulledId, peers: s.peers, ownerId: s.ownerId, household: s.household, ownerName: s.ownerName,
       }),
     },
   ),

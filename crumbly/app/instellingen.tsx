@@ -10,8 +10,9 @@ import { useSessionEmail } from '../src/services/auth';
 import { supabase } from '../src/services/supabase';
 import { getSyncStatus, onSyncStatus, syncNow, type SyncStatus } from '../src/services/sync';
 import { useCrumbly } from '../src/store/store';
+import { Gezin } from '../src/ui/Gezin';
 import { Koppelen } from '../src/ui/Koppelen';
-import { Button, Card, Field, Gap, Row, Screen, Segmented, Toggle, Txt } from '../src/ui/kit';
+import { Button, Card, Field, Gap, Row, Screen, Toggle, Txt } from '../src/ui/kit';
 import { colors, space } from '../src/ui/theme';
 import { HhmmStepper } from '../src/ui/widgets';
 
@@ -19,6 +20,7 @@ const ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 function Account() {
   const user = useSessionEmail();
+  const dirtyCount = useCrumbly((s) => s.dirty.length);
   const [sync, setSync] = useState<SyncStatus>(getSyncStatus());
   useEffect(() => onSyncStatus(setSync), []);
   if (!supabase || !user) return null;
@@ -29,6 +31,7 @@ function Account() {
       <Txt v="folio">Account en sync</Txt>
       <Txt style={st.mt}>Aangemeld als {user}.</Txt>
       <Txt v="note">{statusText}</Txt>
+      <Txt v="note">{dirtyCount === 0 ? 'Alles is verstuurd.' : `${dirtyCount} ${dirtyCount === 1 ? 'wijziging wacht' : 'wijzigingen wachten'} om verstuurd te worden.`}</Txt>
       <Gap />
       <Row>
         <Button small v="green" label="Nu synchroniseren" onPress={() => void syncNow()} />
@@ -180,6 +183,7 @@ export default function Instellingen() {
   return (
     <Screen folio="Instellingen" title="Instellingen" right={<Button small v="ghost" label="Sluiten" onPress={() => router.back()} />}>
       <Account />
+      <Gezin />
       <Koppelen />
       <Meldingen />
       <ThuisMomenten />

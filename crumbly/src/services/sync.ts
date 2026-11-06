@@ -3,8 +3,11 @@
 // (bak_reminders), die de server als melding verstuurt.
 
 import { useEffect, useState } from 'react';
+import { friendlyError, NETWORK_TEXT } from '../domain/errors';
 import { buildReminders } from '../domain/reminders';
 import { itemForKey, useCrumbly } from '../store/store';
+import { resolveDataId, type HouseholdState } from '../domain/household';
+import { fetchHousehold } from './household';
 import { supabase } from './supabase';
 import { runSync } from './syncCore';
 
@@ -45,7 +48,7 @@ export async function syncNow(): Promise<SyncStatus> {
   // getSession ververst een verlopen sessie via het netwerk en kan lang wachten: geef na 15 seconden op.
   const result = await Promise.race([supabase.auth.getSession(), new Promise<null>((resolve) => setTimeout(() => resolve(null), 15_000))]);
   if (!result) {
-    emit({ kind: 'fout', message: 'Geen verbinding met de server. Je gegevens blijven op dit toestel en worden later verstuurd.' });
+    emit({ kind: 'fout', message: NETWORK_TEXT });
     return lastStatus;
   }
   const sess = result.data;
@@ -58,20 +61,33 @@ export async function syncNow(): Promise<SyncStatus> {
   emit({ kind: 'bezig' });
   try {
     const userId = sess.session.user.id;
-    // Gegevens van een ander account op dit toestel gaan nooit mee naar dit account.
-    useCrumbly.getState().claimForAccount(userId);
+    // Op wiens gegevens werk ik: mijn eigen, of die van de eigenaar van het gezin waarvan ik lid ben. Lukt het
+    // ophalen van het gezin niet, dan blijf ik bij wat dit toestel al had (zie resolveDataId).
+    let household: HouseholdState | null = null;
+    try {
+      household = await fetchHousehold(supabase, userId);
+    } catch {
+      household = null;
+    }
+    const meta = sess.session.user.user_metadata as { crumbly_name?: unknown } | undefined;
+    const ownerName = typeof meta?.crumbly_name === 'string' ? meta.crumbly_name : null;
+    const dataId = resolveDataId(userId, household, useCrumbly.getState().ownerId);
+    // Gegevens van een ander (ook mijn eigen als ik in een gezin kom) gaan nooit door elkaar.
+    useCrumbly.getState().claimForAccount(dataId);
+    if (household) useCrumbly.getState().setHousehold(household, ownerName);
     await runSync(supabase, userId, {
       dirty: () => [...useCrumbly.getState().dirty],
       itemFor: (k) => itemForKey(useCrumbly.getState(), k),
       clearDirty: (keys) => useCrumbly.getState().clearDirty(keys),
       lastPulledAt: () => useCrumbly.getState().lastPulledAt,
-      applyRemote: (items, serverTime) => useCrumbly.getState().applyRemote(items, serverTime),
+      lastPulledId: () => useCrumbly.getState().lastPulledId,
+      applyRemote: (items, serverTime, lastId) => useCrumbly.getState().applyRemote(items, serverTime, lastId),
       applyPeers: (peers) => useCrumbly.getState().setPeers(peers),
       wantedReminders: () => {
         const s = useCrumbly.getState();
         return buildReminders({ bakes: s.bakes, feeds: s.feeds, starter: s.starter, settings: s.settings, away: s.away }, new Date());
       },
-    });
+    }, dataId);
     emit({ kind: 'ok', at: new Date().toISOString() });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
@@ -79,7 +95,7 @@ export async function syncNow(): Promise<SyncStatus> {
       kind: 'fout',
       message: isMissingTable(message)
         ? 'De tabellen voor Crumbly staan nog niet in de databank. Je gegevens blijven op dit toestel.'
-        : `Sync mislukt: ${message}`,
+        : friendlyError(message) === message ? `Synchroniseren mislukt: ${message}` : friendlyError(message),
     });
   } finally {
     running = false;

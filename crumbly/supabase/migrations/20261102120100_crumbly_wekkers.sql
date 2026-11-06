@@ -4,7 +4,8 @@
 -- Vereist twee geheimen in de kluis (Vault), NIET in de repo:
 --   bak_push_secret  hetzelfde als CRON_SECRET in Vercel (project crumbly)
 --   bak_push_url     https://<crumbly-domein>/api/push/send
--- Zie docs/meldingen-instellen.md. NIET TOEGEPAST: pas na Tuurs ok.
+-- Zie docs/meldingen-instellen.md. TOEGEPAST (gecontroleerd 6 november 2026: functie, pg_cron-taak 'crumbly-wekkers'
+-- en beide geheimen in de kluis staan er).
 
 create extension if not exists pg_net with schema extensions;
 create extension if not exists pg_cron;

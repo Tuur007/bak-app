@@ -6,6 +6,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { fmtDayTime } from '../domain/dates';
 import { peerName } from '../domain/peers';
 import { ageDays, liveFeeds, readiness } from '../domain/starter';
+import { locationLabel, locationSince } from '../domain/location';
+import { LocationControl } from './StarterActions';
 import { useCrumbly } from '../store/store';
 import { Button, Card, Field, Gap, Row, Txt } from './kit';
 import { colors, radius, space } from './theme';
@@ -24,6 +26,7 @@ export function StarterOverview({ now }: { now: Date }) {
   const feeds = useCrumbly((s) => s.feeds);
   const peers = useCrumbly((s) => s.peers);
   const updateStarter = useCrumbly((s) => s.updateStarter);
+  const household = useCrumbly((s) => s.household);
   const [naming, setNaming] = useState(false);
   if (!starter) return null;
 
@@ -42,8 +45,11 @@ export function StarterOverview({ now }: { now: Date }) {
           <Txt v="h3">{starter.name}</Txt>
           <Txt v="note">Dag {own.ageDays}. {ownFed ? `Laatst gevoed ${fmtDayTime(new Date(ownFed.fedAt), now)}.` : 'Nog niet gevoed.'}{own.ready ? ' Lijkt klaar.' : ''}</Txt>
         </View>
-        <Tag label="Van jou" tone="own" />
+        <Tag label={household?.role === 'lid' ? 'Van het gezin' : household?.role === 'eigenaar' ? 'Van het gezin' : 'Van jou'} tone="own" />
       </Pressable>
+      <View style={st.loc}>
+        <LocationControl starter={starter} now={now} compact />
+      </View>
 
       {peers.map((p) => {
         const pr = p.starter ? readiness(p.starter, p.feeds, now) : null;
@@ -54,7 +60,7 @@ export function StarterOverview({ now }: { now: Date }) {
               <Txt v="h3">{peerName(p, starter.name)}</Txt>
               <Txt v="note">
                 {p.starter && pr
-                  ? `Dag ${ageDays(p.starter.startedOn, now)}. ${last ? `Laatst gevoed ${fmtDayTime(new Date(last.fedAt), now)}.` : 'Nog niet gevoed.'}${pr.ready ? ' Lijkt klaar.' : ''}`
+                  ? `Dag ${ageDays(p.starter.startedOn, now)}. ${last ? `Laatst gevoed ${fmtDayTime(new Date(last.fedAt), now)}.` : 'Nog niet gevoed.'}${pr.ready ? ' Lijkt klaar.' : ''} Staat ${locationLabel(p.starter.location)}${locationSince(p.starter) ? ` sinds ${fmtDayTime(new Date(locationSince(p.starter) as string), now)}` : ''}.`
                   : 'Nog geen gegevens, ze verschijnen na de volgende sync.'}
               </Txt>
             </View>
@@ -78,9 +84,9 @@ export function StarterOverview({ now }: { now: Date }) {
       {peers.length === 0 ? (
         <>
           <Gap />
-          <Txt v="note">Deel je een starter met iemand? Koppel jullie accounts, dan zie je elkaars starter (enkel kijken).</Txt>
+          <Txt v="note">Werk je samen met iemand aan dezelfde starter (gezin), of wil je de starter van een ander zien? Open Delen.</Txt>
           <Row style={st.mt}>
-            <Button small v="outline" label="Koppelen" onPress={() => router.push('/koppelen')} />
+            <Button small v="outline" label="Delen" onPress={() => router.push('/koppelen')} />
           </Row>
         </>
       ) : null}
@@ -97,5 +103,6 @@ const st = StyleSheet.create({
   tagOwnText: { color: '#F6F0E6' },
   tagPeer: { backgroundColor: colors.blush },
   tagPeerText: { color: colors.ink },
+  loc: { paddingBottom: space(1) },
   name: { borderTopWidth: 1, borderTopColor: colors.line, marginTop: space(1), paddingTop: space(1) },
 });
