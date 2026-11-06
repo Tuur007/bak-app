@@ -7,7 +7,7 @@ import { feedAmounts, parseFeedRatio } from '../../src/domain/ratios';
 import { ageDays, liveFeeds, parseDay, peakSeries, readiness } from '../../src/domain/starter';
 import type { Feed } from '../../src/domain/types';
 import { useCrumbly } from '../../src/store/store';
-import { Button, Card, Field, Gap, num, Row, Screen, Segmented, str, Txt } from '../../src/ui/kit';
+import { Button, Card, Field, Gap, num, NumberField, Row, Screen, Segmented, str, Txt } from '../../src/ui/kit';
 import { PeerView } from '../../src/ui/PeerView';
 import { LocationControl, StarterLog, useFeedWithUndo } from '../../src/ui/StarterActions';
 import { DEFAULT_FRIDGE_FEED_DAYS, feedSummary } from '../../src/domain/location';
@@ -106,7 +106,7 @@ function MijnStarter({ top }: { top: ReactNode }) {
         <Gap />
         <LocationControl starter={starter} now={now} />
         <Gap />
-        <Field label="In de koelkast voeden om de (dagen)" value={str(starter.fridgeFeedDays ?? DEFAULT_FRIDGE_FEED_DAYS)} onChange={(v) => updateStarter({ fridgeFeedDays: Math.max(1, Math.round(num(v))) })} numeric />
+        <NumberField label="In de koelkast voeden om de (dagen)" value={starter.fridgeFeedDays ?? DEFAULT_FRIDGE_FEED_DAYS} min={1} integer onCommit={(n) => updateStarter({ fridgeFeedDays: n })} />
         <Txt v="note">In de koelkast komt de herinnering om te voeden niet elke dag maar om de zoveel dagen. Voedingen in de koelkast, en de eerste erna, tellen niet mee voor "klaar om te bakken".</Txt>
       </Card>
 
@@ -146,7 +146,7 @@ function MijnStarter({ top }: { top: ReactNode }) {
       <Card>
         <Txt v="folio">Over {starter.name}</Txt>
         <Gap />
-        <Field label="Naam" value={starter.name} onChange={(v) => updateStarter({ name: v })} />
+        <Field label="Naam" value={starter.name} onChange={(v) => updateStarter({ name: v })} onBlur={() => { if (starter.name.trim() === '') updateStarter({ name: 'Jean' }); }} />
         <Txt v="label">Gestart op</Txt>
         <Row style={st.mtSmall}>
           <Button small v="outline" label="-1 dag" onPress={() => updateStarter({ startedOn: toDayString(addDays(parseDay(starter.startedOn), -1)) })} />
@@ -168,10 +168,10 @@ function MijnStarter({ top }: { top: ReactNode }) {
         ) : null}
         <Gap />
         <Row>
-          <Field style={st.flex} label="Voeden om de (uur)" value={str(starter.feedIntervalHours)} onChange={(v) => updateStarter({ feedIntervalHours: Math.max(1, num(v)) })} numeric />
-          <Field style={st.flex} label="Klaar binnen (uur)" value={str(starter.thresholdHours)} onChange={(v) => updateStarter({ thresholdHours: Math.max(1, num(v)) })} numeric />
+          <NumberField style={st.flex} label="Voeden om de (uur)" value={starter.feedIntervalHours} min={1} onCommit={(n) => updateStarter({ feedIntervalHours: n })} />
+          <NumberField style={st.flex} label="Klaar binnen (uur)" value={starter.thresholdHours} min={1} onCommit={(n) => updateStarter({ thresholdHours: n })} />
         </Row>
-        <Field label="Zoveel keer op rij" value={str(starter.streakNeeded)} onChange={(v) => updateStarter({ streakNeeded: Math.max(1, Math.round(num(v))) })} numeric />
+        <NumberField label="Zoveel keer op rij" value={starter.streakNeeded} min={1} integer onCommit={(n) => updateStarter({ streakNeeded: n })} />
         <Txt v="note">"Klaar" is een schatting volgens bakkersbronnen: hij verdubbelt een paar keer op rij binnen enkele uren, en is minstens 14 dagen oud. Jij beslist.</Txt>
       </Card>
     </Screen>

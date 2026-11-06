@@ -21,8 +21,8 @@ export function PeakQuestion({ now }: { now: Date }) {
         {PEAK_ANSWERS.map((a) => <Chip key={a.hours} label={a.label} onPress={() => answerPeak(feed.id, a.hours)} />)}
       </View>
       <Row>
-        <Button small v="ghost" label="Niet gevoed" onPress={() => answerPeak(feed.id, 'niet-gevoed')} />
-        <Button small v="ghost" label="Niet bekeken" onPress={() => answerPeak(feed.id, 'niet-gekeken')} />
+        <Button small v="outline" label="Niet gevoed" onPress={() => answerPeak(feed.id, 'niet-gevoed')} />
+        <Button small v="outline" label="Niet bekeken" onPress={() => answerPeak(feed.id, 'niet-gekeken')} />
       </Row>
     </Card>
   );

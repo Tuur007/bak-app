@@ -13,6 +13,20 @@ extra die meer waarde geeft). Voor wie: zus / Tuur / Louise / allen.
 
 ---
 
+## Stand na de eerste opruimronde (6 november 2026)
+
+De kleine bevindingen zonder databankwijziging zijn opgelost in dezelfde PR: **B1** (een nieuwe starter begint vandaag,
+dus "Dag 0"), **B2** (`NumberField`: tijdens het typen blijft je tekst staan, pas bij het verlaten van het veld wordt
+een leeg of onmogelijk getal teruggezet), **B6** (een bak blijft standaard gepland bij "Ik ben weg"), **B7** (recept
+verwijderen vraagt bevestiging; *Sluiten* met niet bewaarde wijzigingen nog niet), **B9** (de knop "Gevoed" staat ook
+tijdens een bak onder de stapkaart), **B10** ("Zet in de koelkast" en "Haal uit de koelkast"), **B11** (Meldingen staan
+bovenaan in Instellingen; de vraag in het welkomscherm nog niet), **B13** (aanmeldtekst), **B14** (`mut` is
+donkerder, veldranden en lege schakelaars halen 3:1, de knoppen "Niet gevoed" en "Niet bekeken" zijn omlijnd),
+**B16** (een lege naam wordt "Jean"), **B17** (knop "Kies het back-upbestand") en **B21** ("Volgend brood").
+Niet gedaan: B3, B4, B5, B8, B12, B15, B18 tot B20, B22 en de kansen. De tekst hieronder is de stand van de audit zelf.
+
+---
+
 ## 1. Samenvatting
 
 - **Sterkst:** eerlijk over wat een schatting is, wekkers die zeggen wanneer ze niet kunnen afgaan, voeden met één tik

@@ -1,6 +1,7 @@
 // Startgegevens bij de eerste keer openen. Het voorbeeldrecept en schema zijn
 // voorbeelden: ze moeten aangepast worden aan het eigen recept.
 
+import { toDayString } from './dates';
 import { newId } from './ids';
 import type { ProcessStep, Recipe, Settings, Starter } from './types';
 
@@ -11,11 +12,12 @@ export const SEED_TIME = '1970-01-01T00:00:00.000Z';
 export const STARTER_ID = '00000000-0000-4000-8000-0000000057a7';
 export const EXAMPLE_RECIPE_ID = '00000000-0000-4000-8000-00000000ba7a';
 
-export function defaultStarter(nowIso: string = SEED_TIME): Starter {
+/** Een nieuwe starter begint vandaag: de leeftijd en de regel van 14 dagen tellen vanaf het moment dat je begint. */
+export function defaultStarter(nowIso: string = SEED_TIME, startedOn: string = toDayString(new Date())): Starter {
   return {
     id: STARTER_ID,
     name: 'Jean',
-    startedOn: '2026-10-16',
+    startedOn,
     defaultRatio: '1:5:5',
     feedIntervalHours: 24,
     thresholdHours: 6,

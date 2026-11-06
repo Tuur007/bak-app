@@ -49,7 +49,7 @@ export function LocationControl({ starter, now, compact }: { starter: Starter; n
         <Button
           small
           v={fridge ? 'green' : 'outline'}
-          label={fridge ? 'Uit de koelkast gehaald' : 'In de koelkast gezet'}
+          label={fridge ? 'Haal uit de koelkast' : 'Zet in de koelkast'}
           onPress={() => { moveStarterTo(fridge ? 'kamer' : 'koelkast'); setJustOut(fridge); }}
         />
       </Row>

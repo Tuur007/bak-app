@@ -102,3 +102,10 @@ test('de ene vraag van de dag gaat over de laatste voeding van 3 tot 30 uur gele
   assert.equal(feedToAsk([f('a', 5, { peakSkipped: true })], now), null, 'niet bekeken');
   assert.equal(feedToAsk([f('a', 5, { deletedAt: 'x' })], now), null);
 });
+
+test('een nieuwe starter begint vandaag, niet op een vaste datum uit het verleden', async () => {
+  const { defaultStarter } = await import('../src/domain/defaults');
+  const { toDayString } = await import('../src/domain/dates');
+  assert.equal(defaultStarter().startedOn, toDayString(new Date()));
+  assert.equal(defaultStarter('1970-01-01T00:00:00.000Z', '2026-10-16').startedOn, '2026-10-16');
+});

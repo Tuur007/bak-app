@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { dayName, fmtDayTime } from '../src/domain/dates';
 import type { HomeWindow } from '../src/domain/types';
-import { downloadBackup, parseBackup } from '../src/services/backup';
+import { downloadBackup, parseBackup, pickBackupFile } from '../src/services/backup';
 import { pushStatus, sendTestReminder, turnPushOff, turnPushOn, type PushStatus } from '../src/services/push';
 import { useSessionEmail } from '../src/services/auth';
 import { supabase } from '../src/services/supabase';
@@ -143,7 +143,11 @@ function BackUp() {
       <Txt v="note" style={st.mt}>Al je gegevens als een bestand: starter, recepten, bakken en broden.</Txt>
       <Gap />
       {Platform.OS === 'web' ? <Button v="outline" label="Back-up downloaden" onPress={() => downloadBackup()} /> : null}
-      <Field label="Back-up terugzetten: plak de inhoud van het bestand" value={text} onChange={(v) => { setText(v); setConfirm(false); setMsg(''); }} multiline />
+      {Platform.OS === 'web' ? <Txt v="note">Het bestand komt bij het downloaden in de Bestanden-app, in Downloads.</Txt> : null}
+      <Gap />
+      <Txt v="bold">Back-up terugzetten</Txt>
+      {Platform.OS === 'web' ? <Button small v="outline" label="Kies het back-upbestand" onPress={async () => { const t = await pickBackupFile(); if (t) { setText(t); setConfirm(false); setMsg(parseBackup(t) ? 'Bestand gelezen. Tik op "Terugzetten".' : 'Dit is geen geldige back-up van Crumbly.'); } }} /> : null}
+      <Field label="Of plak de inhoud van het bestand" value={text} onChange={(v) => { setText(v); setConfirm(false); setMsg(''); }} multiline />
       {confirm ? (
         <>
           <Txt v="bold" style={st.warn}>Dit zet de gegevens uit de back-up terug, ook in de cloud en op je andere toestellen. Wat je daarna maakte en niet in de back-up staat, blijft staan. Zeker?</Txt>
@@ -183,9 +187,9 @@ export default function Instellingen() {
   return (
     <Screen folio="Instellingen" title="Instellingen" right={<Button small v="ghost" label="Sluiten" onPress={() => router.back()} />}>
       <Account />
+      <Meldingen />
       <Gezin />
       <Koppelen />
-      <Meldingen />
       <ThuisMomenten />
       <Temperatuur />
       <Uitleg />
