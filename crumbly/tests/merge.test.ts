@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { defaultSettings, defaultStarter, exampleRecipe, EXAMPLE_RECIPE_ID, STARTER_ID } from '../src/domain/defaults.ts';
-import { mergeRemote, type MergeTarget, type RemoteItem } from '../src/store/merge.ts';
+import { mergeRemote, stampForRestore, type MergeTarget, type RemoteItem } from '../src/store/merge.ts';
 
 function freshDevice(): MergeTarget {
   // Wat een nieuw toestel aanmaakt bij de eerste opstart.
@@ -62,4 +62,30 @@ test('instellingen zonder tijd worden genegeerd', () => {
   const s = freshDevice();
   mergeRemote(s, [{ id: 'x', kind: 'settings', data: { onboarded: true }, updated_at: 'x' }]);
   assert.equal(s.settings.onboarded, undefined);
+});
+
+test('back-up terugzetten: de teruggezette gegevens winnen van nieuwere cloudgegevens', () => {
+  // De back-up is van 1 november, de cloud is intussen aangepast (3 november).
+  const backup = { starter: { ...defaultStarter('2026-11-01T10:00:00.000Z'), name: 'Jeanine' }, feeds: [{ id: 'f1', fedAt: '2026-11-01T08:00:00.000Z', ratio: '1:5:5', updatedAt: '2026-11-01T08:00:00.000Z' }], recipes: [], bakes: [], away: [], settings: defaultSettings('2026-11-01T10:00:00.000Z') };
+  const stamped = stampForRestore(backup, '2026-11-06T12:00:00.000Z');
+  assert.equal(stamped.starter?.updatedAt, '2026-11-06T12:00:00.000Z');
+  assert.equal(stamped.feeds[0].updatedAt, '2026-11-06T12:00:00.000Z');
+  assert.equal(stamped.settings.updatedAt, '2026-11-06T12:00:00.000Z');
+  // Wat er in de back-up stond verandert niet, enkel de tijd.
+  assert.equal(stamped.starter?.name, 'Jeanine');
+  // De cloud (3 november) overschrijft de teruggezette starter niet meer.
+  const device: MergeTarget = { seeded: true, starter: stamped.starter, feeds: stamped.feeds, recipes: [], bakes: [], away: [], settings: stamped.settings };
+  mergeRemote(device, [item('starter', { ...defaultStarter('2026-11-03T09:00:00.000Z'), name: 'Jeanine II' })]);
+  assert.equal(device.starter?.name, 'Jeanine', 'de nieuwere cloudversie van vóór het terugzetten wint niet');
+  // Zonder nieuwe tijd (het oude gedrag) zou de cloud wel winnen.
+  const old: MergeTarget = { seeded: true, starter: backup.starter, feeds: [], recipes: [], bakes: [], away: [], settings: backup.settings };
+  mergeRemote(old, [item('starter', { ...defaultStarter('2026-11-03T09:00:00.000Z'), name: 'Jeanine II' })]);
+  assert.equal(old.starter?.name, 'Jeanine II');
+});
+
+test('back-up terugzetten: wat verwijderd was blijft verwijderd, en een ontbrekende starter blijft ontbreken', () => {
+  const backup = { starter: null, feeds: [{ id: 'f1', fedAt: 'x', ratio: '1:5:5', updatedAt: 'a', deletedAt: '2026-11-01T09:00:00.000Z' }], recipes: [], bakes: [], away: [], settings: defaultSettings('a') };
+  const s = stampForRestore(backup, '2026-11-06T12:00:00.000Z');
+  assert.equal(s.starter, null);
+  assert.equal(s.feeds[0].deletedAt, '2026-11-01T09:00:00.000Z');
 });

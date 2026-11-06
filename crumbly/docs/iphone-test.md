@@ -1,5 +1,7 @@
 # Wat nog op een echte iPhone getest moet worden
 
+Het stappenplan om dit met twee personen te doen staat in `praktijktest-twee-iphones.md`; dit is de korte afvinklijst.
+
 Alles hieronder is in de code en met nagebootste omgevingen getest, **niet** op een echt toestel. Een wekker die niet
 afgaat is het ergste wat een bakplanner kan doen, dus loop dit eenmaal door op haar iPhone (iOS 16.4 of nieuwer), met
 Crumbly vanaf het beginscherm geopend. Zet na elke proef een vinkje.
