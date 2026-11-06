@@ -4,7 +4,7 @@
 --
 -- Koppelen (bak_links) blijft apart: dat is enkel kijken naar de starter van een ander gezin.
 -- Eigen tabellen en functies (bak_*), raakt geen tabellen van andere apps aan.
--- NIET TOEGEPAST: eerst testen met supabase/tests/crumbly_gezin_test.sql, pas toepassen na Tuurs ok.
+-- TOEGEPAST op 6 november 2026 na Tuurs ok (gecontroleerd). Test: supabase/tests/crumbly_gezin_test.sql.
 
 -- 1. Leden van het gezin van een eigenaar. Een account kan maar in één gezin lid zijn.
 create table if not exists public.bak_household_members (

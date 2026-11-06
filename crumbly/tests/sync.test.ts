@@ -135,7 +135,7 @@ test('wekkers: nieuwe erbij, verdwenen weg, ongewijzigde met rust gelaten', asyn
     { user_id: 'u1', id: 'oud', due_at: '2026-11-05T09:00:00+00:00', title: 'Bâtard', body: 'Nu: vouwen', url: '/plan', sent_at: null },
     { user_id: 'u1', id: 'verstuurd', due_at: '2026-11-01T09:00:00+00:00', title: 'Bâtard', body: 'x', url: '/plan', sent_at: '2026-11-01T09:00:10Z' },
   ];
-  await syncReminders(asClient(db), [rem('a', '2026-11-05T10:00:00.000Z'), rem('b', '2026-11-05T11:00:00.000Z')]);
+  await syncReminders(asClient(db), [rem('a', '2026-11-05T10:00:00.000Z'), rem('b', '2026-11-05T11:00:00.000Z')], new Date('2026-11-05T08:00:00Z'));
   assert.deepEqual(db.tables.bak_reminders.map((r) => r.id).sort(), ['a', 'b', 'verstuurd']);
   assert.ok(db.calls.filter((c) => c === 'upsert:bak_reminders').length === 1, 'enkel b is geschreven');
 });
@@ -186,4 +186,16 @@ test('gezin: een lid schrijft en leest op de gegevens van de eigenaar, niet op z
   assert.ok(db.tables.bak_items.some((x) => x.user_id === 'eigenaar' && x.id === 'f2'), 'geschreven bij de eigenaar');
   assert.ok(!db.tables.bak_items.some((x) => x.user_id === 'lid' && x.id === 'f2'), 'niet bij het lid zelf');
   assert.deepEqual(log.applied.map((x) => x.id).sort(), ['f1', 'f2'], 'enkel de rijen van de eigenaar komen binnen, niet x van het lid');
+});
+
+test('wekkers: een wekker waarvan het uur voorbij is, wordt door de planning niet gewist (de server probeert hem opnieuw)', async () => {
+  const db = new FakeDb();
+  const past = new Date(Date.now() - 5 * 60_000).toISOString();
+  const future = new Date(Date.now() + 60 * 60_000).toISOString();
+  db.tables.bak_reminders = [
+    { user_id: 'u1', id: 'voorbij', due_at: past, title: 'Bâtard', body: 'x', url: '/plan', sent_at: null },
+    { user_id: 'u1', id: 'verdwenen', due_at: future, title: 'Bâtard', body: 'x', url: '/plan', sent_at: null },
+  ];
+  await syncReminders(asClient(db), []);
+  assert.deepEqual(db.tables.bak_reminders.map((r) => r.id), ['voorbij'], 'enkel de toekomstige, niet meer gewenste wekker verdwijnt');
 });

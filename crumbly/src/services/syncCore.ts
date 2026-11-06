@@ -117,10 +117,10 @@ export async function runSync(client: SupabaseClient, userId: string, io: SyncIO
   return { pushed: rows.length, pulled };
 }
 
-export async function syncReminders(client: SupabaseClient, wanted: Reminder[]): Promise<void> {
+export async function syncReminders(client: SupabaseClient, wanted: Reminder[], now: Date = new Date()): Promise<void> {
   const { data, error } = await client.from('bak_reminders').select('id, due_at, title, body, url').is('sent_at', null);
   if (error) throw new Error(error.message);
-  const { remove, upsert } = diffReminders((data ?? []) as StoredReminder[], wanted.slice(0, 200));
+  const { remove, upsert } = diffReminders((data ?? []) as StoredReminder[], wanted.slice(0, 200), now);
   if (remove.length > 0) {
     const del = await client.from('bak_reminders').delete().is('sent_at', null).in('id', remove);
     if (del.error) throw new Error(del.error.message);

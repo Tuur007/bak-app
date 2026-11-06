@@ -25,5 +25,6 @@ npx expo export --platform web   # bouwt dist/
   `CRON_SECRET`.
 
 ## Databank
-Migraties in `supabase/migrations/` (nog niet toegepast). Eerst `supabase/tests/crumbly_test.sql`
-in de SQL-editor (draait zichzelf terug), dan de migraties. Meldingen: `docs/meldingen-instellen.md`.
+Migraties in `supabase/migrations/`; welke er in het echte project staan, zie `docs/databank-status.md` (met de
+leesopdrachten om dat zelf na te gaan). Eerst de test in de SQL-editor (draait zichzelf terug), dan pas de migratie.
+Meldingen: `docs/meldingen-instellen.md`. Wat nog op een echte iPhone getest moet worden: `docs/iphone-test.md`.

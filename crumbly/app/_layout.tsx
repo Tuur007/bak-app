@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 import { AppState, Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAuthGate, useSessionEmail } from '../src/services/auth';
-import { registerServiceWorker } from '../src/services/push';
+import { refreshPushSubscription, registerServiceWorker } from '../src/services/push';
 import { supabase } from '../src/services/supabase';
 import { AanmeldScherm } from '../src/ui/AuthForm';
 import { syncNow } from '../src/services/sync';
@@ -34,7 +34,10 @@ function useSyncLoop(enabled: boolean): void {
     void syncNow();
     const id = setInterval(() => void syncNow(), 120_000);
     const sub = AppState.addEventListener('change', (st) => {
-      if (st === 'active') void syncNow();
+      if (st === 'active') {
+        void syncNow();
+        void refreshPushSubscription();
+      }
     });
     const onVis = (): void => {
       if (typeof document !== 'undefined' && document.visibilityState === 'visible') void syncNow();
@@ -80,7 +83,10 @@ export default function RootLayout() {
   useSyncLoop(hydrated);
   // Net aangemeld: meteen synchroniseren, zodat je gegevens en die van de ander er zijn.
   useEffect(() => {
-    if (hydrated && typeof sessionEmail === 'string') void syncNow();
+    if (hydrated && typeof sessionEmail === 'string') {
+      void syncNow();
+      void refreshPushSubscription();
+    }
   }, [hydrated, sessionEmail]);
 
   // Eerst aanmelden: zonder account zie je niets van de app. Zonder Supabase-gegevens (lokaal testen) geldt dit niet.
