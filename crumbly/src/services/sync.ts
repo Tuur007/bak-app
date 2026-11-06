@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 import { friendlyError, NETWORK_TEXT } from '../domain/errors';
 import { buildReminders } from '../domain/reminders';
 import { itemForKey, useCrumbly } from '../store/store';
+import { resolveDataId, type HouseholdState } from '../domain/household';
+import { fetchHousehold } from './household';
 import { supabase } from './supabase';
 import { runSync } from './syncCore';
 
@@ -59,8 +61,20 @@ export async function syncNow(): Promise<SyncStatus> {
   emit({ kind: 'bezig' });
   try {
     const userId = sess.session.user.id;
-    // Gegevens van een ander account op dit toestel gaan nooit mee naar dit account.
-    useCrumbly.getState().claimForAccount(userId);
+    // Op wiens gegevens werk ik: mijn eigen, of die van de eigenaar van het gezin waarvan ik lid ben. Lukt het
+    // ophalen van het gezin niet, dan blijf ik bij wat dit toestel al had (zie resolveDataId).
+    let household: HouseholdState | null = null;
+    try {
+      household = await fetchHousehold(supabase, userId);
+    } catch {
+      household = null;
+    }
+    const meta = sess.session.user.user_metadata as { crumbly_name?: unknown } | undefined;
+    const ownerName = typeof meta?.crumbly_name === 'string' ? meta.crumbly_name : null;
+    const dataId = resolveDataId(userId, household, useCrumbly.getState().ownerId);
+    // Gegevens van een ander (ook mijn eigen als ik in een gezin kom) gaan nooit door elkaar.
+    useCrumbly.getState().claimForAccount(dataId);
+    if (household) useCrumbly.getState().setHousehold(household, ownerName);
     await runSync(supabase, userId, {
       dirty: () => [...useCrumbly.getState().dirty],
       itemFor: (k) => itemForKey(useCrumbly.getState(), k),
@@ -72,7 +86,7 @@ export async function syncNow(): Promise<SyncStatus> {
         const s = useCrumbly.getState();
         return buildReminders({ bakes: s.bakes, feeds: s.feeds, starter: s.starter, settings: s.settings, away: s.away }, new Date());
       },
-    });
+    }, dataId);
     emit({ kind: 'ok', at: new Date().toISOString() });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);

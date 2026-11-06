@@ -2,6 +2,7 @@
 // komt in `starter.locationLog`, zodat Crumbly weet welke voedingen in de koelkast gebeurden en de
 // gekoppelde ander het ook ziet. Puur en getest (tests/location.test.ts).
 
+import { formatHours, hoursToPeak } from './starter';
 import type { AwayPeriod, Feed, LocationMove, ProcessStep, Starter, StarterLocation } from './types';
 
 const HOUR = 3_600_000;
@@ -116,4 +117,11 @@ export function fridgeOutStep(name: string): ProcessStep {
 /** Het bakschema voor deze starter: met de koelkaststap ervoor als hij in de koelkast staat. */
 export function bakeProcess(process: ProcessStep[], starter: Starter | null): ProcessStep[] {
   return starter?.location === 'koelkast' ? [fridgeOutStep(starter.name), ...process] : process;
+}
+
+/** Eén regel over een voeding in het logboek: verhouding, wie, en hoe snel hij verdubbelde. */
+export function feedSummary(f: Feed): string {
+  const h = hoursToPeak(f);
+  const peak = h ? `verdubbeld ${f.peakApprox ? 'binnen' : 'na'} ${formatHours(h)}` : f.peakAt ? 'verdubbeld-tijd klopt niet, pas aan' : f.peakSkipped ? 'niet bekeken' : 'nog niet verdubbeld aangeduid';
+  return `${f.ratio}${f.auto ? ' · automatisch genoteerd' : ''}${f.by ? ` · door ${f.by}` : ''} · ${peak}`;
 }

@@ -26,6 +26,7 @@ export function StarterOverview({ now }: { now: Date }) {
   const feeds = useCrumbly((s) => s.feeds);
   const peers = useCrumbly((s) => s.peers);
   const updateStarter = useCrumbly((s) => s.updateStarter);
+  const household = useCrumbly((s) => s.household);
   const [naming, setNaming] = useState(false);
   if (!starter) return null;
 
@@ -44,7 +45,7 @@ export function StarterOverview({ now }: { now: Date }) {
           <Txt v="h3">{starter.name}</Txt>
           <Txt v="note">Dag {own.ageDays}. {ownFed ? `Laatst gevoed ${fmtDayTime(new Date(ownFed.fedAt), now)}.` : 'Nog niet gevoed.'}{own.ready ? ' Lijkt klaar.' : ''}</Txt>
         </View>
-        <Tag label="Van jou" tone="own" />
+        <Tag label={household?.role === 'lid' ? 'Van het gezin' : household?.role === 'eigenaar' ? 'Van het gezin' : 'Van jou'} tone="own" />
       </Pressable>
       <View style={st.loc}>
         <LocationControl starter={starter} now={now} compact />
@@ -83,9 +84,9 @@ export function StarterOverview({ now }: { now: Date }) {
       {peers.length === 0 ? (
         <>
           <Gap />
-          <Txt v="note">Deel je een starter met iemand? Koppel jullie accounts, dan zie je elkaars starter (enkel kijken).</Txt>
+          <Txt v="note">Werk je samen met iemand aan dezelfde starter (gezin), of wil je de starter van een ander zien? Open Delen.</Txt>
           <Row style={st.mt}>
-            <Button small v="outline" label="Koppelen" onPress={() => router.push('/koppelen')} />
+            <Button small v="outline" label="Delen" onPress={() => router.push('/koppelen')} />
           </Row>
         </>
       ) : null}

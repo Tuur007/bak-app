@@ -26,7 +26,11 @@ export interface SyncIO {
 const PAGE = 500;
 const MAX_PAGES = 20;
 
-export async function runSync(client: SupabaseClient, userId: string, io: SyncIO): Promise<{ pushed: number; pulled: number }> {
+/**
+ * `userId` is wie ik ben (voor de gekoppelde starters), `dataId` op wiens gegevens ik werk: mijn eigen, of die van de
+ * eigenaar van het gezin waarvan ik lid ben.
+ */
+export async function runSync(client: SupabaseClient, userId: string, io: SyncIO, dataId: string = userId): Promise<{ pushed: number; pulled: number }> {
   // 1. Eigen wijzigingen versturen
   const keys = io.dirty();
   const rows: (RemoteItem & { user_id: string; deleted_at: string | null })[] = [];
@@ -34,7 +38,7 @@ export async function runSync(client: SupabaseClient, userId: string, io: SyncIO
     const it = io.itemFor(k);
     if (!it) continue;
     const deleted = (it.data as { deletedAt?: string }).deletedAt ?? null;
-    rows.push({ ...it, user_id: userId, deleted_at: deleted });
+    rows.push({ ...it, user_id: dataId, deleted_at: deleted });
   }
   if (rows.length > 0) {
     const { error } = await client.from('bak_items').upsert(rows, { onConflict: 'user_id,id' });
@@ -46,7 +50,8 @@ export async function runSync(client: SupabaseClient, userId: string, io: SyncIO
   let since = io.lastPulledAt();
   let pulled = 0;
   for (let page = 0; page < MAX_PAGES; page++) {
-    let q = client.from('bak_items').select('id, kind, data, updated_at, server_updated_at').order('server_updated_at', { ascending: true }).limit(PAGE);
+    // Altijd op de eigenaar van de gegevens filteren: een lid ziet via de RLS ook zijn eigen rijen, en die mogen niet door elkaar.
+    let q = client.from('bak_items').select('id, kind, data, updated_at, server_updated_at').eq('user_id', dataId).order('server_updated_at', { ascending: true }).limit(PAGE);
     if (since) q = q.gt('server_updated_at', since);
     const { data, error } = await q;
     if (error) throw new Error(error.message);
