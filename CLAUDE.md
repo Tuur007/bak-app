@@ -78,7 +78,7 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
   zouden de eigen starter overschrijven). Tabblad Starter heeft een keuze tussen eigen en gekoppelde starter
   (`PeerView`); het startscherm toont bovenaan wie welke starter heeft (`StarterOverview`, met naam kiezen en weg naar
   `app/koppelen.tsx`); de koppelcode staat in `src/ui/Koppelen.tsx` (ook in Instellingen). Een geldige code blijft bestaan (migratie
-  `20261106130000_crumbly_koppelcode_blijft.sql`, nog niet toegepast zolang de status in `docs/databank-status.md` dat zegt):
+  `20261106130000_crumbly_koppelcode_blijft.sql`, toegepast 6 november 2026):
   `bak_create_link_code()` geeft je bestaande code terug, enkel `p_new => true` maakt een nieuwe; `bak_my_link_code()` toont
   ze op elk toestel. `Starter.splitFrom/splitOn` noteert waarvan je gesplitst bent.
 - Koelkast of kamertemperatuur (`src/domain/location.ts`, getest): elke verplaatsing in `starter.locationLog`

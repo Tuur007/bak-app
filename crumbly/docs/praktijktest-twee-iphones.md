@@ -64,7 +64,7 @@ Gaat een melding niet af? Zeg het meteen aan Claude of Tuur met het uur: de data
 2. B: Delen, onder "Koppelen met een ander account" de code invullen, **Koppel**. Daarna zien beiden de starter van de ander op het startscherm, met "Gekoppeld, enkel kijken".
 3. B voedt: A ziet de nieuwe voeding binnen twee minuten, maar kan niets aan haar starter aanpassen. En omgekeerd.
 4. Probeer als A je **eigen** code in te vullen: de app legt uit dat die voor de ander is.
-5. Op beide telefoons: de code opnieuw openen toont dezelfde code (de blijvende koppelcode). **Let op:** dit werkt pas nadat de SQL van die migratie in Supabase staat (`databank-status.md`).
+5. Op beide telefoons: de code opnieuw openen toont dezelfde code (de blijvende koppelcode). (De SQL daarvoor staat sinds 6 november 2026 in Supabase.)
    - [ ] gekoppeld  - [ ] zien elkaars voeding  - [ ] niets aan te passen bij de ander
 
 ## Blok 7: samen op één starter, een gezin (A en Louise)
