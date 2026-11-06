@@ -31,6 +31,8 @@ export interface CrumblyState {
   lastPulledAt: string | null;
   /** Starters van gekoppelde accounts: enkel lezen, nooit in `dirty`, nooit naar de server. */
   peers: PeerData[];
+  /** Account waarvan de gegevens op dit toestel zijn (null = nog nooit aangemeld). */
+  ownerId: string | null;
 
   seedIfEmpty: () => void;
   updateStarter: (patch: Partial<Starter>) => void;
@@ -56,6 +58,12 @@ export interface CrumblyState {
   applyRemote: (items: RemoteItem[], pulledAt: string) => void;
   clearDirty: (keys: string[]) => void;
   setPeers: (peers: PeerData[]) => void;
+  /**
+   * Koppelt de gegevens op dit toestel aan een account. Eerste aanmelding: de gegevens horen bij dat account
+   * (ook wat je offline al deed). Een ander account: begin opnieuw met de startgegevens en haal alles op,
+   * zodat de gegevens van het ene account nooit bij het andere terechtkomen. Geeft true als er opnieuw begonnen werd.
+   */
+  claimForAccount: (userId: string) => boolean;
   replaceAll: (data: BackupData) => void;
 }
 
@@ -100,6 +108,7 @@ export const useCrumbly = create<CrumblyState>()(
         dirty: [],
         lastPulledAt: null,
         peers: [],
+        ownerId: null,
 
         seedIfEmpty: () =>
           set((s) => {
@@ -285,6 +294,33 @@ export const useCrumbly = create<CrumblyState>()(
 
         setPeers: (peers) => set((s) => { s.peers = peers; }),
 
+        claimForAccount: (userId) => {
+          const owner = get().ownerId;
+          if (owner === userId) return false;
+          if (owner === null) {
+            set((s) => { s.ownerId = userId; });
+            return false;
+          }
+          set((s) => {
+            s.ownerId = userId;
+            s.starter = defaultStarter();
+            s.feeds = [];
+            const r = exampleRecipe();
+            s.recipes = [r];
+            s.bakes = [];
+            s.away = [];
+            s.settings = defaultSettings();
+            s.peers = [];
+            s.lastPulledAt = null;
+            s.seeded = true;
+            s.dirty = [];
+            touch(s, 'starter', s.starter.id);
+            touch(s, 'recipe', r.id);
+            touch(s, 'settings', SETTINGS_ID);
+          });
+          return true;
+        },
+
         clearDirty: (keys) => set((s) => { s.dirty = s.dirty.filter((k) => !keys.includes(k)); }),
 
         replaceAll: (data) =>
@@ -311,7 +347,7 @@ export const useCrumbly = create<CrumblyState>()(
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({
         seeded: s.seeded, starter: s.starter, feeds: s.feeds, recipes: s.recipes, bakes: s.bakes,
-        away: s.away, settings: s.settings, dirty: s.dirty, lastPulledAt: s.lastPulledAt, peers: s.peers,
+        away: s.away, settings: s.settings, dirty: s.dirty, lastPulledAt: s.lastPulledAt, peers: s.peers, ownerId: s.ownerId,
       }),
     },
   ),

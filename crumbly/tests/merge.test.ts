@@ -17,7 +17,7 @@ test('tweede toestel: echte starter, instellingen en recept uit de cloud winnen 
   const realRecipe = { ...exampleRecipe('2026-11-02T10:00:00.000Z'), name: 'Bâtard uit Kometen Brood', isExample: false };
   mergeRemote(s, [
     item('starter', realStarter),
-    item('settings', { ...realSettings, id: '00000000-0000-4000-8000-00000000c0de' }),
+    { id: '00000000-0000-4000-8000-00000000c0de', kind: 'settings', data: realSettings, updated_at: realSettings.updatedAt },
     item('recipe', realRecipe),
   ]);
   assert.equal(s.starter?.thresholdHours, 5);
@@ -47,4 +47,19 @@ test('rommel uit de cloud wordt genegeerd', () => {
   const s = freshDevice();
   const n = mergeRemote(s, [{ id: 'x', kind: 'feed', data: null, updated_at: '' }, { id: 'y', kind: 'bake', data: { nope: 1 }, updated_at: '' }]);
   assert.equal(n, 0);
+});
+
+test('instellingen uit de cloud (zonder id in de gegevens, zoals in de databank) komen binnen: welkom niet opnieuw', () => {
+  const s = freshDevice();
+  assert.equal(s.settings.onboarded, undefined);
+  // Zo staan de instellingen echt in bak_items.data: geen id, wel updatedAt.
+  const cloud = { homeWindows: [], feedReminder: false, onboarded: true, updatedAt: '2026-11-06T07:10:54.306Z' };
+  mergeRemote(s, [{ id: '00000000-0000-4000-8000-00000000c0de', kind: 'settings', data: cloud, updated_at: cloud.updatedAt }]);
+  assert.equal(s.settings.onboarded, true);
+});
+
+test('instellingen zonder tijd worden genegeerd', () => {
+  const s = freshDevice();
+  mergeRemote(s, [{ id: 'x', kind: 'settings', data: { onboarded: true }, updated_at: 'x' }]);
+  assert.equal(s.settings.onboarded, undefined);
 });

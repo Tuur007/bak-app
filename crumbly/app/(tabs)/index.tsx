@@ -40,6 +40,14 @@ export default function Vandaag() {
   }, [needsWelcome, router]);
 
   if (!starter) return <Screen title="Crumbly"><Txt>Even geduld...</Txt></Screen>;
+  // Net aangemeld op dit toestel: wacht op je gegevens uit de cloud, anders zie je even de startgegevens ("Jean").
+  if (typeof sessionEmail === 'string' && lastPulledAt === null && sync.kind !== 'fout') {
+    return (
+      <Screen folio="Crumbly" title="Je gegevens ophalen">
+        <Txt>Even geduld, je starter en recepten komen eraan.</Txt>
+      </Screen>
+    );
+  }
 
   const r = readiness(starter, feeds, now);
   const earliest = earliestBakeDay(starter, feeds, now);

@@ -35,7 +35,11 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
 - `src/store/store.ts`: lokaal de bron van waarheid (werkt offline). Wijzigingen in `dirty`.
   Startgegevens (Jean, voorbeeldrecept, instellingen) hebben vaste id's en tijd 1970
   (`src/domain/defaults.ts`), zodat echte gegevens uit de cloud altijd winnen op een nieuw toestel.
-  Samenvoegen is puur: `src/store/merge.ts` (getest).
+  Samenvoegen is puur: `src/store/merge.ts` (getest). Let op: de instellingen hebben geen `id` in hun gegevens;
+  ze worden enkel op `updatedAt` vergeleken (vroeger vielen ze weg, waardoor het welkomscherm telkens terugkwam).
+  `ownerId`: de gegevens op het toestel horen bij één account; meldt een ander account zich aan, dan begint de
+  app opnieuw met de startgegevens (`claimForAccount`, in `sync.ts`). Het welkomscherm schrijft enkel wat je
+  echt aanpaste en verdwijnt zodra `onboarded` uit de cloud binnenkomt.
   Selecteer in componenten de ruwe lijst (`s.bakes`) en filter daarna: een selector die
   telkens een nieuwe lijst geeft, laat zustand eindeloos hertekenen.
 - `src/services/sync.ts`: upsert naar `bak_items` (sleutel user_id+id), ophalen op

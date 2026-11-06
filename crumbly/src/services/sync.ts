@@ -58,6 +58,8 @@ export async function syncNow(): Promise<SyncStatus> {
   emit({ kind: 'bezig' });
   try {
     const userId = sess.session.user.id;
+    // Gegevens van een ander account op dit toestel gaan nooit mee naar dit account.
+    useCrumbly.getState().claimForAccount(userId);
     await runSync(supabase, userId, {
       dirty: () => [...useCrumbly.getState().dirty],
       itemFor: (k) => itemForKey(useCrumbly.getState(), k),
