@@ -1,8 +1,8 @@
 -- Crumbly: geen ketting van gezinnen. Een gezinscode die iemand maakte VOOR hij zelf lid werd van een ander gezin, bleef
 -- tot een dag geldig. Wie zo'n code gebruikte, kwam dan in het gezin van iemand die zelf al lid is: A is lid van B en
 -- C wordt lid van A, terwijl niemand op de gegevens van A werkt. Nu weigert bak_join_household zo'n code.
--- Verder identiek aan 20261106140000_crumbly_gezin.sql. Raakt enkel bak_*. NIET TOEGEPAST: eerst testen met
--- supabase/tests/crumbly_gezin_ketting_test.sql, pas toepassen na Tuurs ok.
+-- Verder identiek aan 20261106140000_crumbly_gezin.sql. Raakt enkel bak_*. TOEGEPAST op 6 november 2026 na Tuurs ok
+-- (gecontroleerd). Test: supabase/tests/crumbly_gezin_ketting_test.sql.
 
 create or replace function public.bak_join_household(p_code text, p_name text)
 returns void

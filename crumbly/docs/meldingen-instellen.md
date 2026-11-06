@@ -11,7 +11,7 @@ de uren staan altijd in het bakplan.
 3. De route verstuurt de melding naar elk toestel van die gebruiker (web-push).
 Een melding kan een paar minuten later komen. Wat meer dan 30 minuten te laat is, vervalt.
 
-**Betrouwbaarheid** (migratie `20261106150000_crumbly_wekkers_betrouwbaar.sql`, na toepassen): de database leest elke minuut de
+**Betrouwbaarheid** (migratie `20261106150000_crumbly_wekkers_betrouwbaar.sql`, toegepast op 6 november 2026): de database leest elke minuut de
 antwoorden van de route (`private.bak_push_check()`, taak `crumbly-wekkers-controle`). Verlopen abonnementen (404/410) worden gewist.
 Kwam er niets aan (fout, time-out, geen antwoord), dan volgt een nieuwe poging, hoogstens 3, zolang de wekker niet meer dan 30
 minuten te laat is. Kwam hij bij minstens één toestel aan, dan is hij bevestigd en volgt er geen herhaling (geen dubbele meldingen).

@@ -107,8 +107,8 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
   zonder wekker, nooit een handstap van 5 minuten.
 - Wekkers: de planning wist geen wekker waarvan het uur voorbij is (de server herkanst). Migratie
   `20261106150000_crumbly_wekkers_betrouwbaar.sql` (herkansing, controle van antwoorden, verlopen abonnementen wissen)
-  is nog niet toegepast (net als `20261106160000_crumbly_gezin_ketting.sql`). `refreshPushSubscription` herstelt een
-  weggevallen abonnement bij het openen.
+  staat in de databank (net als `20261106160000_crumbly_gezin_ketting.sql`, toegepast 6 november 2026); de proef met een
+  echte melding op een iPhone moet nog. `refreshPushSubscription` herstelt een weggevallen abonnement bij het openen.
 - Foutmeldingen in gewone taal: `src/domain/errors.ts` (netwerkfout, VPN).
 - Meldingen: `bak_push_subscriptions` + `private.bak_send_due()` (pg_cron elke minuut) ->
   `api/push/send.js` (Vercel, web-push). Zie `crumbly/docs/meldingen-instellen.md`.
