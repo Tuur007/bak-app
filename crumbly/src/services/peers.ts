@@ -14,10 +14,32 @@ export async function fetchPeers(client: SupabaseClient, me: string, now: Date =
   return buildPeers(list, (rows.data ?? []) as LinkedRow[], me, now.toISOString());
 }
 
-export async function createLinkCode(client: SupabaseClient): Promise<{ code: string } | { error: string }> {
-  const { data, error } = await client.rpc('bak_create_link_code');
+/**
+ * Je koppelcode. Bestaat er nog een geldige, ongebruikte code, dan krijg je die terug (ook op een ander
+ * toestel van hetzelfde account). Met `fresh` komt er een nieuwe en vervalt de oude.
+ */
+export async function createLinkCode(client: SupabaseClient, fresh = false): Promise<{ code: string } | { error: string }> {
+  const { data, error } = fresh ? await client.rpc('bak_create_link_code', { p_new: true }) : await client.rpc('bak_create_link_code');
   if (error) return { error: linkErrorText(error.message) };
   return { code: String(data) };
+}
+
+export interface MyLinkCode {
+  code: string;
+  expiresAt: string;
+}
+
+/** Je geldige, ongebruikte koppelcode, of null. Fouten (bv. oudere databank) tellen als "geen code". */
+export async function myLinkCode(client: SupabaseClient): Promise<MyLinkCode | null> {
+  try {
+    const { data, error } = await client.rpc('bak_my_link_code');
+    if (error) return null;
+    const row = (Array.isArray(data) ? data[0] : data) as { code?: unknown; expires_at?: unknown } | null | undefined;
+    if (!row || typeof row.code !== 'string' || typeof row.expires_at !== 'string') return null;
+    return { code: row.code, expiresAt: row.expires_at };
+  } catch {
+    return null;
+  }
 }
 
 export async function redeemLinkCode(client: SupabaseClient, code: string): Promise<{ ok: true } | { error: string }> {

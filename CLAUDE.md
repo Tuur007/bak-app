@@ -77,7 +77,10 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
   `src/services/peers.ts`), nooit in `dirty` en nooit door `mergeRemote` (alle starters hebben hetzelfde vaste id en
   zouden de eigen starter overschrijven). Tabblad Starter heeft een keuze tussen eigen en gekoppelde starter
   (`PeerView`); het startscherm toont bovenaan wie welke starter heeft (`StarterOverview`, met naam kiezen en weg naar
-  `app/koppelen.tsx`); de koppelcode staat in `src/ui/Koppelen.tsx` (ook in Instellingen). `Starter.splitFrom/splitOn` noteert waarvan je gesplitst bent.
+  `app/koppelen.tsx`); de koppelcode staat in `src/ui/Koppelen.tsx` (ook in Instellingen). Een geldige code blijft bestaan (migratie
+  `20261106130000_crumbly_koppelcode_blijft.sql`, nog niet toegepast zolang de status in `docs/databank-status.md` dat zegt):
+  `bak_create_link_code()` geeft je bestaande code terug, enkel `p_new => true` maakt een nieuwe; `bak_my_link_code()` toont
+  ze op elk toestel. `Starter.splitFrom/splitOn` noteert waarvan je gesplitst bent.
 - Koelkast of kamertemperatuur (`src/domain/location.ts`, getest): elke verplaatsing in `starter.locationLog`
   (geen databankwijziging, gaat mee met de starter, ook naar de gekoppelde ander). In de koelkast: voeden om de
   `fridgeFeedDays` (standaard 7) dagen, geen vraag naar verdubbeling, geen automatische voeding. Voedingen in de

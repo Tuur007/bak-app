@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { buildPeers, linkErrorText, peerName, peerOf, type LinkedRow, type LinkRow } from '../src/domain/peers.ts';
-import { fetchPeers, redeemLinkCode, unlinkPeer } from '../src/services/peers.ts';
+import { createLinkCode, fetchPeers, myLinkCode, redeemLinkCode, unlinkPeer } from '../src/services/peers.ts';
 import { mergeRemote, type MergeTarget } from '../src/store/merge.ts';
 import { defaultSettings, defaultStarter } from '../src/domain/defaults.ts';
 
@@ -137,4 +137,26 @@ test('unlinkPeer: gebruikt het genormaliseerde paar (kleinste eerst), ongeacht w
   await unlinkPeer(b.client, HER, ME);
   assert.deepEqual(a.deletes[0], { user_a: HER, user_b: ME });
   assert.deepEqual(b.deletes[0], { user_a: HER, user_b: ME });
+});
+
+// Nepclient voor de koppelcode: onthoudt met welke argumenten de functies aangeroepen worden.
+function codeClient(answers: Record<string, { data: unknown; error: { message: string } | null }>) {
+  const calls: [string, unknown][] = [];
+  const client = { async rpc(name: string, args?: unknown) { calls.push([name, args]); return answers[name] ?? { data: null, error: { message: 'Could not find the function in the schema cache' } }; } };
+  return { client: client as unknown as SupabaseClient, calls };
+}
+
+test('createLinkCode: gewoon vragen gebruikt geen parameter (bestaande code terug), nieuwe code met p_new', async () => {
+  const c = codeClient({ bak_create_link_code: { data: 'ABCDEF1234', error: null } });
+  assert.deepEqual(await createLinkCode(c.client), { code: 'ABCDEF1234' });
+  assert.deepEqual(await createLinkCode(c.client, true), { code: 'ABCDEF1234' });
+  assert.deepEqual(c.calls, [['bak_create_link_code', undefined], ['bak_create_link_code', { p_new: true }]]);
+});
+
+test('myLinkCode: leest de geldige code, of null', async () => {
+  const ok = codeClient({ bak_my_link_code: { data: [{ code: 'ABCDEF1234', expires_at: '2026-11-07T07:24:04Z' }], error: null } });
+  assert.deepEqual(await myLinkCode(ok.client), { code: 'ABCDEF1234', expiresAt: '2026-11-07T07:24:04Z' });
+  assert.equal(await myLinkCode(codeClient({ bak_my_link_code: { data: [], error: null } }).client), null);
+  // oudere databank zonder de functie: geen code, geen fout
+  assert.equal(await myLinkCode(codeClient({}).client), null);
 });
