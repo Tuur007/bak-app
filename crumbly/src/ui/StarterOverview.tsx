@@ -81,7 +81,7 @@ export function StarterOverview({ now }: { now: Date }) {
         </Row>
       ) : null}
 
-      {peers.length === 0 ? (
+      {peers.length === 0 && (!household || household.role === 'geen') ? (
         <>
           <Gap />
           <Txt v="note">Werk je samen met iemand aan dezelfde starter (gezin), of wil je de starter van een ander zien? Open Delen.</Txt>

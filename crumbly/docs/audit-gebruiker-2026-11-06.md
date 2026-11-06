@@ -23,6 +23,16 @@ tijdens een bak onder de stapkaart), **B10** ("Zet in de koelkast" en "Haal uit 
 bovenaan in Instellingen; de vraag in het welkomscherm nog niet), **B13** (aanmeldtekst), **B14** (`mut` is
 donkerder, veldranden en lege schakelaars halen 3:1, de knoppen "Niet gevoed" en "Niet bekeken" zijn omlijnd),
 **B16** (een lege naam wordt "Jean"), **B17** (knop "Kies het back-upbestand") en **B21** ("Volgend brood").
+**B23 (gemist in de eerste versie van deze audit, daarna door Tuur gemeld): het welkomscherm vraagt niet of je bij een
+gezin komt.** Wie met iemand aan één starter werkt (Tuur en zijn vrouw), kreeg als eerste scherm toch "Hoe heet hij?" en
+een startdatum, en moest zelf bedenken dat ze eerst naar Instellingen, Delen moest. Nu begint het welkomscherm met één
+vraag: "Werk je samen met iemand?". "Ja" vraagt de gezinscode en je eigen naam (dezelfde knop als in Delen,
+`GezinJoin`) en zet je meteen op de starter van de ander, zonder naam of datum te vragen. "Nee" gaat naar de vragen
+over een eigen starter. Wie al in een gezin zit, krijgt het welkomscherm niet. Op het startscherm staat de regel "Werk je
+samen met iemand ... Open Delen" niet meer voor gezinsleden. Getest met een nagemaakte databank (aanmelden, code,
+joinen, herladen), niet met het echte gezin.
+Les voor volgende audits: de eerste-keer-route moet per gebruiker en per manier van samenwerken worden doorlopen
+(eigen starter, gezin, koppelen), vanaf een leeg toestel met een nieuw account, en niet alleen zonder account.
 Niet gedaan: B3, B4, B5, B8, B12, B15, B18 tot B20, B22 en de kansen. De tekst hieronder is de stand van de audit zelf.
 
 ---
