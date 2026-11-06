@@ -21,6 +21,10 @@ export interface Starter {
   autoFeedAt?: string;
   /** Vanaf welke dag (YYYY-MM-DD) automatisch genoteerd wordt; nooit met terugwerkende kracht daarvoor. */
   autoFeedSince?: string;
+  /** Van wie deze starter afgesplitst is (bv. "Jean Flore"), enkel ter herinnering. */
+  splitFrom?: string;
+  /** Dag van het splitsen (YYYY-MM-DD). De leeftijd blijft tellen vanaf `startedOn`. */
+  splitOn?: string;
   updatedAt: string;
 }
 

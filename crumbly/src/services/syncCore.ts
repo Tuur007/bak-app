@@ -4,7 +4,9 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { diffReminders, type Reminder, type StoredReminder } from '../domain/reminders';
+import type { PeerData } from '../domain/peers';
 import type { RemoteItem } from '../store/merge';
+import { fetchPeers } from './peers';
 
 export interface SyncIO {
   /** Sleutels van wijzigingen die nog niet verstuurd zijn. */
@@ -17,6 +19,8 @@ export interface SyncIO {
   applyRemote(items: RemoteItem[], serverTime: string): void;
   /** De wekkers die nu zouden moeten klaarstaan. */
   wantedReminders(): Reminder[];
+  /** De starters van gekoppelde accounts (enkel lezen, apart van je eigen gegevens). */
+  applyPeers?(peers: PeerData[]): void;
 }
 
 const PAGE = 500;
@@ -56,6 +60,16 @@ export async function runSync(client: SupabaseClient, userId: string, io: SyncIO
 
   // 3. Wekkers: enkel verschillen
   await syncReminders(client, io.wantedReminders());
+
+  // 4. Gekoppelde starters (enkel lezen). Mislukt dit, dan blijft de laatste stand staan en
+  // faalt de gewone sync niet.
+  if (io.applyPeers) {
+    try {
+      io.applyPeers(await fetchPeers(client, userId));
+    } catch {
+      /* de vorige stand blijft */
+    }
+  }
   return { pushed: rows.length, pulled };
 }
 

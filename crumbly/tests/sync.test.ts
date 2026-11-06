@@ -133,3 +133,23 @@ test('testmeldingen worden door de planning nooit gewist', async () => {
   await syncReminders(asClient(db), []);
   assert.equal(db.tables.bak_reminders.length, 1);
 });
+
+test('gekoppelde starters: een fout bij het ophalen laat de gewone sync niet falen', async () => {
+  const db = new FakeDb(); // heeft geen tabel bak_links: het ophalen van peers faalt
+  const { io } = makeIO({ dirty: ['feed:f1'], items: { 'feed:f1': item('f1', 'feed', '2026-11-02T10:00:00Z') } });
+  let applied = 0;
+  io.applyPeers = () => { applied++; };
+  const r = await runSync(asClient(db), 'u1', io);
+  assert.equal(r.pushed, 1);
+  assert.equal(applied, 0, 'de vorige stand blijft staan');
+});
+
+test('gekoppelde starters: zonder koppelingen wordt de lijst leeggemaakt', async () => {
+  const db = new FakeDb();
+  db.tables.bak_links = [];
+  const { io } = makeIO();
+  let got: unknown = 'niet aangeroepen';
+  io.applyPeers = (p) => { got = p; };
+  await runSync(asClient(db), 'u1', io);
+  assert.deepEqual(got, []);
+});

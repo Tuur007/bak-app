@@ -3,7 +3,8 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { fmtDay, fmtDayTime, fmtLongDate, fmtTime } from '../../src/domain/dates';
 import { activeAway, stepState, upcomingAway } from '../../src/domain/schedule';
-import { earliestBakeDay, formatHours, liveFeeds, nextFeedDue, readiness } from '../../src/domain/starter';
+import { peerName } from '../../src/domain/peers';
+import { ageDays, earliestBakeDay, formatHours, liveFeeds, nextFeedDue, readiness } from '../../src/domain/starter';
 import { useSessionEmail } from '../../src/services/auth';
 import { syncNow, useSyncStatus } from '../../src/services/sync';
 import { supabase } from '../../src/services/supabase';
@@ -25,6 +26,7 @@ export default function Vandaag() {
   const feedNow = useCrumbly((s) => s.feedNow);
   const markPeak = useCrumbly((s) => s.markPeak);
   const recipes = useCrumbly((s) => s.recipes);
+  const peers = useCrumbly((s) => s.peers);
   const sessionEmail = useSessionEmail();
 
   const sync = useSyncStatus();
@@ -104,6 +106,22 @@ export default function Vandaag() {
           )}
         </Card>
       )}
+
+      {peers.map((p) => {
+        if (!p.starter) return null;
+        const pr = readiness(p.starter, p.feeds, now);
+        const lastFed = liveFeeds(p.feeds).pop();
+        return (
+          <Card key={p.userId} tone="blush">
+            <Txt v="folio">Gekoppeld: {peerName(p, starter.name)}</Txt>
+            <Txt style={s.mt}>
+              Dag {ageDays(p.starter.startedOn, now)}. {lastFed ? `Laatst gevoed ${fmtDayTime(new Date(lastFed.fedAt), now)}.` : 'Nog niet gevoed.'} {pr.ready ? 'Lijkt klaar om te bakken.' : `${pr.streak} van ${pr.needed} keer op rij verdubbeld.`}
+            </Txt>
+            <Gap />
+            <Row><Button small v="outline" label="Bekijk" onPress={() => router.push('/jean')} /></Row>
+          </Card>
+        );
+      })}
 
       {lastResult?.result ? (
         <Card tone="blush">

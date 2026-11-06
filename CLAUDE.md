@@ -65,6 +65,13 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
   (plakken of "Tekst scannen" op de iPhone), altijd met waarschuwingen om na te kijken.
 - Eerste keer: `app/welkom.tsx` (naam en startdatum van de starter, thuis-momenten, eigen recept, uitleg van
   de woorden uit `src/domain/glossary.ts`). `settings.onboarded` synct mee, zodat een tweede toestel niet opnieuw begint.
+- Koppelen (twee accounts, enkel lezen): `bak_links` + `bak_link_codes` + functies `bak_create_link_code`,
+  `bak_redeem_link_code`, `bak_get_linked` (migratie `20261106120000_crumbly_koppelen.sql`, test
+  `supabase/tests/crumbly_koppelen_test.sql`). De ander krijgt enkel `starter`- en `feed`-rijen, via de functie; de
+  RLS van `bak_items` blijft eigen rijen. Lokaal staat dat apart in `store.peers` (`src/domain/peers.ts`,
+  `src/services/peers.ts`), nooit in `dirty` en nooit door `mergeRemote` (alle starters hebben hetzelfde vaste id en
+  zouden de eigen starter overschrijven). Tabblad Starter heeft een keuze tussen eigen en gekoppelde starter
+  (`PeerView`); Instellingen heeft de koppelcode. `Starter.splitFrom/splitOn` noteert waarvan je gesplitst bent.
 - Meldingen: `bak_push_subscriptions` + `private.bak_send_due()` (pg_cron elke minuut) ->
   `api/push/send.js` (Vercel, web-push). Zie `crumbly/docs/meldingen-instellen.md`.
 - Tijden altijd als absolute momenten; aftellen rekent vanaf de klok (iOS pauzeert timers).

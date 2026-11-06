@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { addDays, fmtDayTime, fmtLongDate, toDayString } from '../../src/domain/dates';
+import { peerName } from '../../src/domain/peers';
 import { feedAmounts, parseFeedRatio } from '../../src/domain/ratios';
 import { ageDays, formatHours, hoursToPeak, liveFeeds, parseDay, peakSeries, readiness } from '../../src/domain/starter';
 import type { Feed } from '../../src/domain/types';
 import { useCrumbly } from '../../src/store/store';
-import { Button, Card, Chip, Field, Gap, num, Row, Screen, str, Txt } from '../../src/ui/kit';
+import { Button, Card, Chip, Field, Gap, num, Row, Screen, Segmented, str, Txt } from '../../src/ui/kit';
+import { PeerView } from '../../src/ui/PeerView';
 import { colors, space } from '../../src/ui/theme';
 import { PeakQuestion } from '../../src/ui/PeakQuestion';
 import { HhmmStepper, PeakChart, TimeStepper, useNow } from '../../src/ui/widgets';
@@ -44,7 +46,7 @@ function FeedRow({ f, now }: { f: Feed; now: Date }) {
   );
 }
 
-export default function Starter() {
+function MijnStarter({ top }: { top: ReactNode }) {
   const now = useNow(30_000);
   const starter = useCrumbly((s) => s.starter);
   const feeds = useCrumbly((s) => s.feeds);
@@ -60,7 +62,8 @@ export default function Starter() {
   const amounts = feedAmounts(starter.defaultRatio, num(keepG));
 
   return (
-    <Screen folio="Starter" title={starter.name} sub={`Gestart op ${fmtLongDate(parseDay(starter.startedOn))}, dag ${ageDays(starter.startedOn, now)}.`}>
+    <Screen folio="Starter" title={starter.name} sub={`Gestart op ${fmtLongDate(parseDay(starter.startedOn))}, dag ${ageDays(starter.startedOn, now)}.${starter.splitFrom ? ` Gesplitst van ${starter.splitFrom}${starter.splitOn ? ` op ${fmtLongDate(parseDay(starter.splitOn))}` : ''}.` : ''}`}>
+      {top}
       <Row style={st.buttons}>
         <Button style={st.flex} label="Gevoed" onPress={() => feedNow()} />
         <Button style={st.flex} v="green" label="Verdubbeld" onPress={() => markPeak()} disabled={!r.waitingForPeak} />
@@ -120,6 +123,19 @@ export default function Starter() {
           <Button small v="outline" label="+1 dag" onPress={() => updateStarter({ startedOn: toDayString(addDays(parseDay(starter.startedOn), 1)) })} />
         </Row>
         <Gap />
+        <Field label="Gesplitst van (naam, mag leeg)" value={starter.splitFrom ?? ''} onChange={(v) => updateStarter({ splitFrom: v.trim() === '' ? undefined : v, splitOn: v.trim() === '' ? undefined : starter.splitOn ?? toDayString(new Date()) })} placeholder="bv. Jean Flore" />
+        {starter.splitFrom ? (
+          <>
+            <Txt v="label">Gesplitst op</Txt>
+            <Row style={st.mtSmall}>
+              <Button small v="outline" label="-1 dag" onPress={() => updateStarter({ splitOn: toDayString(addDays(parseDay(starter.splitOn ?? toDayString(new Date())), -1)) })} />
+              <Txt v="bold" style={st.flexCenter}>{fmtLongDate(parseDay(starter.splitOn ?? toDayString(new Date())))}</Txt>
+              <Button small v="outline" label="+1 dag" onPress={() => updateStarter({ splitOn: toDayString(addDays(parseDay(starter.splitOn ?? toDayString(new Date())), 1)) })} />
+            </Row>
+            <Txt v="note">De leeftijd telt door vanaf de oorspronkelijke startdatum hierboven.</Txt>
+          </>
+        ) : null}
+        <Gap />
         <Row>
           <Field style={st.flex} label="Voeden om de (uur)" value={str(starter.feedIntervalHours)} onChange={(v) => updateStarter({ feedIntervalHours: Math.max(1, num(v)) })} numeric />
           <Field style={st.flex} label="Klaar binnen (uur)" value={str(starter.thresholdHours)} onChange={(v) => updateStarter({ thresholdHours: Math.max(1, num(v)) })} numeric />
@@ -134,6 +150,22 @@ export default function Starter() {
       </Card>
     </Screen>
   );
+}
+
+export default function Starter() {
+  const peers = useCrumbly((s) => s.peers);
+  const ownName = useCrumbly((s) => s.starter?.name);
+  const [view, setView] = useState<string>('mine');
+  const peer = peers.find((p) => p.userId === view);
+  if (peers.length === 0) return <MijnStarter top={null} />;
+  const top = (
+    <Segmented
+      options={[{ value: 'mine', label: ownName ?? 'Mijn starter' }, ...peers.map((p) => ({ value: p.userId, label: peerName(p, ownName) }))]}
+      value={peer ? view : 'mine'}
+      onChange={setView}
+    />
+  );
+  return peer ? <PeerView peer={peer} top={top} /> : <MijnStarter top={top} />;
 }
 
 const st = StyleSheet.create({
