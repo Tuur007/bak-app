@@ -57,6 +57,9 @@ export async function runSync(client: SupabaseClient, userId: string, io: SyncIO
     pulled += list.length;
     if (list.length < PAGE) break;
   }
+  // Eerste keer en niets op te halen: noteer toch dat er opgehaald werd (vanaf het begin), zodat de app
+  // niet blijft wachten op gegevens die er niet zijn.
+  if (since === null) io.applyRemote([], '1970-01-01T00:00:00.000Z');
 
   // 3. Wekkers: enkel verschillen
   await syncReminders(client, io.wantedReminders());

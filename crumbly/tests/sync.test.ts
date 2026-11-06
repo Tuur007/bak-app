@@ -153,3 +153,10 @@ test('gekoppelde starters: zonder koppelingen wordt de lijst leeggemaakt', async
   await runSync(asClient(db), 'u1', io);
   assert.deepEqual(got, []);
 });
+
+test('eerste sync zonder iets op te halen: toch genoteerd als opgehaald', async () => {
+  const db = new FakeDb();
+  const { io, log } = makeIO();
+  await runSync(asClient(db), 'u1', io);
+  assert.equal(log.serverTime, '1970-01-01T00:00:00.000Z');
+});

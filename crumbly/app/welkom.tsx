@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { addDays, fmtLongDate, toDayString } from '../src/domain/dates';
 import { GLOSSARY } from '../src/domain/glossary';
@@ -25,14 +25,29 @@ export default function Welkom() {
   const starter = useCrumbly((s) => s.starter);
   const updateStarter = useCrumbly((s) => s.updateStarter);
   const updateSettings = useCrumbly((s) => s.updateSettings);
-  const [name, setName] = useState(starter?.name ?? '');
+  const onboarded = useCrumbly((s) => s.settings.onboarded);
+  // null = niet aangeraakt: dan tonen we de naam zoals hij nu is (ook als die net uit de cloud binnenkwam)
+  // en schrijven we hem niet terug. Zo zet het welkomscherm nooit een echte naam terug op "Jean".
+  const [name, setName] = useState<string | null>(null);
+  const finishing = useRef(false);
+  // Blijkt uit de cloud dat je al begonnen bent (bv. op een ander toestel), dan is dit scherm overbodig.
+  useEffect(() => {
+    if (onboarded && !finishing.current) router.replace('/');
+  }, [onboarded, router]);
   const [pattern, setPattern] = useState<Pattern>('week-avond');
   const [feedAt, setFeedAt] = useState<string | null>(null);
   if (!starter) return <Screen title="Even geduld"><Txt>...</Txt></Screen>;
   const started = parseDay(starter.startedOn);
 
+  const shownName = name ?? starter.name;
   const done = (target: '/recept/plakken' | '/recepten' | '/'): void => {
-    updateStarter({ name: name.trim() || starter.name, ...(feedAt ? { autoFeedAt: feedAt, autoFeedSince: toDayString(new Date()) } : {}) });
+    finishing.current = true;
+    const patch = {
+      ...(name !== null && name.trim() && name.trim() !== starter.name ? { name: name.trim() } : {}),
+      ...(feedAt ? { autoFeedAt: feedAt, autoFeedSince: toDayString(new Date()) } : {}),
+    };
+    // Enkel opslaan wat je echt veranderde: een lege wijziging zou een nieuwere tijd geven en de cloud overschrijven.
+    if (Object.keys(patch).length > 0) updateStarter(patch);
     const w = windowsFor(pattern);
     updateSettings({ onboarded: true, ...(w ? { homeWindows: w } : {}) });
     router.replace(target);
@@ -42,7 +57,7 @@ export default function Welkom() {
     <Screen folio="Welkom" title="Welkom bij Crumbly" sub="Drie korte vragen, dan kan je beginnen. Alles kan je later aanpassen.">
       <Card>
         <Txt v="folio">1. Je starter</Txt>
-        <Field label="Hoe heet hij?" value={name} onChange={setName} placeholder="bv. Jean Tuur" />
+        <Field label="Hoe heet hij?" value={shownName} onChange={setName} placeholder="bv. Jean Tuur" />
         <Txt v="note">Deel je een starter met iemand, geef hem dan een eigen naam (bv. Jean Tuur en Jean Flore). Je kan hem later nog hernoemen.</Txt>
         <Txt v="label">Wanneer ben je gestart?</Txt>
         <Row style={st.row}>
@@ -53,7 +68,7 @@ export default function Welkom() {
       </Card>
 
       <Card>
-        <Txt v="folio">Hoe laat voed je {name.trim() || starter.name}?</Txt>
+        <Txt v="folio">Hoe laat voed je {shownName.trim() || starter.name}?</Txt>
         <Txt v="note" style={st.mt}>Voed je elke dag rond hetzelfde uur, dan noteert Crumbly de voedingen zelf. Dan hoef je niets te tikken, enkel af en toe één vraag: hoe snel verdubbelde hij?</Txt>
         <Gap />
         <View style={st.chips}>

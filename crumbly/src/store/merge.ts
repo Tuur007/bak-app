@@ -24,8 +24,10 @@ export interface MergeTarget {
 
 type Stamped = { id: string; updatedAt: string };
 
-const isStamped = (d: unknown): d is Stamped =>
-  !!d && typeof d === 'object' && typeof (d as Stamped).id === 'string' && typeof (d as Stamped).updatedAt === 'string';
+const hasTime = (d: unknown): d is { updatedAt: string } =>
+  !!d && typeof d === 'object' && typeof (d as { updatedAt?: unknown }).updatedAt === 'string';
+
+const isStamped = (d: unknown): d is Stamped => hasTime(d) && typeof (d as { id?: unknown }).id === 'string';
 
 /** Is `remote` nieuwer dan `local`? Gelijk = lokaal houden. */
 export const remoteWins = (local: { updatedAt: string } | null | undefined, remote: { updatedAt: string }): boolean =>
@@ -41,14 +43,16 @@ export function mergeRemote(s: MergeTarget, items: RemoteItem[]): number {
   };
   for (const it of items) {
     const d = it.data;
+    // De instellingen hebben geen eigen id in hun gegevens (de rij heeft er wel een): enkel de tijd telt.
+    if (it.kind === 'settings') {
+      if (hasTime(d) && remoteWins(s.settings, d)) { s.settings = d as unknown as Settings; changed++; }
+      continue;
+    }
     if (!isStamped(d)) continue;
     switch (it.kind) {
       case 'starter':
         if (remoteWins(s.starter, d)) { s.starter = d as unknown as Starter; changed++; }
         s.seeded = true;
-        break;
-      case 'settings':
-        if (remoteWins(s.settings, d)) { s.settings = d as unknown as Settings; changed++; }
         break;
       case 'feed': upsert(s.feeds, d); break;
       case 'recipe': upsert(s.recipes, d); break;
