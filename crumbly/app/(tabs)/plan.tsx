@@ -6,6 +6,7 @@ import { formatPct, recipeRatios } from '../../src/domain/ratios';
 import { endOf, findFittingEnd, homeConflicts, planBackward, stepState, totalMinutes, workMinutes } from '../../src/domain/schedule';
 import { adjustForTemperature } from '../../src/domain/temperature';
 import { bakeProcess } from '../../src/domain/location';
+import { stepsToCheck } from '../../src/domain/recipeDraft';
 import { earliestBakeDay } from '../../src/domain/starter';
 import type { Bake, HomeWindow, PlannedStep, ProcessStep } from '../../src/domain/types';
 import { liveRecipes, plannedBakes, useCrumbly } from '../../src/store/store';
@@ -200,6 +201,14 @@ function Planner({ initialRecipe, onDone }: { initialRecipe?: string; onDone: ()
         ))}
       </Row>
       <Txt v="note" style={p.mb}>Hydratatie {formatPct(q.hydration)} · duurt {fmtDuration(totalMinutes(adjusted?.process ?? recipe.process))}</Txt>
+      {stepsToCheck(recipe) > 0 ? (
+        <Card tone="blush">
+          <Txt v="folio">Nog nakijken</Txt>
+          <Txt style={p.mt}>{stepsToCheck(recipe)} {stepsToCheck(recipe) === 1 ? 'stap' : 'stappen'} van dit recept {stepsToCheck(recipe) === 1 ? 'komt' : 'komen'} uit een tekst en {stepsToCheck(recipe) === 1 ? 'is' : 'zijn'} nog niet nagekeken. Het schema en de wekkers kunnen dan afwijken.</Txt>
+          <Gap />
+          <Row><Button small v="green" label="Recept nakijken" onPress={() => router.push(`/recept/${recipe.id}`)} /></Row>
+        </Card>
+      ) : null}
       {refTemp !== undefined && kitchen !== undefined ? (
         <>
           <Txt v="label">Temperatuur in je keuken</Txt>

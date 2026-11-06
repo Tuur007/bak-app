@@ -77,6 +77,8 @@ export interface ProcessStep {
   /** Duurt langer als het koeler is (bv. bulk op de aanrecht). */
   tempSensitive?: boolean;
   alarm: boolean;
+  /** Uit een tekst afgeleid en onzeker: wat de gebruiker moet nakijken. Verdwijnt zodra hij de stap aanpast. */
+  check?: string;
 }
 
 export interface Recipe {

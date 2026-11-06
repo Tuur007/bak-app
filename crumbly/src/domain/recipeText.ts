@@ -27,11 +27,30 @@ const ING_RE = new RegExp(`^\\s*(?:[-*•·–]\\s*)?${NUM}\\s*(kg|gram|gr\\.?|g
 const HEADING_ING = /^\s*(ingredi[eë]nten|wat heb je nodig|benodigdheden)\s*:?\s*$/i;
 const HEADING_STEPS = /^\s*(bereiding|bereidingswijze|werkwijze|instructies|methode|stappen|zo maak je het)\s*:?\s*$/i;
 
+/** Is dit een zin uit de bereiding (met een tijd) en geen ingrediënt? Voorkomt valse waarschuwingen. */
+const stepsAt_isStep = (l: string): boolean => durationMinutes(l) !== null && /\b(laat|bak|meng|vouw|rust|rijs|verwarm)\w*/i.test(l);
+
 const toNum = (s: string): number => Number(s.replace(',', '.'));
+
+const FRACTIONS: Record<string, number> = { '½': 0.5, '¼': 0.25, '¾': 0.75, '⅓': 1 / 3, '⅔': 2 / 3, '⅛': 0.125 };
+
+/** "1½ dl", "½ kg" en "1/2 theelepel" worden "1.5 dl", "0.5 kg" en "0.5 theelepel". */
+export function normalizeNumbers(text: string): string {
+  const round = (n: number): string => String(Math.round(n * 1000) / 1000);
+  return text
+    .replace(/(?:(\d+)\s?)?([½¼¾⅓⅔⅛])/g, (_m, whole: string | undefined, f: string) => round((whole ? Number(whole) : 0) + FRACTIONS[f]))
+    .replace(/(^|[^\d/.,])(\d+)\s*\/\s*(\d+)(?=\s*(?:kg|gram|gr|g|ml|dl|cl|l|el|tl|eetlepels?|theelepels?|koffielepels?|kopjes?|kop)(?![a-zà-ÿ]))/gi, (_m, pre: string, a: string, b: string) => (Number(b) > 0 ? pre + round(Number(a) / Number(b)) : _m));
+}
 const cap = (s: string): string => (s ? s[0].toUpperCase() + s.slice(1) : s);
 
 /** Aantal minuten in een stuk tekst, of null. Bereiken ("4 tot 5 uur") nemen we het gemiddelde van. */
 export function durationMinutes(text: string): { minutes: number; range: boolean; guessed: boolean } | null {
+  // "1 uur en 30 minuten", "1u30", "1 u 30"
+  const comp = /(\d+(?:[.,]\d+)?)\s*(?:uur|uren|u)\s*(?:en\s*)?(\d{1,2})\s*(?:minuten|minuut|min\b)?(?![\d])/i.exec(text);
+  if (comp && (/\b(minuten|minuut|min)\b/i.test(comp[0]) || /u\s*\d{2}\b/i.test(comp[0]))) {
+    return { minutes: Math.round(toNum(comp[1]) * 60 + Number(comp[2])), range: false, guessed: false };
+  }
+  if (/\banderhalf\s*uur\b/i.test(text)) return { minutes: 90, range: false, guessed: false };
   const m = /(\d+(?:[.,]\d+)?)(?:\s*(?:tot|à|-|–|of)\s*(\d+(?:[.,]\d+)?))?\s*(minuten|minuut|min\b|uren|uur|u\b)/i.exec(text);
   if (m) {
     const unit = m[3].toLowerCase().startsWith('m') ? 1 : 60;
@@ -48,9 +67,20 @@ export function durationMinutes(text: string): { minutes: number; range: boolean
   return null;
 }
 
-function parseIngredientLine(line: string): { grams: number; rest: string; unit: string } | null {
-  const m = ING_RE.exec(line);
-  if (!m) return null;
+// "Bloem 500 g", "Water: 350 ml", "bloem T65 500 g (bio)": de hoeveelheid staat achter de naam.
+const ING_NAME_FIRST_RE = new RegExp(`^\\s*(?:[-*•·–]\\s*)?([a-zà-ÿ][^\\d]*?(?:\\s+[a-zà-ÿ]+\\d+[a-zà-ÿ]*)?)\\s*[:\\-–]?\\s*(?<![\\d.,])${NUM}\\s*(kg|gram|gr\\.?|g|ml|dl|cl|l|el|tl|eetlepels?|theelepels?|koffielepels?)(?![a-zà-ÿ])\\.?\\s*(\\(.*?\\))?\\s*$`, 'i');
+
+export function parseIngredientLine(rawLine: string): { grams: number; rest: string; unit: string } | null {
+  const line = normalizeNumbers(rawLine);
+  let m = ING_RE.exec(line);
+  let nameFirst = false;
+  if (!m) {
+    const nf = ING_NAME_FIRST_RE.exec(line);
+    if (!nf) return null;
+    nameFirst = true;
+    m = [nf[0], nf[2], nf[3], `${nf[1].trim()}${nf[4] ? ` ${nf[4]}` : ''}`] as unknown as RegExpExecArray;
+  }
+  void nameFirst;
   const n = toNum(m[1]);
   const unit = m[2].toLowerCase().replace('.', '');
   const rest = m[3].trim().replace(/[.;,]\s*$/, '');
@@ -83,13 +113,33 @@ function splitSentences(text: string): string[] {
 
 /** Splits een zin met meer dan één tijd ("bak 20 minuten met deksel en 25 minuten zonder") in stukken met elk één tijd. */
 function splitByDuration(sentence: string): string[] {
-  const pieces = sentence.split(/\s*(?:,|;|\ben\b|\bdaarna\b|\bvervolgens\b|\bdan\b)\s+/i).filter(Boolean);
+  // "1 uur en 30 minuten" is één tijd: de 'en' mag daar niet splitsen.
+  const KEEP = '\u0001';
+  const protectedText = sentence.replace(/(\d+(?:[.,]\d+)?\s*(?:uur|uren|u))\s+en\s+(?=\d)/gi, `$1${KEEP}`);
+  const pieces = protectedText.split(/\s*(?:,|;|\ben\b|\bdaarna\b|\bvervolgens\b|\bdan\b)\s+/i).filter(Boolean).map((p) => p.split(KEEP).join(' en '));
   const out: string[] = [];
   for (const p of pieces) {
     if (out.length > 0 && !durationMinutes(p)) out[out.length - 1] += ` en ${p}`;
     else out.push(p);
   }
+  // "Laat daarna 2 uur rijzen": het werkwoord alleen ('Laat') is geen eigen stap, plak het aan het volgende stuk.
+  if (out.length >= 2 && !durationMinutes(out[0]) && out[0].trim().split(/\s+/).length <= 2 && durationMinutes(out[1])) {
+    out.splice(0, 2, `${out[0]} ${out[1]}`);
+  }
   return out;
+}
+
+const COUNT_WORDS: Record<string, number> = { twee: 2, drie: 3, vier: 4, vijf: 5, zes: 6 };
+
+/** "Vouw het deeg 4 keer, elk half uur" -> 4 vouwstappen met elk een half uur ertussen. Null als de zin zo niet is. */
+function repeatedSteps(sentence: string): { name: string; times: number; every: number } | null {
+  const m = /^(.*?)\b(\d+|twee|drie|vier|vijf|zes)\s*(?:keer|maal|x)\b[\s,;]*(?:(?:en\s+)?(?:telkens|steeds)\s+)?(?:elk|elke|om de|iedere|per)\s+(.+)$/i.exec(sentence.replace(/[.;,]\s*$/, ''));
+  if (!m) return null;
+  const times = /^\d+$/.test(m[2]) ? Number(m[2]) : COUNT_WORDS[m[2].toLowerCase()];
+  const every = durationMinutes(m[3]);
+  if (!every || !times || times < 2 || times > 8) return null;
+  const name = m[1].trim().replace(/[,;]$/, '').trim();
+  return name ? { name, times, every: every.minutes } : null;
 }
 
 export function parseRecipeText(input: string): ParsedRecipe {
@@ -101,14 +151,14 @@ export function parseRecipeText(input: string): ParsedRecipe {
   // --- naam
   let name = '';
   const first = nonEmpty[0];
-  if (first && first.length <= 60 && !ING_RE.test(first) && !HEADING_ING.test(first) && !HEADING_STEPS.test(first) && !/^\d+\s*[.)]/.test(first)) name = first.replace(/[:.]\s*$/, '');
+  if (first && first.length <= 60 && !parseIngredientLine(first) && !HEADING_ING.test(first) && !HEADING_STEPS.test(first) && !/^\d+\s*[.)]/.test(first)) name = first.replace(/[:.]\s*$/, '');
 
   // --- secties
   const stepsAt = lines.findIndex((l) => HEADING_STEPS.test(l));
   const ingLines = (stepsAt >= 0 ? lines.slice(0, stepsAt) : lines).filter(Boolean);
   const stepText = stepsAt >= 0
     ? lines.slice(stepsAt + 1).join('\n')
-    : lines.filter((l) => l && !ING_RE.test(l) && !HEADING_ING.test(l) && l !== name).join('\n');
+    : lines.filter((l) => l && !parseIngredientLine(l) && !HEADING_ING.test(l) && l !== name).join('\n');
 
   // --- ingrediënten
   const flours: Flour[] = [];
@@ -118,7 +168,14 @@ export function parseRecipeText(input: string): ParsedRecipe {
   let starterHydration = 100;
   for (const l of ingLines) {
     const ing = parseIngredientLine(l);
-    if (!ing) continue;
+    if (!ing) {
+      // Een hoeveelheid in een eenheid die we niet kennen (kopjes, cups, snufje): niet stil overslaan.
+      if (/^\s*(?:[-*•·–]\s*)?(?:\d|[½¼¾])/.test(l) && /(bloem|meel|water|zout|starter|desem|levain)/i.test(l) && !stepsAt_isStep(l)) {
+        ignored.push(l);
+        warnings.push(`"${l.trim()}" staat niet in gram of ml. Wissel het om en vul het zelf in.`);
+      }
+      continue;
+    }
     const low = ing.rest.toLowerCase();
     if (/starter|desem|levain|zuurdesem|zuurdeeg|moederdeeg/.test(low)) {
       starterG += ing.grams;
@@ -145,7 +202,17 @@ export function parseRecipeText(input: string): ParsedRecipe {
   let guessedTimes = 0;
   let ranges = 0;
   let nights = 0;
+  let waitsWithoutTime = 0;
+  let repeats = 0;
   for (const sentence of splitSentences(stepText)) {
+    const rep = repeatedSteps(sentence);
+    if (rep) {
+      repeats++;
+      for (let i = 1; i <= rep.times; i++) {
+        process.push({ id: newId(), name: cap(`${rep.name} (${i} van ${rep.times})`), minutes: rep.every, kind: 'hand', workMinutes: 5, alarm: true, check: `Herhaling uit "${sentence.replace(/[.;,]\s*$/, '')}": controleer het aantal en de tijd ertussen.` });
+      }
+      continue;
+    }
     const chunks = splitByDuration(sentence);
     let prevVerb = '';
     for (const chunk of chunks) {
@@ -155,12 +222,25 @@ export function parseRecipeText(input: string): ParsedRecipe {
       if (/^\d/.test(text) && prevVerb) text = `${prevVerb} ${text}`;
       prevVerb = /^[A-Za-zÀ-ÿ]+$/.test(text.split(' ')[0]) ? text.split(' ')[0] : prevVerb;
       const d = durationMinutes(text);
-      const minutes = d ? d.minutes : 5;
+      // Een stap die wacht maar geen tijd noemt ("laat het deeg rijzen tot het verdubbeld is") is geen handstap van
+      // 5 minuten met een wekker: het is een wachtstap met een voorlopige tijd die de gebruiker invult.
+      const waitsNoTime = !d && /\b(laat|laten|rijs|rijst|rijzen|rust|rusten|staan|fermenteer\w*)\b/i.test(text);
+      const minutes = d ? d.minutes : waitsNoTime ? 60 : 5;
       if (!d) guessedTimes++;
+      if (waitsNoTime) waitsWithoutTime++;
       if (d?.range) ranges++;
       if (d?.guessed) nights++;
-      const kind = d ? stepKind(text, minutes) : 'hand';
+      const kind = d ? stepKind(text, minutes) : waitsNoTime ? 'wacht' : 'hand';
       const rise = kind === 'wacht' && /(rijs|rijz|bulk)/i.test(text) && !/koelkast/i.test(text);
+      const check = waitsNoTime
+        ? 'Geen tijd in het recept: vul zelf in hoe lang dit duurt (ik zette 1 uur).'
+        : !d
+          ? 'Geen tijd in het recept: ik zette 5 minuten.'
+          : d.range
+            ? 'Het recept geeft een bereik: ik nam het midden.'
+            : d.guessed
+              ? '"Een nacht" telt als 12 uur: pas aan naar wat jij doet.'
+              : undefined;
       process.push({
         id: newId(),
         name: cap(text.length > 70 ? `${text.slice(0, 67)}...` : text),
@@ -169,12 +249,15 @@ export function parseRecipeText(input: string): ParsedRecipe {
         workMinutes: kind === 'hand' ? Math.min(minutes, /bak|oven/i.test(text) ? 5 : 10) : undefined,
         tempSensitive: rise || undefined,
         alarm: kind === 'hand',
+        ...(check ? { check } : {}),
       });
     }
     if (/vouw/i.test(sentence) && splitByDuration(sentence).length > 1) warnings.push('Controleer het vouwschema: vouwmomenten en rijstijd overlappen vaak.');
   }
   if (process.length === 0) warnings.push('Ik vond geen stappen. Plak ook de bereiding, of voeg de stappen zelf toe.');
-  if (guessedTimes > 0) warnings.push(`${guessedTimes} ${guessedTimes === 1 ? 'stap had' : 'stappen hadden'} geen tijd. Ik zette er 5 minuten bij; pas aan waar nodig.`);
+  if (waitsWithoutTime > 0) warnings.push(`${waitsWithoutTime} ${waitsWithoutTime === 1 ? 'wachtstap noemt' : 'wachtstappen noemen'} geen tijd ("laat rijzen tot het verdubbeld is"). Ik zette er voorlopig 1 uur bij: vul de echte tijd in, anders klopt je schema niet.`);
+  if (guessedTimes - waitsWithoutTime > 0) warnings.push(`${guessedTimes - waitsWithoutTime} ${guessedTimes - waitsWithoutTime === 1 ? 'stap had' : 'stappen hadden'} geen tijd. Ik zette er 5 minuten bij; pas aan waar nodig.`);
+  if (repeats > 0) warnings.push('Een herhaling ("4 keer, elk half uur") werd meerdere stappen. Controleer het aantal en de tijden.');
   if (ranges > 0) warnings.push('Bij een tijd als "4 tot 5 uur" nam ik het midden. Kijk of dat past.');
   if (nights > 0) warnings.push('"Een nacht" telt voor mij als 12 uur. Pas aan naar wat jij doet.');
   if (process.length > 0) warnings.push('Controleer de tijden en de volgorde: dit is een voorstel uit de tekst, geen zekerheid.');
