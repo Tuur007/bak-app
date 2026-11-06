@@ -3,7 +3,7 @@
 -- toestellen op hetzelfde account (iPhone en iPad) verdween zo de code die je net doorgaf.
 -- Nu geeft bak_create_link_code de bestaande, nog geldige en ongebruikte code terug; enkel met
 -- p_new = true komt er een nieuwe (en vervalt de oude). bak_my_link_code toont je geldige code.
--- Raakt geen tabellen van andere apps aan. NIET TOEGEPAST: pas na Tuurs ok.
+-- Raakt geen tabellen van andere apps aan. TOEGEPAST op 6 november 2026 na Tuurs ok (gecontroleerd).
 
 -- De oude functie zonder parameter weg, anders zijn er twee versies en weet de API niet welke.
 drop function if exists public.bak_create_link_code();
