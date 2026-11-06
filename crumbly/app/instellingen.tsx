@@ -19,6 +19,7 @@ const ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 function Account() {
   const user = useSessionEmail();
+  const dirtyCount = useCrumbly((s) => s.dirty.length);
   const [sync, setSync] = useState<SyncStatus>(getSyncStatus());
   useEffect(() => onSyncStatus(setSync), []);
   if (!supabase || !user) return null;
@@ -29,6 +30,7 @@ function Account() {
       <Txt v="folio">Account en sync</Txt>
       <Txt style={st.mt}>Aangemeld als {user}.</Txt>
       <Txt v="note">{statusText}</Txt>
+      <Txt v="note">{dirtyCount === 0 ? 'Alles is verstuurd.' : `${dirtyCount} ${dirtyCount === 1 ? 'wijziging wacht' : 'wijzigingen wachten'} om verstuurd te worden.`}</Txt>
       <Gap />
       <Row>
         <Button small v="green" label="Nu synchroniseren" onPress={() => void syncNow()} />

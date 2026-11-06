@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { fmtDay, fmtDayTime, fmtLongDate, fmtTime } from '../../src/domain/dates';
+import { fmtDay, fmtDayTime, fmtLongDate, fmtTime, toDayString } from '../../src/domain/dates';
+import type { Feed } from '../../src/domain/types';
 import { activeAway, stepState, upcomingAway } from '../../src/domain/schedule';
 import { earliestBakeDay, formatHours, liveFeeds, nextFeedDue, readiness } from '../../src/domain/starter';
 import { useSessionEmail } from '../../src/services/auth';
@@ -11,9 +12,24 @@ import { liveRecipes, plannedBakes, useCrumbly } from '../../src/store/store';
 import { Button, Card, Gap, Row, Screen, Txt } from '../../src/ui/kit';
 import { space } from '../../src/ui/theme';
 import { StarterOverview } from '../../src/ui/StarterOverview';
+import { LocationControl, useFeedWithUndo } from '../../src/ui/StarterActions';
+import { backFromAwayWithFridge, DEFAULT_FRIDGE_FEED_DAYS } from '../../src/domain/location';
 import { PeakQuestion } from '../../src/ui/PeakQuestion';
 import { StepCard } from '../../src/ui/StepCard';
 import { Arch, Dots, Gear, useNow } from '../../src/ui/widgets';
+
+/**
+ * Voed je de laatste 3 keer rond hetzelfde uur (binnen een uur van elkaar)? Dan stellen we voor dat Crumbly het
+ * zelf noteert, op dat uur (afgerond op een kwartier).
+ */
+function suggestAutoFeed(feeds: Feed[]): string | null {
+  const last = liveFeeds(feeds).slice(-3);
+  if (last.length < 3) return null;
+  const mins = last.map((f) => { const d = new Date(f.fedAt); return d.getHours() * 60 + d.getMinutes(); });
+  if (Math.max(...mins) - Math.min(...mins) > 60) return null;
+  const avg = Math.round(mins.reduce((a, b) => a + b, 0) / mins.length / 15) * 15;
+  return `${String(Math.floor(avg / 60) % 24).padStart(2, '0')}:${String(avg % 60).padStart(2, '0')}`;
+}
 
 export default function Vandaag() {
   const router = useRouter();
@@ -23,7 +39,9 @@ export default function Vandaag() {
   const away = useCrumbly((s) => s.away);
   const allBakes = useCrumbly((s) => s.bakes);
   const bakes = plannedBakes(allBakes);
-  const feedNow = useCrumbly((s) => s.feedNow);
+  const { feed, note: feedNote } = useFeedWithUndo();
+  const updateStarter = useCrumbly((s) => s.updateStarter);
+  const dirtyCount = useCrumbly((s) => s.dirty.length);
   const markPeak = useCrumbly((s) => s.markPeak);
   const recipes = useCrumbly((s) => s.recipes);
   const sessionEmail = useSessionEmail();
@@ -73,7 +91,8 @@ export default function Vandaag() {
       {sync.kind === 'fout' ? (
         <Card tone="blush">
           <Txt v="folio">Synchroniseren mislukt</Txt>
-          <Txt style={s.mt}>{sync.message} Je gegevens blijven op dit toestel staan en worden later opnieuw verstuurd.</Txt>
+          <Txt style={s.mt}>{sync.message}</Txt>
+          <Txt v="note" style={s.mt}>{dirtyCount > 0 ? `${dirtyCount} ${dirtyCount === 1 ? 'wijziging wacht' : 'wijzigingen wachten'} op dit toestel` : 'Alles staat op dit toestel'} en wordt verstuurd zodra het weer lukt.</Txt>
           <Gap />
           <Row><Button small v="green" label="Probeer opnieuw" onPress={() => void syncNow()} /></Row>
         </Card>
@@ -88,6 +107,15 @@ export default function Vandaag() {
 
       <StarterOverview now={now} />
 
+      {backFromAwayWithFridge(starter, away, now) ? (
+        <Card tone="blush">
+          <Txt v="folio">Welkom terug</Txt>
+          <Txt style={s.mt}>{starter.name} staat nog in de koelkast. Haal hem eruit, voed hem en laat hem op kamertemperatuur komen.</Txt>
+          <Gap />
+          <LocationControl starter={starter} now={now} compact />
+        </Card>
+      ) : null}
+
       <Arch label="Klaar om te bakken?" title={archTitle}>
         <Dots filled={Math.min(r.streak, r.needed)} total={r.needed} />
         <Txt v="note" style={s.center}>{archText}</Txt>
@@ -101,7 +129,10 @@ export default function Vandaag() {
         <Card>
           <Txt v="folio">Volgende voeding</Txt>
           <Txt v="h2" style={s.mt}>{nextFeed ? `${fmtDay(nextFeed, now)} ${fmtTime(nextFeed)}` : `Voed ${starter.name} wanneer het je past`}</Txt>
-          {starter.autoFeedAt ? (
+          {starter.location === 'koelkast' ? (
+            <Txt v="note" style={s.mt}>{starter.name} staat in de koelkast: voeden om de {starter.fridgeFeedDays ?? DEFAULT_FRIDGE_FEED_DAYS} dagen.</Txt>
+          ) : null}
+          {starter.autoFeedAt && starter.location !== 'koelkast' ? (
             <Txt v="note" style={s.mt}>Crumbly noteert de voeding zelf. Jij hoeft alleen af en toe de vraag hierboven te beantwoorden. Anders gevoed? Pas het aan bij {starter.name}.</Txt>
           ) : (
             <>
@@ -109,8 +140,17 @@ export default function Vandaag() {
               {r.waitingForPeak ? (
                 <Button v="green" label={`${starter.name} is verdubbeld`} onPress={() => markPeak()} />
               ) : null}
-              <Button label={`${starter.name} is gevoed`} onPress={() => feedNow()} />
+              <Button label={`${starter.name} is gevoed`} onPress={feed} />
+              {feedNote}
               <Txt v="note">Eén tik. Zelfde verhouding als altijd ({starter.defaultRatio}).{hasFeeds ? '' : ' Pas ze aan bij je starter.'}</Txt>
+              {starter.location !== 'koelkast' && suggestAutoFeed(feeds) ? (
+                <Button
+                  small
+                  v="ghost"
+                  label={`Voed je elke dag rond ${suggestAutoFeed(feeds)}? Laat Crumbly het noteren`}
+                  onPress={() => updateStarter({ autoFeedAt: suggestAutoFeed(feeds) ?? '08:00', autoFeedSince: toDayString(new Date()) })}
+                />
+              ) : null}
             </>
           )}
         </Card>

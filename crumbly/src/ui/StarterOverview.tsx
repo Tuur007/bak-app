@@ -6,6 +6,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { fmtDayTime } from '../domain/dates';
 import { peerName } from '../domain/peers';
 import { ageDays, liveFeeds, readiness } from '../domain/starter';
+import { locationLabel, locationSince } from '../domain/location';
+import { LocationControl } from './StarterActions';
 import { useCrumbly } from '../store/store';
 import { Button, Card, Field, Gap, Row, Txt } from './kit';
 import { colors, radius, space } from './theme';
@@ -44,6 +46,9 @@ export function StarterOverview({ now }: { now: Date }) {
         </View>
         <Tag label="Van jou" tone="own" />
       </Pressable>
+      <View style={st.loc}>
+        <LocationControl starter={starter} now={now} compact />
+      </View>
 
       {peers.map((p) => {
         const pr = p.starter ? readiness(p.starter, p.feeds, now) : null;
@@ -54,7 +59,7 @@ export function StarterOverview({ now }: { now: Date }) {
               <Txt v="h3">{peerName(p, starter.name)}</Txt>
               <Txt v="note">
                 {p.starter && pr
-                  ? `Dag ${ageDays(p.starter.startedOn, now)}. ${last ? `Laatst gevoed ${fmtDayTime(new Date(last.fedAt), now)}.` : 'Nog niet gevoed.'}${pr.ready ? ' Lijkt klaar.' : ''}`
+                  ? `Dag ${ageDays(p.starter.startedOn, now)}. ${last ? `Laatst gevoed ${fmtDayTime(new Date(last.fedAt), now)}.` : 'Nog niet gevoed.'}${pr.ready ? ' Lijkt klaar.' : ''} Staat ${locationLabel(p.starter.location)}${locationSince(p.starter) ? ` sinds ${fmtDayTime(new Date(locationSince(p.starter) as string), now)}` : ''}.`
                   : 'Nog geen gegevens, ze verschijnen na de volgende sync.'}
               </Txt>
             </View>
@@ -97,5 +102,6 @@ const st = StyleSheet.create({
   tagOwnText: { color: '#F6F0E6' },
   tagPeer: { backgroundColor: colors.blush },
   tagPeerText: { color: colors.ink },
+  loc: { paddingBottom: space(1) },
   name: { borderTopWidth: 1, borderTopColor: colors.line, marginTop: space(1), paddingTop: space(1) },
 });

@@ -66,14 +66,17 @@ export default function RootLayout() {
   useEffect(() => registerServiceWorker(), []);
 
   // Vaste voeduur: noteer de voedingen die zijn voorbijgekomen (bij opstarten, bij terugkeer en elke 5 minuten).
+  // "Ik ben weg" met de starter in de koelkast: noteer de verplaatsing bij vertrek (voor de voedingen).
   const ensureAutoFeeds = useCrumbly((s) => s.ensureAutoFeeds);
+  const ensureAwayFridge = useCrumbly((s) => s.ensureAwayFridge);
   useEffect(() => {
     if (!hydrated) return;
-    ensureAutoFeeds();
-    const id = setInterval(() => ensureAutoFeeds(), 300_000);
-    const sub = AppState.addEventListener('change', (st) => { if (st === 'active') ensureAutoFeeds(); });
+    const tick = (): void => { ensureAwayFridge(); ensureAutoFeeds(); };
+    tick();
+    const id = setInterval(tick, 300_000);
+    const sub = AppState.addEventListener('change', (st) => { if (st === 'active') tick(); });
     return () => { clearInterval(id); sub.remove(); };
-  }, [hydrated, ensureAutoFeeds]);
+  }, [hydrated, ensureAutoFeeds, ensureAwayFridge]);
   useSyncLoop(hydrated);
   // Net aangemeld: meteen synchroniseren, zodat je gegevens en die van de ander er zijn.
   useEffect(() => {

@@ -3,6 +3,7 @@
 // naar de server en nooit door mergeRemote (die zou je eigen starter overschrijven, want
 // iedere starter heeft hetzelfde vaste id). Getest in tests/peers.test.ts.
 
+import { isNetworkError, NETWORK_TEXT } from './errors';
 import type { Feed, Starter } from './types';
 
 export interface PeerData {
@@ -70,6 +71,7 @@ export function peerName(peer: PeerData, ownName: string | undefined): string {
 
 /** Vertaalt een foutmelding van de databank naar iets leesbaars. */
 export function linkErrorText(message: string): string {
+  if (isNetworkError(message)) return NETWORK_TEXT;
   const m = message.toLowerCase();
   if (m.includes('klopt niet') || m.includes('verlopen')) return 'Deze code klopt niet of is verlopen. Vraag de ander om een nieuwe.';
   if (m.includes('eigen code')) return 'Dit is je eigen code. Geef ze aan de ander.';

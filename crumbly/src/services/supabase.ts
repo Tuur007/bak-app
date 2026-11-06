@@ -1,6 +1,7 @@
 import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { isNetworkError, NETWORK_TEXT } from '../domain/errors';
 
 // Hetzelfde Supabase-project als de Recepten-app en de Tuin-app: een login voor alles.
 // Zonder de twee variabelen werkt Crumbly gewoon lokaal, zonder sync.
@@ -31,6 +32,6 @@ export function translateAuthError(message: string): string {
   const m = message.toLowerCase();
   if (m.includes('invalid login credentials')) return 'E-mailadres of wachtwoord klopt niet.';
   if (m.includes('email not confirmed')) return 'Bevestig eerst je e-mailadres via de link die je kreeg.';
-  if (m.includes('network') || m.includes('fetch')) return 'Geen verbinding. Probeer het later opnieuw.';
+  if (isNetworkError(message) || m.includes('network') || m.includes('fetch')) return NETWORK_TEXT;
   return message;
 }

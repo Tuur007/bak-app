@@ -13,8 +13,9 @@ import { computeRatios } from '../domain/ratios';
 import { delayOpen, endOf, finishWaitNow, markDone, planBackward, shiftForReturn, undoDone } from '../domain/schedule';
 import { adjustForTemperature } from '../domain/temperature';
 import { dueAutoFeeds, liveFeeds } from '../domain/starter';
+import { awayFridgeMove, bakeProcess, moveStarter } from '../domain/location';
 import { mergeRemote, type Kind, type RemoteItem } from './merge';
-import type { AwayPeriod, Bake, BakeResult, Feed, PlannedStep, Recipe, Settings, Starter } from '../domain/types';
+import type { AwayPeriod, Bake, BakeResult, Feed, PlannedStep, Recipe, Settings, Starter, StarterLocation } from '../domain/types';
 
 export type { Kind, RemoteItem } from './merge';
 export const SETTINGS_ID = '00000000-0000-4000-8000-00000000c0de';
@@ -36,7 +37,12 @@ export interface CrumblyState {
 
   seedIfEmpty: () => void;
   updateStarter: (patch: Partial<Starter>) => void;
-  feedNow: (at?: Date) => void;
+  /** Noteert een voeding en geeft haar id (om ongedaan te maken). */
+  feedNow: (at?: Date) => string;
+  /** Zet de starter in de koelkast of op kamertemperatuur, met het moment in het logboek. */
+  moveStarterTo: (to: StarterLocation, at?: Date) => void;
+  /** "Ik ben weg" met de starter in de koelkast: noteer dat hij bij vertrek in de koelkast ging. */
+  ensureAwayFridge: (now?: Date) => void;
   markPeak: (at?: Date) => void;
   answerPeak: (feedId: string, answer: number | 'niet-gevoed' | 'niet-gekeken') => void;
   ensureAutoFeeds: (now?: Date) => number;
@@ -77,6 +83,7 @@ export interface BackupData {
 }
 
 const nowIso = (): string => new Date().toISOString();
+
 const key = (kind: Kind, id: string): string => `${kind}:${id}`;
 
 export const useCrumbly = create<CrumblyState>()(
@@ -131,12 +138,36 @@ export const useCrumbly = create<CrumblyState>()(
             touch(s, 'starter', s.starter.id);
           }),
 
-        feedNow: (at = new Date()) =>
+        feedNow: (at = new Date()) => {
+          const id = newId();
           set((s) => {
-            const f: Feed = { id: newId(), fedAt: at.toISOString(), ratio: s.starter?.defaultRatio ?? '1:5:5', updatedAt: nowIso() };
+            const f: Feed = { id, fedAt: at.toISOString(), ratio: s.starter?.defaultRatio ?? '1:5:5', updatedAt: nowIso() };
             s.feeds.push(f);
             touch(s, 'feed', f.id);
+          });
+          return id;
+        },
+
+        moveStarterTo: (to, at = new Date()) =>
+          set((s) => {
+            if (!s.starter) return;
+            const patch = moveStarter(s.starter, to, at);
+            if (!patch) return;
+            Object.assign(s.starter, patch, { updatedAt: nowIso() });
+            touch(s, 'starter', s.starter.id);
           }),
+
+        ensureAwayFridge: (now = new Date()) => {
+          const st = get().starter;
+          if (!st) return;
+          const patch = awayFridgeMove(st, get().away, now);
+          if (!patch) return;
+          set((s) => {
+            if (!s.starter) return;
+            Object.assign(s.starter, patch, { updatedAt: nowIso() });
+            touch(s, 'starter', s.starter.id);
+          });
+        },
 
         markPeak: (at = new Date()) =>
           set((s) => {
@@ -216,7 +247,8 @@ export const useCrumbly = create<CrumblyState>()(
           const flourG = r.flours.reduce((a, f) => a + f.grams, 0);
           const ratios = computeRatios({ flourG, waterG: r.waterG, starterG: r.starterG, starterHydration: r.starterHydration, saltG: r.saltG });
           const adjusted = adjustForTemperature(r.process, r.refTempC, kitchenTempC, get().settings.tempDoubling);
-          const steps: PlannedStep[] = planBackward(adjusted.process, end).map((p) => ({ ...p, id: newId() }));
+          const process = bakeProcess(adjusted.process, get().starter);
+          const steps: PlannedStep[] = planBackward(process, end).map((p) => ({ ...p, id: newId() }));
           const t = nowIso();
           const b: Bake = {
             id: newId(), recipeId: r.id, recipeName: r.name, hydration: ratios.hydration,

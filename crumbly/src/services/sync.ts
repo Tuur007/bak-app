@@ -3,6 +3,7 @@
 // (bak_reminders), die de server als melding verstuurt.
 
 import { useEffect, useState } from 'react';
+import { friendlyError, NETWORK_TEXT } from '../domain/errors';
 import { buildReminders } from '../domain/reminders';
 import { itemForKey, useCrumbly } from '../store/store';
 import { supabase } from './supabase';
@@ -45,7 +46,7 @@ export async function syncNow(): Promise<SyncStatus> {
   // getSession ververst een verlopen sessie via het netwerk en kan lang wachten: geef na 15 seconden op.
   const result = await Promise.race([supabase.auth.getSession(), new Promise<null>((resolve) => setTimeout(() => resolve(null), 15_000))]);
   if (!result) {
-    emit({ kind: 'fout', message: 'Geen verbinding met de server. Je gegevens blijven op dit toestel en worden later verstuurd.' });
+    emit({ kind: 'fout', message: NETWORK_TEXT });
     return lastStatus;
   }
   const sess = result.data;
@@ -79,7 +80,7 @@ export async function syncNow(): Promise<SyncStatus> {
       kind: 'fout',
       message: isMissingTable(message)
         ? 'De tabellen voor Crumbly staan nog niet in de databank. Je gegevens blijven op dit toestel.'
-        : `Sync mislukt: ${message}`,
+        : friendlyError(message) === message ? `Synchroniseren mislukt: ${message}` : friendlyError(message),
     });
   } finally {
     running = false;

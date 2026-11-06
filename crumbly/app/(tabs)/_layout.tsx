@@ -10,11 +10,13 @@ const LABELS: Record<string, string> = { index: 'Vandaag', jean: 'Starter', rece
 function TabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const starterName = useCrumbly((s) => s.starter?.name);
+  // Met een gekoppelde starter toont dit tabblad er twee: dan heet het "Starters", niet naar de jouwe.
+  const hasPeers = useCrumbly((s) => s.peers.length > 0);
   return (
     <View style={[t.bar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
       {state.routes.map((r, i) => {
         const on = state.index === i;
-        const label = r.name === 'jean' && starterName ? starterName : LABELS[r.name] ?? r.name;
+        const label = r.name === 'jean' ? (hasPeers ? 'Starters' : starterName ?? LABELS.jean) : LABELS[r.name] ?? r.name;
         return (
           <Pressable
             key={r.key}
