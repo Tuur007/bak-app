@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { createElement, useEffect, useRef, useState } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 import { addDays, fmtLongDate, toDayString } from '../src/domain/dates';
 import { GLOSSARY } from '../src/domain/glossary';
 import { parseDay } from '../src/domain/starter';
@@ -38,6 +38,8 @@ export default function Welkom() {
   const [feedAt, setFeedAt] = useState<string | null>(null);
   if (!starter) return <Screen title="Even geduld"><Txt>...</Txt></Screen>;
   const started = parseDay(starter.startedOn);
+  const today = toDayString(new Date());
+  const startedOnToday = starter.startedOn === today;
 
   const shownName = name ?? starter.name;
   const done = (target: '/recept/plakken' | '/recepten' | '/'): void => {
@@ -65,6 +67,20 @@ export default function Welkom() {
           <Txt v="bold" style={st.mid}>{fmtLongDate(started)}</Txt>
           <Button small v="outline" label="+1 dag" onPress={() => updateStarter({ startedOn: toDayString(addDays(started, 1)) })} />
         </Row>
+        <Row style={st.row}>
+          {startedOnToday ? null : <Button small v="green" label="Ik begin vandaag" onPress={() => updateStarter({ startedOn: today })} />}
+          {Platform.OS === 'web'
+            ? createElement('input', {
+                type: 'date',
+                value: starter.startedOn,
+                max: today,
+                'aria-label': 'Kies de dag waarop je startte',
+                onChange: (e: { target: { value: string } }) => { if (/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)) updateStarter({ startedOn: e.target.value }); },
+                style: { minHeight: 44, fontSize: 16, padding: '0 12px', borderRadius: 14, border: '1.5px solid #857B72', background: '#FCF9F4', color: '#2A2522', fontFamily: 'Figtree_400Regular, sans-serif' },
+              })
+            : null}
+        </Row>
+        <Txt v="note">Begon je vandaag, tik dan op "Ik begin vandaag". Anders kies je de dag waarop je jouw starter maakte.</Txt>
       </Card>
 
       <Card>
