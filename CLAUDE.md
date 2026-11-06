@@ -78,6 +78,15 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
   zouden de eigen starter overschrijven). Tabblad Starter heeft een keuze tussen eigen en gekoppelde starter
   (`PeerView`); het startscherm toont bovenaan wie welke starter heeft (`StarterOverview`, met naam kiezen en weg naar
   `app/koppelen.tsx`); de koppelcode staat in `src/ui/Koppelen.tsx` (ook in Instellingen). `Starter.splitFrom/splitOn` noteert waarvan je gesplitst bent.
+- Koelkast of kamertemperatuur (`src/domain/location.ts`, getest): elke verplaatsing in `starter.locationLog`
+  (geen databankwijziging, gaat mee met de starter, ook naar de gekoppelde ander). In de koelkast: voeden om de
+  `fridgeFeedDays` (standaard 7) dagen, geen vraag naar verdubbeling, geen automatische voeding. Voedingen in de
+  koelkast en de eerste na het uithalen tellen niet mee voor "klaar om te bakken" (`countsForReadiness`).
+  "Ik ben weg" met de starter in de koelkast noteert de verplaatsing bij vertrek (`awayFridgeMove`); bij terugkomst
+  een herinnering op het startscherm. Een bak met de starter in de koelkast begint met "uit de koelkast halen"
+  (`bakeProcess`, ook in de voorvertoning). Bediening: `LocationControl` in `src/ui/StarterActions.tsx` (startscherm
+  en starterscherm), samen met "Gevoed" met ongedaan maken (`useFeedWithUndo`) en het logboek (`StarterLog`).
+- Foutmeldingen in gewone taal: `src/domain/errors.ts` (netwerkfout, VPN).
 - Meldingen: `bak_push_subscriptions` + `private.bak_send_due()` (pg_cron elke minuut) ->
   `api/push/send.js` (Vercel, web-push). Zie `crumbly/docs/meldingen-instellen.md`.
 - Tijden altijd als absolute momenten; aftellen rekent vanaf de klok (iOS pauzeert timers).

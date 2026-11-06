@@ -4,11 +4,13 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { addDays, fmtDayTime, fmtLongDate, toDayString } from '../../src/domain/dates';
 import { peerName } from '../../src/domain/peers';
 import { feedAmounts, parseFeedRatio } from '../../src/domain/ratios';
-import { ageDays, formatHours, hoursToPeak, liveFeeds, parseDay, peakSeries, readiness } from '../../src/domain/starter';
+import { ageDays, liveFeeds, parseDay, peakSeries, readiness } from '../../src/domain/starter';
 import type { Feed } from '../../src/domain/types';
 import { useCrumbly } from '../../src/store/store';
-import { Button, Card, Chip, Field, Gap, num, Row, Screen, Segmented, str, Txt } from '../../src/ui/kit';
+import { Button, Card, Field, Gap, num, Row, Screen, Segmented, str, Txt } from '../../src/ui/kit';
 import { PeerView } from '../../src/ui/PeerView';
+import { LocationControl, StarterLog, feedSummary, useFeedWithUndo } from '../../src/ui/StarterActions';
+import { DEFAULT_FRIDGE_FEED_DAYS } from '../../src/domain/location';
 import { colors, space } from '../../src/ui/theme';
 import { PeakQuestion } from '../../src/ui/PeakQuestion';
 import { HhmmStepper, PeakChart, TimeStepper, useNow } from '../../src/ui/widgets';
@@ -18,13 +20,13 @@ function FeedRow({ f, now }: { f: Feed; now: Date }) {
   const [open, setOpen] = useState(false);
   const updateFeed = useCrumbly((s) => s.updateFeed);
   const deleteFeed = useCrumbly((s) => s.deleteFeed);
-  const h = hoursToPeak(f);
   return (
     <View style={st.feed}>
       <Pressable onPress={() => setOpen(!open)} style={st.feedHead} accessibilityRole="button" accessibilityLabel="voeding aanpassen">
         <View style={st.flex}>
           <Txt v="bold">{fmtDayTime(new Date(f.fedAt), now)}</Txt>
-          <Txt v="note">{f.ratio}{f.auto ? ' · automatisch genoteerd' : ''} · {h ? `verdubbeld ${f.peakApprox ? 'binnen' : 'na'} ${formatHours(h)}` : f.peakAt ? 'verdubbeld-tijd klopt niet, pas aan' : f.peakSkipped ? 'niet bekeken' : 'nog niet verdubbeld aangeduid'}</Txt>
+          <Txt v="note">{feedSummary(f)}</Txt>
+          {f.note ? <Txt v="note">{f.note}</Txt> : null}
         </View>
         <Txt v="note">{open ? 'sluiten' : 'aanpassen'}</Txt>
       </Pressable>
@@ -51,7 +53,8 @@ function MijnStarter({ top }: { top: ReactNode }) {
   const now = useNow(30_000);
   const starter = useCrumbly((s) => s.starter);
   const feeds = useCrumbly((s) => s.feeds);
-  const feedNow = useCrumbly((s) => s.feedNow);
+  const { feed, note: feedNote } = useFeedWithUndo();
+  const [earlierAt, setEarlierAt] = useState<Date | null>(null);
   const markPeak = useCrumbly((s) => s.markPeak);
   const updateStarter = useCrumbly((s) => s.updateStarter);
   const [keepG, setKeepG] = useState('20');
@@ -59,32 +62,52 @@ function MijnStarter({ top }: { top: ReactNode }) {
   if (!starter) return <Screen title="Starter"><Txt>Even geduld...</Txt></Screen>;
   const r = readiness(starter, feeds, now);
   const series = peakSeries(feeds, 14);
-  const list = liveFeeds(feeds).slice().reverse().slice(0, 14);
+  const lastFedAt = new Date(liveFeeds(feeds).slice(-1)[0]?.fedAt ?? Date.now()).getTime() + 30 * 60_000;
   const amounts = feedAmounts(starter.defaultRatio, num(keepG));
 
   return (
     <Screen folio="Starter" title={starter.name} sub={`Gestart op ${fmtLongDate(parseDay(starter.startedOn))}, dag ${ageDays(starter.startedOn, now)}.${starter.splitFrom ? ` Gesplitst van ${starter.splitFrom}${starter.splitOn ? ` op ${fmtLongDate(parseDay(starter.splitOn))}` : ''}.` : ''}`}>
       {top}
       <Row style={st.buttons}>
-        <Button style={st.flex} label="Gevoed" onPress={() => feedNow()} />
+        <Button style={st.flex} label="Gevoed" onPress={feed} />
         <Button style={st.flex} v="green" label="Verdubbeld" onPress={() => markPeak()} disabled={!r.waitingForPeak} />
       </Row>
       <Txt v="note" style={st.hint}>
         {r.waitingForPeak ? `Tik op "Verdubbeld" zodra ${starter.name} dubbel zo hoog staat. Te laat getikt? Pas het uur aan in de lijst.` : `Na het voeden tik je op "Gevoed". Zo leert de app hoe snel ${starter.name} is.`}
       </Txt>
 
+      {feedNote}
+      {r.waitingForPeak ? (
+        <View style={st.earlier}>
+          {earlierAt ? (
+            <>
+              <Txt v="label">Verdubbeld om</Txt>
+              <TimeStepper value={earlierAt} onChange={setEarlierAt} />
+              <Row>
+                <Button small v="green" label="Bewaar" onPress={() => { markPeak(earlierAt); setEarlierAt(null); }} />
+                <Button small v="ghost" label="Annuleer" onPress={() => setEarlierAt(null)} />
+              </Row>
+            </>
+          ) : (
+            <Button small v="ghost" label="Eerder verdubbeld? Kies het uur" onPress={() => setEarlierAt(new Date(Math.max(Date.now() - 60 * 60_000, lastFedAt)))} style={st.left} />
+          )}
+        </View>
+      ) : null}
+
       <PeakQuestion now={now} />
 
       <Card>
-        <Txt v="folio">Uren tot verdubbeling</Txt>
-        {series.length >= 3 ? (
-          <>
-            <PeakChart points={series} threshold={starter.thresholdHours} />
-            <Txt v="note">Lager is sterker. Groen = binnen {starter.thresholdHours} uur.</Txt>
-          </>
-        ) : (
-          <Txt style={st.mt}>De grafiek verschijnt na 3 metingen ({series.length} van 3). Ze toont of {starter.name} sneller verdubbelt, en dus sterker wordt.</Txt>
-        )}
+        <Txt v="folio">Logboek</Txt>
+        <StarterLog starter={starter} feeds={feeds} now={now} renderFeed={(f) => <FeedRow f={f} now={now} />} />
+      </Card>
+
+      <Card>
+        <Txt v="folio">Waar staat {starter.name}?</Txt>
+        <Gap />
+        <LocationControl starter={starter} now={now} />
+        <Gap />
+        <Field label="In de koelkast voeden om de (dagen)" value={str(starter.fridgeFeedDays ?? DEFAULT_FRIDGE_FEED_DAYS)} onChange={(v) => updateStarter({ fridgeFeedDays: Math.max(1, Math.round(num(v))) })} numeric />
+        <Txt v="note">In de koelkast komt de herinnering om te voeden niet elke dag maar om de zoveel dagen. Voedingen in de koelkast, en de eerste erna, tellen niet mee voor "klaar om te bakken".</Txt>
       </Card>
 
       <Card>
@@ -109,8 +132,15 @@ function MijnStarter({ top }: { top: ReactNode }) {
       </Card>
 
       <Card>
-        <Txt v="folio">Laatste voedingen</Txt>
-        {list.length === 0 ? <Txt style={st.mt}>Nog geen voedingen. Tik op "Gevoed" na je volgende voeding.</Txt> : list.map((f) => <FeedRow key={f.id} f={f} now={now} />)}
+        <Txt v="folio">Uren tot verdubbeling</Txt>
+        {series.length >= 3 ? (
+          <>
+            <PeakChart points={series} threshold={starter.thresholdHours} />
+            <Txt v="note">Lager is sterker. Groen = binnen {starter.thresholdHours} uur.</Txt>
+          </>
+        ) : (
+          <Txt style={st.mt}>De grafiek verschijnt na 3 metingen ({series.length} van 3). Ze toont of {starter.name} sneller verdubbelt, en dus sterker wordt.</Txt>
+        )}
       </Card>
 
       <Card>
@@ -142,11 +172,6 @@ function MijnStarter({ top }: { top: ReactNode }) {
           <Field style={st.flex} label="Klaar binnen (uur)" value={str(starter.thresholdHours)} onChange={(v) => updateStarter({ thresholdHours: Math.max(1, num(v)) })} numeric />
         </Row>
         <Field label="Zoveel keer op rij" value={str(starter.streakNeeded)} onChange={(v) => updateStarter({ streakNeeded: Math.max(1, Math.round(num(v))) })} numeric />
-        <Txt v="label">Waar staat {starter.name}?</Txt>
-        <Row style={st.mtSmall}>
-          <Chip label="Op kamertemperatuur" on={starter.location === 'kamer'} onPress={() => updateStarter({ location: 'kamer' })} />
-          <Chip label="In de koelkast" on={starter.location === 'koelkast'} onPress={() => updateStarter({ location: 'koelkast' })} />
-        </Row>
         <Txt v="note">"Klaar" is een schatting volgens bakkersbronnen: hij verdubbelt een paar keer op rij binnen enkele uren, en is minstens 14 dagen oud. Jij beslist.</Txt>
       </Card>
     </Screen>
@@ -178,6 +203,8 @@ const st = StyleSheet.create({
   hint: { marginBottom: space(2) },
   mt: { marginTop: space(1) },
   mtSmall: { marginTop: 4, marginBottom: 4, flexWrap: 'wrap' },
+  earlier: { marginBottom: space(2) },
+  left: { alignSelf: 'flex-start' },
   feed: { borderTopWidth: 1, borderTopColor: colors.line, marginTop: space(1) },
   feedHead: { flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingTop: space(1) },
   feedEdit: { paddingVertical: space(1) },

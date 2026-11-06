@@ -28,9 +28,11 @@ const t = StyleSheet.create({
 
 // ---------------------------------------------------------------- scherm
 
-export function Screen({ folio, title, sub, right, children }: { folio?: string; title?: string; sub?: string; right?: React.ReactNode; children: React.ReactNode }) {
+/** `banner`: blijft bovenaan staan terwijl de rest scrolt. */
+export function Screen({ folio, title, sub, right, banner, children }: { folio?: string; title?: string; sub?: string; right?: React.ReactNode; banner?: React.ReactNode; children: React.ReactNode }) {
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
+      {banner}
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
         {(folio || title || right) && (
           <View style={s.head}>

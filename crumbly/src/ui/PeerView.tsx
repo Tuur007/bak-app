@@ -3,11 +3,13 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { fmtDayTime, fmtLongDate } from '../domain/dates';
 import { peerName, type PeerData } from '../domain/peers';
-import { ageDays, formatHours, hoursToPeak, liveFeeds, nextFeedDue, parseDay, peakSeries, readiness } from '../domain/starter';
+import { ageDays, formatHours, liveFeeds, nextFeedDue, parseDay, peakSeries, readiness } from '../domain/starter';
 import { useCrumbly } from '../store/store';
 import { Card, Gap, Screen, Txt } from './kit';
 import { colors, space } from './theme';
 import { Dots, PeakChart, useNow } from './widgets';
+import { locationLabel, locationSince } from '../domain/location';
+import { StarterLog } from './StarterActions';
 
 export function PeerView({ peer, top }: { peer: PeerData; top: ReactNode }) {
   const now = useNow(60_000);
@@ -15,10 +17,15 @@ export function PeerView({ peer, top }: { peer: PeerData; top: ReactNode }) {
   const name = peerName(peer, ownName);
   const starter = peer.starter;
   const updated = `Bijgewerkt ${fmtDayTime(new Date(peer.pulledAt), now)}.`;
+  const banner = (
+    <View style={st.banner} accessibilityRole="header">
+      <Txt v="bold" style={st.bannerText} numberOfLines={1}>{name} · alleen kijken</Txt>
+    </View>
+  );
 
   if (!starter) {
     return (
-      <Screen folio="Starter" title={name}>
+      <Screen folio="Gekoppelde starter" title={name} banner={banner}>
         {top}
         <Card tone="blush">
           <Txt v="folio">Alleen kijken</Txt>
@@ -30,12 +37,12 @@ export function PeerView({ peer, top }: { peer: PeerData; top: ReactNode }) {
 
   const r = readiness(starter, peer.feeds, now);
   const series = peakSeries(peer.feeds, 14);
-  const list = liveFeeds(peer.feeds).slice().reverse().slice(0, 14);
+  const list = liveFeeds(peer.feeds).slice().reverse();
   const next = nextFeedDue(starter, peer.feeds);
   const split = starter.splitFrom ? ` Gesplitst van ${starter.splitFrom}${starter.splitOn ? ` op ${fmtLongDate(parseDay(starter.splitOn))}` : ''}.` : '';
 
   return (
-    <Screen folio="Starter" title={name} sub={`Gestart op ${fmtLongDate(parseDay(starter.startedOn))}, dag ${ageDays(starter.startedOn, now)}.${split}`}>
+    <Screen folio="Gekoppelde starter" title={name} banner={banner} sub={`Gestart op ${fmtLongDate(parseDay(starter.startedOn))}, dag ${ageDays(starter.startedOn, now)}.${split}`}>
       {top}
       <Card tone="blush">
         <Txt v="folio">Alleen kijken</Txt>
@@ -58,7 +65,12 @@ export function PeerView({ peer, top }: { peer: PeerData; top: ReactNode }) {
         <Txt v="folio">Voeding</Txt>
         <Txt style={st.mt}>{list.length > 0 ? `Laatst gevoed: ${fmtDayTime(new Date(list[0].fedAt), now)}.` : 'Nog geen voedingen.'}</Txt>
         {next ? <Txt v="note">Volgende voeding rond {fmtDayTime(next, now)}.</Txt> : null}
-        <Txt v="note">Staat {starter.location === 'koelkast' ? 'in de koelkast' : 'op kamertemperatuur'}. Verhouding {starter.defaultRatio}.</Txt>
+        <Txt v="note">Staat {locationLabel(starter.location)}{locationSince(starter) ? ` sinds ${fmtDayTime(new Date(locationSince(starter) as string), now)}` : ''}. Verhouding {starter.defaultRatio}.</Txt>
+      </Card>
+
+      <Card>
+        <Txt v="folio">Logboek</Txt>
+        <StarterLog starter={starter} feeds={peer.feeds} now={now} />
       </Card>
 
       <Card>
@@ -72,24 +84,13 @@ export function PeerView({ peer, top }: { peer: PeerData; top: ReactNode }) {
           <Txt style={st.mt}>De grafiek verschijnt na 3 metingen ({series.length} van 3).</Txt>
         )}
       </Card>
-
-      <Card>
-        <Txt v="folio">Laatste voedingen</Txt>
-        {list.length === 0 ? <Txt style={st.mt}>Nog geen voedingen.</Txt> : list.map((f) => {
-          const h = hoursToPeak(f);
-          return (
-            <View key={f.id} style={st.feed}>
-              <Txt v="bold">{fmtDayTime(new Date(f.fedAt), now)}</Txt>
-              <Txt v="note">{f.ratio}{f.auto ? ' · automatisch genoteerd' : ''} · {h ? `verdubbeld ${f.peakApprox ? 'binnen' : 'na'} ${formatHours(h)}` : f.peakSkipped ? 'niet bekeken' : 'nog niet verdubbeld aangeduid'}</Txt>
-            </View>
-          );
-        })}
-      </Card>
     </Screen>
   );
 }
 
 const st = StyleSheet.create({
   mt: { marginTop: space(1) },
+  banner: { backgroundColor: colors.grn, paddingHorizontal: space(2), paddingVertical: space(1) },
+  bannerText: { color: '#F6F0E6' },
   feed: { borderTopWidth: 1, borderTopColor: colors.line, marginTop: space(1), paddingTop: space(1) },
 });

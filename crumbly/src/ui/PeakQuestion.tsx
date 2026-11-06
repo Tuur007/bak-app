@@ -10,7 +10,7 @@ export function PeakQuestion({ now }: { now: Date }) {
   const starter = useCrumbly((s) => s.starter);
   const feeds = useCrumbly((s) => s.feeds);
   const answerPeak = useCrumbly((s) => s.answerPeak);
-  const feed = feedToAsk(feeds, now);
+  const feed = feedToAsk(feeds, now, starter ?? undefined);
   if (!starter || !feed) return null;
   return (
     <Card tone="blush">
