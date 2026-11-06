@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
-import { supabase, translateAuthError } from './supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authStorageKey, supabase, translateAuthError } from './supabase';
 
 /** E-mailadres van wie aangemeld is (null = niet aangemeld, undefined = nog aan het kijken). */
 export function useSessionEmail(): string | null | undefined {
@@ -12,6 +13,49 @@ export function useSessionEmail(): string | null | undefined {
     return () => data.subscription.unsubscribe();
   }, []);
   return email;
+}
+
+export type AuthGate = 'laden' | 'in' | 'uit';
+
+/** Staat er op dit toestel een bewaarde sessie? Leest enkel de opslag, nooit het netwerk. */
+export async function hasStoredSession(): Promise<boolean> {
+  if (!authStorageKey) return false;
+  try {
+    const raw = await AsyncStorage.getItem(authStorageKey);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw) as { user?: unknown; refresh_token?: unknown } | null;
+    return !!parsed && (!!parsed.user || typeof parsed.refresh_token === 'string');
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Wie mag de app in? Een bewaarde sessie op het toestel telt meteen: de app opent dus ook zonder of met trage
+ * verbinding. getSession kan lang wachten (het ververst een verlopen sessie via het netwerk) en mag de app
+ * niet blokkeren. Is de sessie echt ingetrokken, dan volgt "uit" via de aanmeldmelding of via getSession.
+ */
+export function useAuthGate(): AuthGate {
+  const [gate, setGate] = useState<AuthGate>(supabase ? 'laden' : 'in');
+  useEffect(() => {
+    if (!supabase) return;
+    let alive = true;
+    void hasStoredSession().then((stored) => {
+      if (!alive) return;
+      // Geen bewaarde sessie: getSession antwoordt dan meteen zonder netwerk (hieronder).
+      if (stored) setGate((g) => (g === 'laden' ? 'in' : g));
+    });
+    void supabase.auth.getSession().then(({ data }) => {
+      if (alive) setGate(data.session ? 'in' : 'uit');
+    }).catch(() => {
+      if (alive) setGate((g) => (g === 'laden' ? 'uit' : g));
+    });
+    const { data } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (alive) setGate(session ? 'in' : 'uit');
+    });
+    return () => { alive = false; data.subscription.unsubscribe(); };
+  }, []);
+  return gate;
 }
 
 export async function signIn(email: string, password: string): Promise<string | null> {
