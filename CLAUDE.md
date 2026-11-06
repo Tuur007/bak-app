@@ -86,6 +86,16 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
   een herinnering op het startscherm. Een bak met de starter in de koelkast begint met "uit de koelkast halen"
   (`bakeProcess`, ook in de voorvertoning). Bediening: `LocationControl` in `src/ui/StarterActions.tsx` (startscherm
   en starterscherm), samen met "Gevoed" met ongedaan maken (`useFeedWithUndo`) en het logboek (`StarterLog`).
+- Gezin (samen op één starter, `bak_household_members` + `bak_household_codes`, migratie
+  `20261106140000_crumbly_gezin.sql`, test `supabase/tests/crumbly_gezin_test.sql`): een lid werkt op de rijen van de
+  eigenaar (`user_id` = eigenaar). De RLS van `bak_items` krijgt extra regels (select/insert/update voor leden, nooit
+  delete: wissen is `deleted_at`); de eigen-rijen-regel blijft. Gezinscode (eenmalig, 1 dag) via
+  `bak_create_household_code` / `bak_join_household(code, naam)`. In de app: `src/domain/household.ts`,
+  `src/services/household.ts`, `src/ui/Gezin.tsx` (scherm Delen). `sync.ts` bepaalt eerst `dataId` (eigen id of die van de
+  eigenaar); de pull filtert altijd op `user_id = dataId` (anders komen de eigen rijen van een lid door die van de
+  eigenaar, ze hebben dezelfde vaste id's). `claimForAccount(dataId)` wist het toestel bij een andere gegevensbron.
+  Wekkers en meldingen blijven per account. `Feed.by` = wie voedde (enkel met een gezin; lid: naam uit het
+  lidmaatschap, eigenaar: `user_metadata.crumbly_name`). Gekoppelde starters (`bak_links`) blijven apart en enkel kijken.
 - Foutmeldingen in gewone taal: `src/domain/errors.ts` (netwerkfout, VPN).
 - Meldingen: `bak_push_subscriptions` + `private.bak_send_due()` (pg_cron elke minuut) ->
   `api/push/send.js` (Vercel, web-push). Zie `crumbly/docs/meldingen-instellen.md`.

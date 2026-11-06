@@ -48,6 +48,8 @@ export interface Feed {
   note?: string;
   /** Door Crumbly genoteerd op het vaste voeduur. */
   auto?: boolean;
+  /** Wie voedde (naam binnen het gezin), enkel als er een gezin is. */
+  by?: string;
   /** De verdubbeltijd is een schatting uit een antwoord ("binnen 6 u"). */
   peakApprox?: boolean;
   /** De gebruiker zei: niet bekeken. */

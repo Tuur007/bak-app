@@ -29,6 +29,7 @@ class Query {
   order(col: string) { this.sortBy = col; return this; }
   limit(n: number) { this.lim = n; return this; }
   gt(col: string, v: string) { this.filters.push((r) => String(r[col]) > v); return this; }
+  eq(col: string, v: string) { this.filters.push((r) => String(r[col]) === v); return this; }
   is(col: string, v: null) { this.filters.push((r) => (r[col] ?? null) === v); return this; }
   in(col: string, vs: string[]) { this.filters.push((r) => vs.includes(String(r[col]))); return this; }
   then(resolve: (v: { data: Row[] | null; error: { message: string } | null }) => void) { resolve(this.exec()); }
@@ -159,4 +160,18 @@ test('eerste sync zonder iets op te halen: toch genoteerd als opgehaald', async 
   const { io, log } = makeIO();
   await runSync(asClient(db), 'u1', io);
   assert.equal(log.serverTime, '1970-01-01T00:00:00.000Z');
+});
+
+test('gezin: een lid schrijft en leest op de gegevens van de eigenaar, niet op zijn eigen rijen', async () => {
+  const db = new FakeDb();
+  db.tables.bak_items = [
+    { user_id: 'eigenaar', id: 'f1', kind: 'feed', data: { id: 'f1', updatedAt: '1' }, updated_at: '1', server_updated_at: '10' },
+    { user_id: 'lid', id: 'x', kind: 'feed', data: { id: 'x', updatedAt: '1' }, updated_at: '1', server_updated_at: '11' },
+  ];
+  const { io, log } = makeIO({ dirty: ['feed:f2'], items: { 'feed:f2': item('f2', 'feed', '2026-11-06T10:00:00Z') } });
+  const r = await runSync(asClient(db), 'lid', io, 'eigenaar');
+  assert.equal(r.pushed, 1);
+  assert.ok(db.tables.bak_items.some((x) => x.user_id === 'eigenaar' && x.id === 'f2'), 'geschreven bij de eigenaar');
+  assert.ok(!db.tables.bak_items.some((x) => x.user_id === 'lid' && x.id === 'f2'), 'niet bij het lid zelf');
+  assert.deepEqual(log.applied.map((x) => x.id).sort(), ['f1', 'f2'], 'enkel de rijen van de eigenaar komen binnen, niet x van het lid');
 });

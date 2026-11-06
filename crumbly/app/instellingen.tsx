@@ -10,6 +10,7 @@ import { useSessionEmail } from '../src/services/auth';
 import { supabase } from '../src/services/supabase';
 import { getSyncStatus, onSyncStatus, syncNow, type SyncStatus } from '../src/services/sync';
 import { useCrumbly } from '../src/store/store';
+import { Gezin } from '../src/ui/Gezin';
 import { Koppelen } from '../src/ui/Koppelen';
 import { Button, Card, Field, Gap, Row, Screen, Segmented, Toggle, Txt } from '../src/ui/kit';
 import { colors, space } from '../src/ui/theme';
@@ -182,6 +183,7 @@ export default function Instellingen() {
   return (
     <Screen folio="Instellingen" title="Instellingen" right={<Button small v="ghost" label="Sluiten" onPress={() => router.back()} />}>
       <Account />
+      <Gezin />
       <Koppelen />
       <Meldingen />
       <ThuisMomenten />

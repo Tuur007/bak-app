@@ -9,6 +9,7 @@ import { immer } from 'zustand/middleware/immer';
 import { defaultSettings, defaultStarter, exampleRecipe } from '../domain/defaults';
 import { newId } from '../domain/ids';
 import type { PeerData } from '../domain/peers';
+import { feederName, type HouseholdState } from '../domain/household';
 import { computeRatios } from '../domain/ratios';
 import { delayOpen, endOf, finishWaitNow, markDone, planBackward, shiftForReturn, undoDone } from '../domain/schedule';
 import { adjustForTemperature } from '../domain/temperature';
@@ -32,8 +33,12 @@ export interface CrumblyState {
   lastPulledAt: string | null;
   /** Starters van gekoppelde accounts: enkel lezen, nooit in `dirty`, nooit naar de server. */
   peers: PeerData[];
-  /** Account waarvan de gegevens op dit toestel zijn (null = nog nooit aangemeld). */
+  /** Van wie de gegevens op dit toestel zijn (null = nog nooit aangemeld): mijn account, of de eigenaar van mijn gezin. */
   ownerId: string | null;
+  /** Mijn plaats in het gezin (null = nog niet opgehaald). */
+  household: HouseholdState | null;
+  /** Mijn naam als eigenaar van een gezin (komt uit mijn account), voor 'door ...' bij een voeding. */
+  ownerName: string | null;
 
   seedIfEmpty: () => void;
   updateStarter: (patch: Partial<Starter>) => void;
@@ -64,6 +69,7 @@ export interface CrumblyState {
   applyRemote: (items: RemoteItem[], pulledAt: string) => void;
   clearDirty: (keys: string[]) => void;
   setPeers: (peers: PeerData[]) => void;
+  setHousehold: (h: HouseholdState | null, ownerName?: string | null) => void;
   /**
    * Koppelt de gegevens op dit toestel aan een account. Eerste aanmelding: de gegevens horen bij dat account
    * (ook wat je offline al deed). Een ander account: begin opnieuw met de startgegevens en haal alles op,
@@ -116,6 +122,8 @@ export const useCrumbly = create<CrumblyState>()(
         lastPulledAt: null,
         peers: [],
         ownerId: null,
+        household: null,
+        ownerName: null,
 
         seedIfEmpty: () =>
           set((s) => {
@@ -141,7 +149,8 @@ export const useCrumbly = create<CrumblyState>()(
         feedNow: (at = new Date()) => {
           const id = newId();
           set((s) => {
-            const f: Feed = { id, fedAt: at.toISOString(), ratio: s.starter?.defaultRatio ?? '1:5:5', updatedAt: nowIso() };
+            const by = feederName(s.household, s.ownerName);
+            const f: Feed = { id, fedAt: at.toISOString(), ratio: s.starter?.defaultRatio ?? '1:5:5', ...(by ? { by } : {}), updatedAt: nowIso() };
             s.feeds.push(f);
             touch(s, 'feed', f.id);
           });
@@ -326,6 +335,12 @@ export const useCrumbly = create<CrumblyState>()(
 
         setPeers: (peers) => set((s) => { s.peers = peers; }),
 
+        setHousehold: (h, ownerName) =>
+          set((s) => {
+            s.household = h;
+            if (ownerName !== undefined) s.ownerName = ownerName;
+          }),
+
         claimForAccount: (userId) => {
           const owner = get().ownerId;
           if (owner === userId) return false;
@@ -343,6 +358,7 @@ export const useCrumbly = create<CrumblyState>()(
             s.away = [];
             s.settings = defaultSettings();
             s.peers = [];
+            s.household = null;
             s.lastPulledAt = null;
             s.seeded = true;
             s.dirty = [];
@@ -379,7 +395,7 @@ export const useCrumbly = create<CrumblyState>()(
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({
         seeded: s.seeded, starter: s.starter, feeds: s.feeds, recipes: s.recipes, bakes: s.bakes,
-        away: s.away, settings: s.settings, dirty: s.dirty, lastPulledAt: s.lastPulledAt, peers: s.peers, ownerId: s.ownerId,
+        away: s.away, settings: s.settings, dirty: s.dirty, lastPulledAt: s.lastPulledAt, peers: s.peers, ownerId: s.ownerId, household: s.household, ownerName: s.ownerName,
       }),
     },
   ),

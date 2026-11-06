@@ -3,8 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { fmtDayTime, fmtTime } from '../domain/dates';
-import { feedIntervalHours, locationLabel, locationSince, starterLog } from '../domain/location';
-import { formatHours, hoursToPeak } from '../domain/starter';
+import { feedIntervalHours, feedSummary, locationLabel, locationSince, starterLog } from '../domain/location';
 import type { Feed, Starter } from '../domain/types';
 import { useCrumbly } from '../store/store';
 import { Button, Row, Txt } from './kit';
@@ -85,12 +84,6 @@ export function StarterLog({ starter, feeds, now, renderFeed, limit = 14 }: { st
       )}
     </>
   );
-}
-
-export function feedSummary(f: Feed): string {
-  const h = hoursToPeak(f);
-  const peak = h ? `verdubbeld ${f.peakApprox ? 'binnen' : 'na'} ${formatHours(h)}` : f.peakAt ? 'verdubbeld-tijd klopt niet, pas aan' : f.peakSkipped ? 'niet bekeken' : 'nog niet verdubbeld aangeduid';
-  return `${f.ratio}${f.auto ? ' · automatisch genoteerd' : ''} · ${peak}`;
 }
 
 const st = StyleSheet.create({
