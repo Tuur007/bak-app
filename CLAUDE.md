@@ -77,7 +77,9 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
   `src/services/peers.ts`), nooit in `dirty` en nooit door `mergeRemote` (alle starters hebben hetzelfde vaste id en
   zouden de eigen starter overschrijven). Tabblad Starter heeft een keuze tussen eigen en gekoppelde starter
   (`PeerView`); het startscherm toont bovenaan wie welke starter heeft (`StarterOverview`, met naam kiezen en weg naar
-  `app/koppelen.tsx`); de koppelcode staat in `src/ui/Koppelen.tsx` (ook in Instellingen). `Starter.splitFrom/splitOn` noteert waarvan je gesplitst bent.
+  `app/koppelen.tsx`); de koppelcode staat in `src/ui/Koppelen.tsx` (ook in Instellingen). Een geldige code blijft bestaan (migratie
+  `20261106130000_crumbly_koppelcode_blijft.sql`): `bak_create_link_code()` geeft je bestaande code terug, enkel
+  `p_new => true` maakt een nieuwe; `bak_my_link_code()` toont ze op elk toestel. `Starter.splitFrom/splitOn` noteert waarvan je gesplitst bent.
 - Meldingen: `bak_push_subscriptions` + `private.bak_send_due()` (pg_cron elke minuut) ->
   `api/push/send.js` (Vercel, web-push). Zie `crumbly/docs/meldingen-instellen.md`.
 - Tijden altijd als absolute momenten; aftellen rekent vanaf de klok (iOS pauzeert timers).

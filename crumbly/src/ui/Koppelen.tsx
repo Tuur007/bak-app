@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { peerName } from '../domain/peers';
 import { useSessionEmail } from '../services/auth';
-import { createLinkCode, redeemLinkCode, unlinkPeer } from '../services/peers';
+import { fmtDayTime } from '../domain/dates';
+import { createLinkCode, myLinkCode, redeemLinkCode, unlinkPeer, type MyLinkCode } from '../services/peers';
 import { supabase } from '../services/supabase';
 import { syncNow } from '../services/sync';
 import { useCrumbly } from '../store/store';
@@ -14,11 +16,44 @@ export function Koppelen() {
   const peers = useCrumbly((s) => s.peers);
   const ownName = useCrumbly((s) => s.starter?.name);
   const [code, setCode] = useState('');
-  const [mine, setMine] = useState('');
+  const [mine, setMine] = useState<MyLinkCode | null>(null);
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState<string | null>(null);
+  const [confirmNew, setConfirmNew] = useState(false);
+
+  // Toon meteen je geldige code (ook als je ze op een ander toestel maakte).
+  const refresh = async (): Promise<void> => {
+    if (!supabase) return;
+    setMine(await myLinkCode(supabase));
+  };
+  useEffect(() => { if (user) void refresh(); }, [user]);
   if (!supabase || !user) return null;
+
+  const make = async (fresh: boolean): Promise<void> => {
+    setBusy(true); setMsg(''); setConfirmNew(false);
+    const r = await createLinkCode(supabase!, fresh);
+    if ('error' in r) setMsg(r.error);
+    else {
+      const full = await myLinkCode(supabase!);
+      // Oudere databank zonder bak_my_link_code: toon de code zonder einddatum.
+      setMine(full && full.code === r.code ? full : { code: r.code, expiresAt: '' });
+    }
+    setBusy(false);
+  };
+
+  const share = async (): Promise<void> => {
+    if (!mine) return;
+    const text = `Mijn koppelcode voor Crumbly: ${mine.code}`;
+    const nav = typeof navigator !== 'undefined' ? (navigator as Navigator & { share?: (d: { text: string }) => Promise<void> }) : undefined;
+    try {
+      if (Platform.OS === 'web' && nav?.share) { await nav.share({ text }); return; }
+      if (Platform.OS === 'web' && nav?.clipboard) { await nav.clipboard.writeText(mine.code); setMsg('Code gekopieerd.'); return; }
+    } catch {
+      return; // delen geannuleerd
+    }
+    setMsg('Delen lukt niet op dit toestel. Schrijf de code over.');
+  };
 
   return (
     <Card>
@@ -48,18 +83,35 @@ export function Koppelen() {
       ))}
       <Gap />
       <Txt v="label">Een code geven aan de ander</Txt>
-      <Button small v="outline" label={mine ? 'Nieuwe code maken' : 'Maak een koppelcode'} disabled={busy} onPress={async () => {
-        setBusy(true); setMsg('');
-        const r = await createLinkCode(supabase!);
-        if ('error' in r) setMsg(r.error); else setMine(r.code);
-        setBusy(false);
-      }} />
-      {mine ? <Txt v="h2" style={st.mt}>{mine}</Txt> : null}
-      {mine ? <Txt v="note">Geef deze code aan de ander. Ze werkt eenmalig en een dag lang.</Txt> : null}
+      {mine ? (
+        <>
+          <Txt v="h3" style={st.code}>{mine.code}</Txt>
+          <Txt v="note">
+            Geef deze code aan de ander, die ze invult op haar of zijn eigen account. Ze werkt één keer
+            {mine.expiresAt ? `, tot ${fmtDayTime(new Date(mine.expiresAt), new Date())}` : ''}. Op al je toestellen zie je dezelfde code.
+          </Txt>
+          <Row style={st.mt}>
+            <Button small v="outline" label="Deel de code" onPress={() => void share()} />
+            <Button small v="ghost" label="Nieuwe code" disabled={busy} onPress={() => setConfirmNew(true)} />
+          </Row>
+          {confirmNew ? (
+            <>
+              <Txt v="bold" style={st.warn}>De code {mine.code} werkt dan niet meer. Zeker?</Txt>
+              <Row>
+                <Button small v="danger" label="Ja, nieuwe code" onPress={() => void make(true)} />
+                <Button small v="ghost" label="Nee" onPress={() => setConfirmNew(false)} />
+              </Row>
+            </>
+          ) : null}
+        </>
+      ) : (
+        <Button small v="outline" label={busy ? 'Even geduld...' : 'Maak een koppelcode'} disabled={busy} onPress={() => void make(false)} style={st.left} />
+      )}
       <Gap />
       <Field label="Of vul de code van de ander in" value={code} onChange={setCode} placeholder="bv. 3F9A12BC07" />
       <Button small v="green" label="Koppel" disabled={busy || code.trim() === ''} onPress={async () => {
         setBusy(true); setMsg('');
+        if (mine && code.trim().toUpperCase() === mine.code) { setMsg('Dit is je eigen code. Die vult de ander in, op een ander account.'); setBusy(false); return; }
         const r = await redeemLinkCode(supabase!, code);
         if ('error' in r) setMsg(r.error); else { setCode(''); setMsg('Gekoppeld. De starter van de ander verschijnt zo.'); await syncNow(); }
         setBusy(false);
@@ -74,4 +126,5 @@ const st = StyleSheet.create({
   warn: { color: colors.bor, marginVertical: space(1) },
   day: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space(1), marginTop: space(1) },
   left: { alignSelf: 'flex-start' },
+  code: { marginTop: space(1), fontSize: 28, lineHeight: 36, letterSpacing: 3, color: colors.grn },
 });
