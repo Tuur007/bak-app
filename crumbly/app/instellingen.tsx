@@ -6,12 +6,11 @@ import { dayName, fmtDayTime } from '../src/domain/dates';
 import type { HomeWindow } from '../src/domain/types';
 import { downloadBackup, parseBackup } from '../src/services/backup';
 import { pushStatus, sendTestReminder, turnPushOff, turnPushOn, type PushStatus } from '../src/services/push';
-import { peerName } from '../src/domain/peers';
-import { createLinkCode, redeemLinkCode, unlinkPeer } from '../src/services/peers';
-import { sendPasswordReset, signIn, signUp, useSessionEmail } from '../src/services/auth';
+import { useSessionEmail } from '../src/services/auth';
 import { supabase } from '../src/services/supabase';
 import { getSyncStatus, onSyncStatus, syncNow, type SyncStatus } from '../src/services/sync';
 import { useCrumbly } from '../src/store/store';
+import { Koppelen } from '../src/ui/Koppelen';
 import { Button, Card, Field, Gap, Row, Screen, Segmented, Toggle, Txt } from '../src/ui/kit';
 import { colors, space } from '../src/ui/theme';
 import { HhmmStepper } from '../src/ui/widgets';
@@ -20,129 +19,21 @@ const ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 function Account() {
   const user = useSessionEmail();
-  const [mode, setMode] = useState<'aanmelden' | 'nieuw'>('aanmelden');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [msg, setMsg] = useState('');
-  const [busy, setBusy] = useState(false);
   const [sync, setSync] = useState<SyncStatus>(getSyncStatus());
   useEffect(() => onSyncStatus(setSync), []);
-
-  if (!supabase) {
-    return (
-      <Card>
-        <Txt v="folio">Account en sync</Txt>
-        <Txt style={st.mt}>Sync is nog niet ingesteld. Alles staat veilig op dit toestel. Maak af en toe een back-up (hieronder).</Txt>
-      </Card>
-    );
-  }
-
+  if (!supabase || !user) return null;
   const statusText =
     sync.kind === 'ok' ? `Gesynchroniseerd, ${fmtDayTime(new Date(sync.at), new Date())}.` : sync.kind === 'bezig' ? 'Bezig met synchroniseren...' : sync.kind === 'fout' ? sync.message : sync.reason;
-
-  if (user) {
-    return (
-      <Card>
-        <Txt v="folio">Account en sync</Txt>
-        <Txt style={st.mt}>Aangemeld als {user}.</Txt>
-        <Txt v="note">{statusText}</Txt>
-        <Gap />
-        <Row>
-          <Button small v="green" label="Nu synchroniseren" onPress={() => void syncNow()} />
-          <Button small v="ghost" label="Afmelden" onPress={() => void supabase?.auth.signOut()} />
-        </Row>
-      </Card>
-    );
-  }
-
   return (
     <Card>
       <Txt v="folio">Account en sync</Txt>
-      <Txt v="note" style={st.mt}>Met een account staan je gegevens ook veilig in de cloud, en zie je ze op elk toestel. Zelfde account als de Recepten-app.</Txt>
+      <Txt style={st.mt}>Aangemeld als {user}.</Txt>
+      <Txt v="note">{statusText}</Txt>
       <Gap />
-      <Segmented options={[{ value: 'aanmelden', label: 'Aanmelden' }, { value: 'nieuw', label: 'Account maken' }]} value={mode} onChange={(v) => { setMode(v); setMsg(''); }} />
-      <Field label="E-mailadres" value={email} onChange={setEmail} email />
-      <Field label={mode === 'nieuw' ? 'Wachtwoord (minstens 8 tekens)' : 'Wachtwoord'} value={password} onChange={setPassword} secure />
-      <Button
-        label={busy ? 'Even geduld...' : mode === 'nieuw' ? 'Account maken' : 'Aanmelden'}
-        disabled={busy}
-        onPress={async () => {
-          setBusy(true);
-          setMsg('');
-          if (mode === 'nieuw') {
-            const r = await signUp(email, password);
-            setMsg(r.message);
-            if (r.ok) void syncNow();
-          } else {
-            const err = await signIn(email, password);
-            if (err) setMsg(err);
-            else void syncNow();
-          }
-          setBusy(false);
-        }}
-      />
-      {mode === 'aanmelden' ? <Button small v="ghost" label="Wachtwoord vergeten?" onPress={async () => setMsg(await sendPasswordReset(email))} /> : null}
-      {msg ? <Txt v="bold" style={st.warn}>{msg}</Txt> : null}
-    </Card>
-  );
-}
-
-function Koppelen() {
-  const user = useSessionEmail();
-  const peers = useCrumbly((s) => s.peers);
-  const ownName = useCrumbly((s) => s.starter?.name);
-  const [code, setCode] = useState('');
-  const [mine, setMine] = useState('');
-  const [msg, setMsg] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [confirm, setConfirm] = useState<string | null>(null);
-  if (!supabase || !user) return null;
-
-  return (
-    <Card>
-      <Txt v="folio">Koppelen met een ander account</Txt>
-      <Txt v="note" style={st.mt}>Zo zien jullie elkaars starter: leeftijd, voedingen en of hij klaar is. Enkel kijken, niemand kan iets van de ander aanpassen. Recepten, bakken en broden blijven privé.</Txt>
-      {peers.map((p) => (
-        <View key={p.userId} style={st.day}>
-          <Txt v="bold">Gekoppeld met {peerName(p, ownName)}</Txt>
-          {confirm === p.userId ? (
-            <>
-              <Txt v="bold" style={st.warn}>Jullie zien elkaars starter dan niet meer. Zeker?</Txt>
-              <Row>
-                <Button small v="danger" label="Ja, ontkoppelen" onPress={async () => {
-                  const { data } = await supabase!.auth.getSession();
-                  const me = data.session?.user.id;
-                  const r = me ? await unlinkPeer(supabase!, me, p.userId) : { error: 'Niet aangemeld.' };
-                  setConfirm(null);
-                  if ('error' in r) setMsg(r.error); else { setMsg('Ontkoppeld.'); void syncNow(); }
-                }} />
-                <Button small v="ghost" label="Nee" onPress={() => setConfirm(null)} />
-              </Row>
-            </>
-          ) : (
-            <Button small v="ghost" label="Ontkoppelen" onPress={() => setConfirm(p.userId)} style={st.left} />
-          )}
-        </View>
-      ))}
-      <Gap />
-      <Txt v="label">Een code geven aan de ander</Txt>
-      <Button small v="outline" label={mine ? 'Nieuwe code maken' : 'Maak een koppelcode'} disabled={busy} onPress={async () => {
-        setBusy(true); setMsg('');
-        const r = await createLinkCode(supabase!);
-        if ('error' in r) setMsg(r.error); else setMine(r.code);
-        setBusy(false);
-      }} />
-      {mine ? <Txt v="h2" style={st.mt}>{mine}</Txt> : null}
-      {mine ? <Txt v="note">Geef deze code aan de ander. Ze werkt eenmalig en een dag lang.</Txt> : null}
-      <Gap />
-      <Field label="Of vul de code van de ander in" value={code} onChange={setCode} placeholder="bv. 3F9A12BC07" />
-      <Button small v="green" label="Koppel" disabled={busy || code.trim() === ''} onPress={async () => {
-        setBusy(true); setMsg('');
-        const r = await redeemLinkCode(supabase!, code);
-        if ('error' in r) setMsg(r.error); else { setCode(''); setMsg('Gekoppeld. De starter van de ander verschijnt zo.'); await syncNow(); }
-        setBusy(false);
-      }} />
-      {msg ? <Txt v="bold" style={st.warn}>{msg}</Txt> : null}
+      <Row>
+        <Button small v="green" label="Nu synchroniseren" onPress={() => void syncNow()} />
+        <Button small v="ghost" label="Afmelden" onPress={() => void supabase?.auth.signOut()} />
+      </Row>
     </Card>
   );
 }

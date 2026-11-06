@@ -41,7 +41,8 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
 - `src/services/sync.ts`: upsert naar `bak_items` (sleutel user_id+id), ophalen op
   `server_updated_at`, laatste wijziging wint (ook in de databank, trigger). Daarna de
   openstaande wekkers vervangen in `bak_reminders`.
-- Account: aanmelden, account maken en wachtwoord vergeten in Instellingen (`src/services/auth.ts`).
+- Account: eerst aanmelden voor je iets van de app ziet (`AanmeldScherm` in `app/_layout.tsx`, formulier in
+  `src/ui/AuthForm.tsx`; zonder Supabase-gegevens, bv. lokaal testen, geldt dit niet). Services in `src/services/auth.ts`.
   Zelfde `auth.users` als Recepten, Tuin en Op reis. De bevestigingsmail stuurt terug naar de site
   als `https://crumbly.vercel.app` in Supabase, Authentication, URL Configuration, Redirect URLs staat.
 - Foto van het brood: verkleind tot 480 px JPEG (data-URL) in `BakeResult.photo`, synct mee
@@ -71,7 +72,8 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
   RLS van `bak_items` blijft eigen rijen. Lokaal staat dat apart in `store.peers` (`src/domain/peers.ts`,
   `src/services/peers.ts`), nooit in `dirty` en nooit door `mergeRemote` (alle starters hebben hetzelfde vaste id en
   zouden de eigen starter overschrijven). Tabblad Starter heeft een keuze tussen eigen en gekoppelde starter
-  (`PeerView`); Instellingen heeft de koppelcode. `Starter.splitFrom/splitOn` noteert waarvan je gesplitst bent.
+  (`PeerView`); het startscherm toont bovenaan wie welke starter heeft (`StarterOverview`, met naam kiezen en weg naar
+  `app/koppelen.tsx`); de koppelcode staat in `src/ui/Koppelen.tsx` (ook in Instellingen). `Starter.splitFrom/splitOn` noteert waarvan je gesplitst bent.
 - Meldingen: `bak_push_subscriptions` + `private.bak_send_due()` (pg_cron elke minuut) ->
   `api/push/send.js` (Vercel, web-push). Zie `crumbly/docs/meldingen-instellen.md`.
 - Tijden altijd als absolute momenten; aftellen rekent vanaf de klok (iOS pauzeert timers).

@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { addDays, fmtDayTime, fmtLongDate, toDayString } from '../../src/domain/dates';
 import { peerName } from '../../src/domain/peers';
@@ -155,7 +156,9 @@ function MijnStarter({ top }: { top: ReactNode }) {
 export default function Starter() {
   const peers = useCrumbly((s) => s.peers);
   const ownName = useCrumbly((s) => s.starter?.name);
-  const [view, setView] = useState<string>('mine');
+  const params = useLocalSearchParams<{ view?: string }>();
+  const [view, setView] = useState<string>(params.view ?? 'mine');
+  useEffect(() => { setView(params.view ?? 'mine'); }, [params.view]);
   const peer = peers.find((p) => p.userId === view);
   if (peers.length === 0) return <MijnStarter top={null} />;
   const top = (
