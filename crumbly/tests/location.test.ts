@@ -88,3 +88,39 @@ test('logboek: voedingen en verplaatsingen samen, nieuwste eerst, zonder verwijd
   const log = starterLog(s, [feed('2026-11-01'), feed('2026-11-03'), { ...feed('2026-11-04'), deletedAt: 'x' }]);
   assert.deepEqual(log.map((e) => e.kind), ['voeding', 'plek', 'voeding']);
 });
+
+test('opfrissen: een voeding na minstens anderhalf uur opwarmen telt wel mee, ook als het de eerste is', () => {
+  // Woensdag tot vrijdag: 7 uur uit de koelkast, 9 uur voeden (verdubbeld na 2 uur), 11 uur terug in de koelkast.
+  let s = moved(base, 'koelkast', iso('2026-11-08', 18));
+  const feeds: Feed[] = [];
+  for (const d of ['2026-11-11', '2026-11-12', '2026-11-13']) {
+    s = moved(s, 'kamer', iso(d, 7));
+    feeds.push(feed(d, 2, 9));
+    s = moved(s, 'koelkast', iso(d, 11));
+  }
+  for (const f of feeds) assert.equal(countsForReadiness(s, f, feeds), true);
+  const r = readiness(s, feeds, new Date(iso('2026-11-14', 7)));
+  assert.equal(r.streak, 3);
+  assert.equal(r.ready, true, 'drie keer verdubbeld binnen 6 uur na het opfrissen: klaar voor zaterdag');
+});
+
+test('opfrissen in het bakschema: per dag uit de koelkast, voeden 1:2:2, terug in de koelkast; daarna de knedag', async () => {
+  const { bakeProcess, refreshSteps } = await import('../src/domain/location.ts');
+  const { planBackward } = await import('../src/domain/schedule.ts');
+  const steps = refreshSteps('Jean', 3);
+  assert.equal(steps.length, 9);
+  assert.deepEqual(steps.slice(0, 3).map((x) => x.starterAction), ['uit-koelkast', 'voeden', 'in-koelkast']);
+  assert.equal(steps[1].feedRatio, '1:2:2');
+  assert.ok(steps.every((x) => x.alarm));
+  const dough = [{ id: 'd1', name: 'Mengen', minutes: 60, kind: 'hand' as const, alarm: true }];
+  const fridge = moved(base, 'koelkast', iso('2026-11-08', 18));
+  assert.equal(bakeProcess(dough, base, 3).length, 1, 'starter op kamertemperatuur: niets ervoor');
+  assert.equal(bakeProcess(dough, fridge, 0).length, 2, 'zonder opfrissen: enkel uithalen');
+  const p = bakeProcess(dough, fridge, 3);
+  assert.deepEqual(p.slice(9, 11).map((x) => x.starterAction), ['uit-koelkast', 'voeden'], 'knedag: uithalen, een theelepel bewaren voor volgende week');
+  // Kneden zaterdag 9:00 -> de opfrisdagen beginnen woensdag, donderdag en vrijdag om 7:00 (2 uur voor het kneden, min het bewaren).
+  const plan = planBackward(p, new Date('2026-11-14T10:00:00'));
+  const outs = plan.filter((x) => x.starterAction === 'uit-koelkast').map((x) => new Date(x.startAt));
+  assert.deepEqual(outs.map((d) => [d.getDate(), d.getHours(), d.getMinutes()]), [[11, 6, 55], [12, 6, 55], [13, 6, 55], [14, 6, 55]]);
+  assert.equal(plan[1].starterAction, 'voeden', 'de actie blijft bij het plannen behouden');
+});

@@ -51,19 +51,24 @@ export function feedIntervalHours(starter: Starter): number {
   return starter.feedIntervalHours;
 }
 
+/** Zo lang moet een starter uit de koelkast op kamertemperatuur staan voor hij "opgewarmd" is. */
+export const WARMED_MINUTES = 90;
+
 /**
  * Telt deze voeding mee voor "klaar om te bakken"? Niet als ze in de koelkast gebeurde, en niet de eerste
- * voeding nadat hij uit de koelkast kwam: een koude starter verdubbelt trager en zou de reeks onterecht breken.
+ * voeding vlak nadat hij uit de koelkast kwam: een koude starter verdubbelt trager en zou de reeks onterecht breken.
+ * Stond hij eerst minstens anderhalf uur op kamertemperatuur (zoals bij opfrissen: 2 uur opwarmen, dan voeden met
+ * lauw water), dan telt de voeding wel mee.
  */
 export function countsForReadiness(starter: Starter, feed: Feed, allFeeds: Feed[]): boolean {
   if (locationAt(starter, feed.fedAt) === 'koelkast') return false;
   const fed = t(feed.fedAt);
   const lastOut = moves(starter).filter((m) => m.location === 'kamer' && t(m.at) <= fed).pop();
   if (!lastOut) return true;
-  // Was er tussen het uithalen en deze voeding al een andere voeding? Dan is dit niet de eerste.
   const out = t(lastOut.at);
-  const earlier = allFeeds.some((f) => f.id !== feed.id && !f.deletedAt && t(f.fedAt) >= out && t(f.fedAt) < fed);
-  return earlier;
+  if (fed - out >= WARMED_MINUTES * 60_000) return true;
+  // Was er tussen het uithalen en deze voeding al een andere voeding? Dan is dit niet de eerste.
+  return allFeeds.some((f) => f.id !== feed.id && !f.deletedAt && t(f.fedAt) >= out && t(f.fedAt) < fed);
 }
 
 /**
@@ -111,12 +116,46 @@ export function locationLabel(loc: StarterLocation): string {
 
 /** Eerste stap van een bak als de starter in de koelkast staat: eruit halen en laten opwarmen (vuistregel: 2 uur). */
 export function fridgeOutStep(name: string): ProcessStep {
-  return { id: 'koelkast-uit', name: `${name} uit de koelkast halen en laten opwarmen`, minutes: 120, kind: 'hand', workMinutes: 1, alarm: true };
+  return { id: 'koelkast-uit', name: `${name} uit de koelkast halen en laten opwarmen`, minutes: 120, kind: 'hand', workMinutes: 1, alarm: true, starterAction: 'uit-koelkast' };
 }
 
-/** Het bakschema voor deze starter: met de koelkaststap ervoor als hij in de koelkast staat. */
-export function bakeProcess(process: ProcessStep[], starter: Starter | null): ProcessStep[] {
-  return starter?.location === 'koelkast' ? [fridgeOutStep(starter.name), ...process] : process;
+/** Verhouding bij het opfrissen: veel starter op weinig voer, zodat hij met lauw water binnen een paar uur op zijn piek is. */
+export const REFRESH_RATIO = '1:2:2';
+/** Verhouding van de kleine pot die je op de knedag voor volgende week bewaart. */
+export const KEEP_RATIO = '1:10:10';
+export const MAX_REFRESH_DAYS = 3;
+
+/**
+ * Opfrissen voor een bak, voor een starter die in de koelkast woont: de dagen voor het kneden elke ochtend uit de
+ * koelkast, na 2 uur voeden 1:2:2 met lauw water, en zodra hij verdubbeld is (ongeveer 2 uur) terug in de koelkast
+ * tot de volgende ochtend. Elke stap heeft een wekker en noteert bij het afvinken zelf de koelkast of de voeding.
+ */
+export function refreshSteps(name: string, days: number): ProcessStep[] {
+  const n = Math.max(0, Math.min(MAX_REFRESH_DAYS, Math.round(days)));
+  const out: ProcessStep[] = [];
+  for (let d = 1; d <= n; d++) {
+    const tag = `opfrissen ${d} van ${n}`;
+    out.push({ id: `opfris-${d}-uit`, name: `${name} uit de koelkast halen (${tag})`, minutes: 120, kind: 'hand', workMinutes: 1, alarm: true, starterAction: 'uit-koelkast' });
+    out.push({ id: `opfris-${d}-voeden`, name: `${name} voeden ${REFRESH_RATIO} met lauw water, ongeveer 36 graden (${tag})`, minutes: 120, kind: 'hand', workMinutes: 5, alarm: true, starterAction: 'voeden', feedRatio: REFRESH_RATIO });
+    // Tot de volgende ochtend in de koelkast: 24 uur na het uithalen begint de volgende dag (de laatste dag: de knedag).
+    out.push({ id: `opfris-${d}-in`, name: `${name} verdubbeld? Terug in de koelkast (${tag})`, minutes: 24 * 60 - 240, kind: 'hand', workMinutes: 1, alarm: true, starterAction: 'in-koelkast' });
+  }
+  return out;
+}
+
+/** Op de knedag: neem wat je nodig hebt voor het deeg en bewaar een theelepel als starter voor volgende week. */
+export function keepForNextWeekStep(name: string): ProcessStep {
+  return { id: 'bewaar-volgende-week', name: `Neem wat je nodig hebt voor het deeg. Bewaar een theelepel van ${name}, voed die ${KEEP_RATIO} en zet hem na 2 uur in de koelkast`, minutes: 5, kind: 'hand', workMinutes: 5, alarm: false, starterAction: 'voeden', feedRatio: KEEP_RATIO };
+}
+
+/**
+ * Het bakschema voor deze starter: met de koelkaststap ervoor als hij in de koelkast staat, en eventueel een paar
+ * dagen opfrissen daarvoor (enkel voor een starter in de koelkast).
+ */
+export function bakeProcess(process: ProcessStep[], starter: Starter | null, refreshDays = 0): ProcessStep[] {
+  if (starter?.location !== 'koelkast') return process;
+  if (refreshDays > 0) return [...refreshSteps(starter.name, refreshDays), fridgeOutStep(starter.name), keepForNextWeekStep(starter.name), ...process];
+  return [fridgeOutStep(starter.name), ...process];
 }
 
 /** Eén regel over een voeding in het logboek: verhouding, wie, en hoe snel hij verdubbelde. */

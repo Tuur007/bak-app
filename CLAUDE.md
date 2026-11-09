@@ -108,6 +108,15 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
 - Receptparser (`recipeText.ts`): onzekere stappen hebben `ProcessStep.check`; een uit tekst gemaakt recept is een
   concept (`recipeDraft.ts`) dat pas in de editor wordt bewaard. Een wachtstap zonder tijd is een wachtstap van 1 uur
   zonder wekker, nooit een handstap van 5 minuten.
+  Getest met een echte bladzijde uit het bakboek van de zus (classic bâtard): genummerde stappen zonder punt ("1 Maak"),
+  tussenkoppen ("Kneden (ca. 4 uur)") zijn geen stap, "500 + 60" telt op, zeezout is zout, een tabel met kolom "gram",
+  handelingen zonder tijd in één alinea worden één handstap (één wekker), uitleg zonder opdracht gaat naar de notities,
+  "herhaal nog twee keer", vouwen binnen de bulk, voorverwarmen 45 minuten (nakijken), "bij 24 °C" wordt `refTempC`.
+- Opfrissen (blz. 44 van haar boek, enkel in de weken dat ze bakt): staat de starter in de koelkast, dan kiest ze in de
+  planner 0, 2 of 3 dagen opfrissen (`refreshSteps` in `location.ts`): elke ochtend uit de koelkast, na 2 uur voeden
+  1:2:2 met lauw water, 2 uur later terug in de koelkast; op de knedag een theelepel bewaren (1:10:10). Stappen met
+  `starterAction` noteren bij het afvinken zelf de verplaatsing of de voeding (`setStepDone`). Een voeding na minstens
+  90 minuten opwarmen telt mee voor "klaar om te bakken" (`countsForReadiness`).
 - Wekkers: de planning wist geen wekker waarvan het uur voorbij is (de server herkanst). Migratie
   `20261106150000_crumbly_wekkers_betrouwbaar.sql` (herkansing, controle van antwoorden, verlopen abonnementen wissen)
   staat in de databank (net als `20261106160000_crumbly_gezin_ketting.sql`, toegepast 6 november 2026); de proef met een
