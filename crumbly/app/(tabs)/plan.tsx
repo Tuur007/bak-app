@@ -5,7 +5,7 @@ import { fmtDay, fmtDayTime, fmtDuration, fmtLongDate, fmtTime, sameDay } from '
 import { formatPct, recipeRatios } from '../../src/domain/ratios';
 import { endOf, findFittingEnd, homeConflicts, planBackward, stepState, totalMinutes, workMinutes } from '../../src/domain/schedule';
 import { adjustForTemperature } from '../../src/domain/temperature';
-import { bakeProcess } from '../../src/domain/location';
+import { bakeProcess, REFRESH_RATIO } from '../../src/domain/location';
 import { stepsToCheck } from '../../src/domain/recipeDraft';
 import { earliestBakeDay } from '../../src/domain/starter';
 import type { Bake, HomeWindow, PlannedStep, ProcessStep } from '../../src/domain/types';
@@ -126,7 +126,7 @@ function defaultEnd(process: ProcessStep[], windows: HomeWindow[], now: Date): D
 }
 
 /** Is de starter op de bakdag waarschijnlijk klaar? Een schatting op basis van zijn recente verdubbelingen. */
-function StarterOnBakeDay({ end, now }: { end: Date; now: Date }) {
+function StarterOnBakeDay({ end, now, refreshDays }: { end: Date; now: Date; refreshDays: number }) {
   const starter = useCrumbly((s) => s.starter);
   const feeds = useCrumbly((s) => s.feeds);
   if (!starter) return null;
@@ -143,7 +143,7 @@ function StarterOnBakeDay({ end, now }: { end: Date; now: Date }) {
             ? `Waarschijnlijk klaar: op zijn vroegst rond ${fmtLongDate(earliest)}, en je bakt later.`
             : `Misschien nog niet klaar: op zijn vroegst rond ${fmtLongDate(earliest)}. Kies een latere dag, of kijk zelf hoe hij verdubbelt.`}
       </Txt>
-      {fridge ? <Txt v="note" style={p.mt}>Hij staat in de koelkast. Het schema begint daarom met hem eruit te halen en te laten opwarmen.</Txt> : null}
+      {fridge ? <Txt v="note" style={p.mt}>{refreshDays > 0 ? `Hij staat in de koelkast. Het schema begint ${refreshDays} ${refreshDays === 1 ? 'dag' : 'dagen'} voor het kneden met opfrissen. Verdubbelt hij telkens binnen ${starter.thresholdHours} uur, dan telt dat mee.` : 'Hij staat in de koelkast. Het schema begint daarom met hem eruit te halen en te laten opwarmen.'}</Txt> : null}
       <Txt v="note">Een schatting op basis van zijn laatste verdubbelingen. Jij ziet het aan {starter.name}.</Txt>
     </Card>
   );
@@ -163,6 +163,9 @@ function Planner({ initialRecipe, onDone }: { initialRecipe?: string; onDone: ()
   const [end, setEnd] = useState<Date>(() => defaultEnd(recipe?.process ?? [], windows, new Date()));
   const [msg, setMsg] = useState('');
   const [tempC, setTempC] = useState<number | undefined>(undefined);
+  // Starter in de koelkast: enkel op de bakdag uithalen (0), of een paar dagen opfrissen ervoor.
+  const [refreshDays, setRefreshDays] = useState(0);
+  const inFridge = starter?.location === 'koelkast';
 
   useEffect(() => {
     if (initialRecipe) setRecipeId(initialRecipe);
@@ -176,8 +179,13 @@ function Planner({ initialRecipe, onDone }: { initialRecipe?: string; onDone: ()
     [recipe, kitchen, settings.tempDoubling],
   );
   // Zelfde schema als bij "Plan deze bak": met de koelkaststap als de starter in de koelkast staat.
-  const process = useMemo(() => (adjusted ? bakeProcess(adjusted.process, starter) : []), [adjusted, starter]);
+  const process = useMemo(() => (adjusted ? bakeProcess(adjusted.process, starter, inFridge ? refreshDays : 0) : []), [adjusted, starter, inFridge, refreshDays]);
   const steps = useMemo(() => (recipe ? planBackward(process, end) : []), [recipe, process, end]);
+  // Opfrissen maakt het schema dagen langer: valt het begin dan in het verleden, kies het eerste moment dat wel kan.
+  useEffect(() => {
+    const first = planBackward(process, end)[0];
+    if (first && new Date(first.startAt).getTime() < Date.now() - 5 * 60_000) setEnd(defaultEnd(process, windows, new Date()));
+  }, [refreshDays]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!recipe) {
     return (
       <Card>
@@ -226,6 +234,23 @@ function Planner({ initialRecipe, onDone }: { initialRecipe?: string; onDone: ()
       ) : (
         <Txt v="note" style={p.mb}>Wil je dat de rijstijd meegaat met de temperatuur in je keuken? Vul bij het recept in bij hoeveel graden de tijden gelden.</Txt>
       )}
+      {inFridge && starter ? (
+        <Card>
+          <Txt v="folio">{starter.name} staat in de koelkast</Txt>
+          <Txt style={p.mt}>Hoe maak je hem klaar voor deze bak?</Txt>
+          <Gap />
+          <Row style={p.wrap}>
+            <Chip label="Op de bakdag uithalen" on={refreshDays === 0} onPress={() => setRefreshDays(0)} />
+            <Chip label="2 dagen opfrissen" on={refreshDays === 2} onPress={() => setRefreshDays(2)} />
+            <Chip label="3 dagen opfrissen" on={refreshDays === 3} onPress={() => setRefreshDays(3)} />
+          </Row>
+          <Txt v="note">
+            {refreshDays > 0
+              ? `Elke ochtend voor het kneden: uit de koelkast, na 2 uur voeden ${REFRESH_RATIO} met lauw water (ongeveer 36 graden), en als hij na ongeveer 2 uur verdubbeld is, terug in de koelkast. Op de knedag bewaar je een theelepel voor volgende week. Elke stap krijgt een wekker. Vink je hem af in het bakplan, dan noteert Crumbly de voeding en de koelkast zelf.`
+              : 'Op de bakdag haal je hem 2 uur voor het kneden uit de koelkast. Staat hij al lang in de koelkast, of verdubbelt hij traag, kies dan opfrissen.'}
+          </Txt>
+        </Card>
+      ) : null}
       <Txt v="label">Brood klaar op</Txt>
       <DayChips value={end} onChange={(d) => { setEnd(d); setMsg(''); }} start={now} days={14} />
       <TimeStepper value={end} onChange={(d) => { setEnd(d); setMsg(''); }} step={15} />
@@ -240,7 +265,7 @@ function Planner({ initialRecipe, onDone }: { initialRecipe?: string; onDone: ()
             <Txt style={p.mt}>Al het handwerk valt op een moment dat je thuis bent.</Txt>
           ) : (
             <>
-              <Txt style={p.mt}>Niet thuis bij: {conflicts.slice(0, 4).map((c) => `${c.name.toLowerCase()} (${fmtDayTime(new Date(c.startAt), now)})`).join(', ')}{conflicts.length > 4 ? ' ...' : ''}.</Txt>
+              <Txt style={p.mt}>Niet thuis bij: {conflicts.slice(0, 4).map((c) => `${starter && c.name.startsWith(starter.name) ? c.name : c.name.toLowerCase()} (${fmtDayTime(new Date(c.startAt), now)})`).join(', ')}{conflicts.length > 4 ? ' ...' : ''}.</Txt>
               <Gap />
               <Button small v="green" label="Zoek een moment dat past" onPress={() => {
                 const fit = findFittingEnd(process, end, windows, now);
@@ -253,7 +278,7 @@ function Planner({ initialRecipe, onDone }: { initialRecipe?: string; onDone: ()
         {msg ? <Txt v="note" style={p.mt}>{msg}</Txt> : null}
       </Card>
 
-      {starter ? <StarterOnBakeDay end={end} now={now} /> : null}
+      {starter ? <StarterOnBakeDay end={end} now={now} refreshDays={inFridge ? refreshDays : 0} /> : null}
 
       <Card style={p.list}>
         {steps.filter((s) => s.kind === 'hand').map((s) => (
@@ -264,7 +289,7 @@ function Planner({ initialRecipe, onDone }: { initialRecipe?: string; onDone: ()
           </View>
         ))}
       </Card>
-      <Button label="Plan deze bak" disabled={tooEarly} onPress={() => { if (kitchen !== undefined) updateSettings({ kitchenTempC: kitchen }); if (planBake(recipe.id, end, kitchen)) onDone(); }} />
+      <Button label="Plan deze bak" disabled={tooEarly} onPress={() => { if (kitchen !== undefined) updateSettings({ kitchenTempC: kitchen }); if (planBake(recipe.id, end, kitchen, inFridge ? refreshDays : 0)) onDone(); }} />
       <Button v="ghost" label="Werkwijze en tijden aanpassen" onPress={() => router.push(`/recept/${recipe.id}`)} />
     </>
   );

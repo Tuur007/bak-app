@@ -30,6 +30,8 @@ export default function ReceptPlakken() {
         starterHydration: parsed.starterHydration,
         saltG: parsed.saltG,
         process: parsed.process,
+        ...(parsed.refTempC !== undefined ? { refTempC: parsed.refTempC } : {}),
+        ...(parsed.notes.length > 0 ? { notes: parsed.notes.join('\n') } : {}),
         updatedAt: new Date().toISOString(),
       },
       warnings: parsed.warnings,
@@ -57,6 +59,7 @@ export default function ReceptPlakken() {
             <Txt>Water {parsed.waterG || '?'} g · starter {parsed.starterG || '?'} g · zout {parsed.saltG || '?'} g</Txt>
             {q.totalFlour > 0 && parsed.waterG > 0 ? <Txt v="note" style={st.mt}>Hydratatie {formatPct(q.hydration)} · starter {formatPct(q.starterPct)} · zout {formatPct(q.saltPct)}</Txt> : null}
             {parsed.ignored.length > 0 ? <Txt v="note">Niet herkend: {parsed.ignored.join('; ')}</Txt> : null}
+            {parsed.refTempC !== undefined ? <Txt v="note">De tijden gelden bij {parsed.refTempC} graden. Crumbly past de rijstijd aan je keuken aan.</Txt> : null}
           </Card>
 
           <Card>
@@ -72,6 +75,14 @@ export default function ReceptPlakken() {
               </View>
             ))}
           </Card>
+
+          {parsed.notes.length > 0 ? (
+            <Card>
+              <Txt v="folio">Uitleg uit het recept</Txt>
+              {parsed.notes.map((n) => <Txt key={n} style={st.mt}>{n}</Txt>)}
+              <Txt v="note" style={st.mt}>Dit zijn geen stappen. Het komt bij de notities van je recept.</Txt>
+            </Card>
+          ) : null}
 
           <Card tone="blush">
             <Txt v="folio">Kijk dit na</Txt>

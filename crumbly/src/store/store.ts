@@ -45,7 +45,7 @@ export interface CrumblyState {
   seedIfEmpty: () => void;
   updateStarter: (patch: Partial<Starter>) => void;
   /** Noteert een voeding en geeft haar id (om ongedaan te maken). */
-  feedNow: (at?: Date) => string;
+  feedNow: (at?: Date, ratio?: string) => string;
   /** Zet de starter in de koelkast of op kamertemperatuur, met het moment in het logboek. */
   moveStarterTo: (to: StarterLocation, at?: Date) => void;
   /** "Ik ben weg" met de starter in de koelkast: noteer dat hij bij vertrek in de koelkast ging. */
@@ -57,7 +57,8 @@ export interface CrumblyState {
   deleteFeed: (id: string) => void;
   saveRecipe: (r: Recipe) => void;
   deleteRecipe: (id: string) => void;
-  planBake: (recipeId: string, end: Date, kitchenTempC?: number) => string | null;
+  /** `refreshDays`: zoveel dagen opfrissen ervoor (enkel als de starter in de koelkast staat). */
+  planBake: (recipeId: string, end: Date, kitchenTempC?: number, refreshDays?: number) => string | null;
   finishWait: (bakeId: string, stepId: string) => void;
   setStepDone: (bakeId: string, stepId: string, done: boolean) => void;
   setStepAlarm: (bakeId: string, stepId: string, alarm: boolean) => void;
@@ -149,11 +150,11 @@ export const useCrumbly = create<CrumblyState>()(
             touch(s, 'starter', s.starter.id);
           }),
 
-        feedNow: (at = new Date()) => {
+        feedNow: (at = new Date(), ratio) => {
           const id = newId();
           set((s) => {
             const by = feederName(s.household, s.ownerName);
-            const f: Feed = { id, fedAt: at.toISOString(), ratio: s.starter?.defaultRatio ?? '1:5:5', ...(by ? { by } : {}), updatedAt: nowIso() };
+            const f: Feed = { id, fedAt: at.toISOString(), ratio: ratio ?? s.starter?.defaultRatio ?? '1:5:5', ...(by ? { by } : {}), updatedAt: nowIso() };
             s.feeds.push(f);
             touch(s, 'feed', f.id);
           });
@@ -253,13 +254,13 @@ export const useCrumbly = create<CrumblyState>()(
             touch(s, 'recipe', id);
           }),
 
-        planBake: (recipeId, end, kitchenTempC) => {
+        planBake: (recipeId, end, kitchenTempC, refreshDays = 0) => {
           const r = get().recipes.find((x) => x.id === recipeId && !x.deletedAt);
           if (!r) return null;
           const flourG = r.flours.reduce((a, f) => a + f.grams, 0);
           const ratios = computeRatios({ flourG, waterG: r.waterG, starterG: r.starterG, starterHydration: r.starterHydration, saltG: r.saltG });
           const adjusted = adjustForTemperature(r.process, r.refTempC, kitchenTempC, get().settings.tempDoubling);
-          const process = bakeProcess(adjusted.process, get().starter);
+          const process = bakeProcess(adjusted.process, get().starter, refreshDays);
           const steps: PlannedStep[] = planBackward(process, end).map((p) => ({ ...p, id: newId() }));
           const t = nowIso();
           const b: Bake = {
@@ -274,10 +275,21 @@ export const useCrumbly = create<CrumblyState>()(
           return b.id;
         },
 
-        setStepDone: (bakeId, stepId, done) =>
+        setStepDone: (bakeId, stepId, done) => {
+          const step = get().bakes.find((b) => b.id === bakeId)?.steps.find((x) => x.id === stepId);
+          const wasDone = !!step?.doneAt;
           withBake(bakeId, (b) => {
             b.steps = done ? markDone(b.steps, stepId, new Date()) : undoDone(b.steps, stepId);
-          }),
+          });
+          // Een stap met de starter (uit of in de koelkast, voeden) noteert dat meteen: niet nog eens apart tikken.
+          // Ongedaan maken draait het niet terug: dat doe je bij de starter zelf (de voeding verwijderen of verplaatsen).
+          if (done && !wasDone && step?.starterAction) {
+            const now = new Date();
+            if (step.starterAction === 'uit-koelkast') get().moveStarterTo('kamer', now);
+            else if (step.starterAction === 'in-koelkast') get().moveStarterTo('koelkast', now);
+            else if (step.starterAction === 'voeden') get().feedNow(now, step.feedRatio);
+          }
+        },
 
         finishWait: (bakeId, stepId) => withBake(bakeId, (b) => { b.steps = finishWaitNow(b.steps, stepId, new Date()); }),
 

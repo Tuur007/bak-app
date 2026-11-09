@@ -79,6 +79,12 @@ export interface ProcessStep {
   alarm: boolean;
   /** Uit een tekst afgeleid en onzeker: wat de gebruiker moet nakijken. Verdwijnt zodra hij de stap aanpast. */
   check?: string;
+  /**
+   * Een stap die iets met de starter doet. Afvinken in het bakplan noteert het meteen: uit of in de koelkast
+   * (`locationLog`) of een voeding (met `feedRatio`). Zo hoeft de gebruiker het niet nog eens apart te tikken.
+   */
+  starterAction?: 'uit-koelkast' | 'voeden' | 'in-koelkast';
+  feedRatio?: string;
 }
 
 export interface Recipe {

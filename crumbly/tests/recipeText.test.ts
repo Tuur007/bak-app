@@ -45,7 +45,8 @@ test('stappen: tijden, wachten of handwerk, en splitsen bij twee tijden in één
   assert.equal(fridge.minutes, 720);
   assert.equal(fridge.tempSensitive, undefined, 'koelkast is niet temperatuurgevoelig');
   assert.deepEqual(r.process.filter((s) => /^Bak/.test(s.name)).map((s) => [s.name, s.minutes]), [['Bak 20 minuten met deksel', 20], ['Bak 25 minuten zonder', 25]]);
-  assert.equal(by(/Verwarm/).minutes, 5, 'zonder tijd: 5 minuten geschat');
+  assert.equal(by(/Verwarm/).minutes, 45, 'voorverwarmen zonder tijd: 45 minuten geschat (5 minuten was te kort voor een oven met pan)');
+  assert.match(by(/Verwarm/).check ?? '', /voorverwarm/i);
   assert.ok(r.warnings.some((w) => /geen tijd/.test(w)));
   assert.ok(r.warnings.some((w) => /midden/.test(w)));
   assert.ok(r.warnings.some((w) => /Controleer de tijden/.test(w)), 'altijd nakijken');
@@ -143,7 +144,10 @@ test('een wachtstap zonder tijd is geen handstap van 5 minuten met een wekker', 
   assert.ok(r.warnings.some((w) => /geen tijd/.test(w) && /1 uur/.test(w)));
   const hand = r.process.find((p) => /Vorm/.test(p.name))!;
   assert.equal(hand.kind, 'hand');
-  assert.match(hand.check ?? '', /5 minuten/);
+  // Een handeling zonder tijd krijgt 5 minuten werk, zonder markering: de duur van een handeling is de werktijd. Een
+  // markering per handeling gaf bij een echte bladzijde uit een bakboek 16 stappen om na te kijken.
+  assert.equal(hand.check, undefined);
+  assert.ok(r.warnings.some((w) => /handeling(en)? noem/.test(w) && /5 minuten/.test(w)));
 });
 
 test('onzekere stappen worden gemarkeerd: bereik en een nacht', () => {
@@ -177,5 +181,119 @@ test('"Laat daarna 2 uur rijzen" is één stap', () => {
 
 test('bestaande werkende voorbeelden blijven hetzelfde', () => {
   const r = parseRecipeText(SAMPLE1);
-  assert.deepEqual(r.process.map((p) => [p.kind, p.minutes]), [['hand', 5], ['wacht', 30], ['hand', 5], ['hand', 5], ['wacht', 270], ['hand', 5], ['wacht', 720], ['hand', 5], ['hand', 20], ['hand', 25]]);
+  // Bewust veranderd: "Voeg de starter en het zout toe en kneed 5 minuten" is één handstap (één wekker, niet twee), en
+  // voorverwarmen krijgt 45 minuten in plaats van 5.
+  assert.deepEqual(r.process.map((p) => [p.kind, p.minutes]), [['hand', 5], ['wacht', 30], ['hand', 5], ['wacht', 270], ['hand', 5], ['wacht', 720], ['hand', 45], ['hand', 20], ['hand', 25]]);
+  assert.ok(r.process.some((p) => p.name === 'Voeg de starter en het zout toe en kneed 5 minuten'));
+});
+
+// Een echte bladzijde uit een Nederlandstalig bakboek (classic bâtard, eigen samenvatting van de opbouw): genummerde
+// stappen zonder punt ("1 Maak"), tussenkopjes met een tijd ("Kneden (ca. 4 uur)"), water als "500 + 60", zeezout,
+// "herhaal deze handeling nog twee keer", "tot het 'aan' is", "tot de volgende ochtend in de koelkast" en voorverwarmen.
+const BOEK = `Classic bâtard
+
+Ingrediënten
+voor de meelmix
+tarwebloem 680 g
+roggemeel 90 g
+water 500 + 60 g
+actieve zuurdesem 150 g
+grof zeezout 15 g
+
+Kneden (ca. 4 uur)
+1 Maak de meelmix. Meng in een ruime kom de meelmix met 500 gram water en mix met de hand tot een homogene bol. Dek de kom af met een schone theedoek en laat het deeg 15 minuten rusten op kamertemperatuur.
+2 Voeg 60 gram water, de actieve zuurdesem en het zout toe en mix opnieuw tot een homogene bol. Stort het deeg op een vochtig werkblad en vorm er met vochtige handen een bol van. Zet de kom eroverheen en laat 30 minuten rusten.
+3 Doe een stretch & fold, van 3 tot 6 folds, totdat het deeg op spanning staat (zie handtechniek 'stretch & folds' op blz. 71). Zet de kom eroverheen en laat 45 minuten rusten op kamertemperatuur. Herhaal deze handeling nog twee keer. Na de derde rustperiode heeft het deeg een zachte, droge buitenkant.
+4 Verdeel het deeg in twee gelijke stukken. Bol beide stukken deeg op (zie handtechniek 'opbollen' op blz. 71) en laat afgedekt met een theedoek 30 minuten rusten.
+5 Vorm het deeg op een met bloem bestoven werkblad en met droge handen tot twee bâtards (zie handtechniek 'deeg vormen' op blz. 72). Leg het deeg met de naad naar boven in met bloem bestoven rijsmanden en dek af met de theedoeken.
+
+Rijzen (overnacht)
+6 Laat het deeg rusten op een warme en tochtvrije plek totdat het 'aan' is; het deeg is dan zo'n 1 centimeter omhoog gekomen. Dek, zodra dat het geval is, de rijsmanden af met de theedoeken en laat het deeg tot de volgende ochtend in de koelkast rijzen.
+
+Bakken (volgende dag)
+7 Verwarm de volgende dag de oven voor op 230 °C. Zet een gietijzeren pan met deksel tijdens het voorverwarmen in de oven en laat door en door heet worden.
+8 Stort het deeg uit één van de rijsmanden midden op een stuk bakpapier. Score met een scherp mesje het deeg (zie hiernaast). Haal de gietijzeren pan (voorzichtig!) uit de oven en leg het deeg met bakpapier en al in de hete pan. Spuit om waterdamp te creëren het deeg goed vochtig met de plantenspuit. Doe snel de deksel weer op de pan om de stoom te behouden.
+9 Zet de pan in de oven en bak het brood 15 minuten. Bak daarna zonder deksel nog 15 à 20 minuten, tot er een mooie korst is ontstaan. Het brood is gaar als de kerntemperatuur net boven de 98 °C uitkomt. Laat het brood op een rooster minimaal 15 minuten afkoelen voordat je het aansnijdt. Bak zo ook het andere brood.`;
+
+test('bakboek: ingrediënten met "500 + 60", zeezout en een tussenkop', () => {
+  const r = parseRecipeText(BOEK);
+  assert.equal(r.name, 'Classic bâtard');
+  assert.deepEqual(r.flours.map((f) => [f.name, f.grams]), [['Tarwebloem', 680], ['Roggemeel', 90]]);
+  assert.equal(r.waterG, 560, '500 + 60 telt op');
+  assert.equal(r.starterG, 150);
+  assert.equal(r.saltG, 15, 'grof zeezout is zout');
+  assert.equal(r.warnings.some((w) => /Ik vond geen/.test(w)), false);
+});
+
+test('bakboek: een schema dat klopt met het boek', () => {
+  const r = parseRecipeText(BOEK);
+  const steps = r.process;
+  // geen tussenkop als stap ("Kneden (ca. 4 uur)" is geen handstap van 4 uur)
+  assert.equal(steps.some((s) => /Kneden|Rijzen \(overnacht\)|Bakken \(volgende dag\)/.test(s.name)), false);
+  // drie keer stretch & fold met 45 minuten rust, temperatuurgevoelig
+  const folds = steps.filter((s) => /stretch & fold/i.test(s.name));
+  assert.equal(folds.length, 3, 'herhaal nog twee keer = drie keer');
+  assert.match(folds[2].name, /3 van 3/);
+  const foldRests = steps.filter((s) => s.kind === 'wacht' && s.minutes === 45);
+  assert.equal(foldRests.length, 3);
+  assert.ok(foldRests.every((s) => s.tempSensitive), 'rust op kamertemperatuur tijdens de bulk');
+  // de autolyse van 15 minuten is geen fermentatie
+  assert.equal(steps.find((s) => s.kind === 'wacht' && s.minutes === 15 && /rusten/.test(s.name))?.tempSensitive, undefined);
+  // vormen is een handstap met een wekker; "tot het aan is" is een wachtstap zonder tijd die nagekeken moet worden
+  assert.ok(steps.some((s) => /^Vorm/.test(s.name) && s.kind === 'hand' && s.alarm));
+  const aan = steps.find((s) => /aan' is/.test(s.name))!;
+  assert.equal(aan.kind, 'wacht');
+  assert.ok(aan.check);
+  // in de koelkast tot de volgende ochtend: een geschatte nacht, met een handstap (en wekker) ervoor
+  const night = steps.find((s) => /volgende ochtend/.test(s.name))!;
+  assert.equal(night.minutes, 720);
+  assert.ok(night.check);
+  assert.equal(night.tempSensitive, undefined);
+  // voorverwarmen heeft een eigen geschatte tijd, en "laat door en door heet worden" is geen wachtstap van 1 uur
+  const oven = steps.find((s) => /Verwarm/.test(s.name))!;
+  assert.equal(oven.minutes, 45);
+  assert.match(oven.check ?? '', /voorverwarm/i);
+  assert.equal(steps.some((s) => /heet worden/.test(s.name) && s.kind === 'wacht'), false);
+  // bakken: 15 met deksel, 15 à 20 zonder, 15 afkoelen
+  assert.ok(steps.some((s) => /bak het brood 15 minuten/i.test(s.name) && s.minutes === 15));
+  assert.ok(steps.some((s) => /zonder deksel/.test(s.name) && s.minutes === 18));
+  assert.ok(steps.some((s) => /afkoelen/.test(s.name) && s.kind === 'wacht' && s.minutes === 15));
+  // uitleg is geen stap, maar komt in de notities
+  assert.equal(steps.some((s) => /kerntemperatuur|zachte, droge buitenkant|andere brood/.test(s.name)), false);
+  assert.ok(r.notes.some((n) => /kerntemperatuur/.test(n)));
+  assert.ok(r.warnings.some((w) => /twee broden/.test(w)));
+  // geen verwijzingen naar bladzijden in de namen, en niet tientallen wekkers
+  assert.equal(steps.some((s) => /blz\./.test(s.name)), false);
+  assert.ok(steps.filter((s) => s.alarm).length <= 12, `te veel wekkers: ${steps.filter((s) => s.alarm).length}`);
+  // totale duur: ongeveer 4 uur kneden + rijzen + nacht + bakken (geen 22 uur door geraden stappen)
+  const total = steps.reduce((a, s) => a + s.minutes, 0);
+  assert.ok(total > 17 * 60 && total < 21 * 60, `totaal ${total} min`);
+});
+
+test('bakboek als tabel: kolom "gram" zonder eenheid per regel, met percentages en een subtotaal', () => {
+  const r = parseRecipeText(`Classic bâtard\nIngrediënten gram %\nvoor de meelmix\ntarwebloem 680 88\nroggemeel 90 12\nmeelmix 770 100\nwater 500 + 60 73\nactieve zuurdesem 150 20\ngrof zeezout 15 2\nKneden (ca. 4 uur)\n1 Maak de meelmix en laat 15 minuten rusten.`);
+  assert.deepEqual(r.flours.map((f) => f.grams), [680, 90], 'het subtotaal "meelmix" telt niet mee');
+  assert.equal(r.waterG, 560);
+  assert.equal(r.starterG, 150);
+  assert.equal(r.saltG, 15);
+});
+
+test('bulk met vouwen erin: vouwen tijdens de bulk, niet erna', () => {
+  const r = parseRecipeText(`${BASIS}1. Bulk 4 à 5 uur bij 24°C, met 4 keer stretch and fold om het halfuur.\n2. Vorm en laat een nacht rijzen in de koelkast.`);
+  assert.deepEqual(r.process.slice(0, 5).map((p) => [p.kind, p.minutes]), [['hand', 30], ['hand', 30], ['hand', 30], ['hand', 30], ['wacht', 150]]);
+  assert.match(r.process[0].name, /stretch and fold \(1 van 4\)/i);
+  assert.equal(r.process[4].tempSensitive, true);
+  assert.equal(r.refTempC, 24, '"bij 24°C" is de temperatuur van het recept');
+  const vorm = r.process.find((p) => /^Vorm/.test(p.name))!;
+  assert.equal(vorm.kind, 'hand', 'vormen is handwerk met een wekker, geen wachtstap');
+  assert.ok(vorm.alarm);
+  assert.ok(r.process.some((p) => p.kind === 'wacht' && p.minutes === 720));
+});
+
+test('gescande bladzijde: regels breken midden in een zin en woorden zijn afgebroken', () => {
+  const scan = `Classic bâtard\nIngrediënten\ntarwebloem 680 g\nwater 500 + 60 g\nactieve zuurdesem 150 g\ngrof zeezout 15 g\nKneden (ca. 4 uur)\n1 Maak de meelmix. Dek de kom af en laat het deeg\n15 minuten rusten op kamer-\ntemperatuur.\n2 Doe een stretch & fold. Zet de kom eroverheen en laat 45\nminuten rusten op kamertemperatuur. Herhaal deze handeling nog\ntwee keer.`;
+  const r = parseRecipeText(scan);
+  assert.ok(r.process.some((s) => /kamertemperatuur/.test(s.name) && s.minutes === 15), 'afgebroken woord weer heel');
+  assert.equal(r.process.filter((s) => /stretch & fold/.test(s.name)).length, 3, 'herhaling over een regelbreuk');
+  assert.equal(r.process.filter((s) => s.kind === 'wacht' && s.minutes === 45).length, 3);
 });
