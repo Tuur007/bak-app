@@ -29,6 +29,12 @@ export function StepCard({ bake, now, showName, showPlanLink }: { bake: Bake; no
       <Txt v="folio" style={loud ? c.onPunchMuted : undefined}>{h.label}{showName ? ` · ${bake.recipeName}` : ''}</Txt>
       <Txt v="h2" style={[c.mt, light]}>{h.title}</Txt>
       <Txt v="title" style={[c.count, light]}>{count}</Txt>
+      {step.tip ? (
+        <View style={c.tip}>
+          <Txt v="bold">Uitleg bij deze stap</Txt>
+          <Txt style={c.li}>{step.tip}</Txt>
+        </View>
+      ) : null}
       {h.waiting && h.at ? <Txt v="note" style={c.mb}>{h.nextName ? `Daarna: ${h.nextName.toLowerCase()}, gepland om ${fmtTime(h.at)}.` : `Gepland tot ${fmtTime(h.at)}.`}</Txt> : null}
 
       {h.label === 'Nu' ? (
@@ -78,6 +84,7 @@ const c = StyleSheet.create({
   mb: { marginBottom: space(1) },
   count: { fontSize: 48, lineHeight: 56, marginVertical: space(1) },
   li: { marginTop: 4 },
+  tip: { backgroundColor: colors.blush, borderRadius: 16, padding: space(2), marginBottom: space(1) },
   check: { backgroundColor: colors.blush, borderRadius: 16, padding: space(2), marginBottom: space(1) },
   onPunch: { color: colors.bg },
   onPunchMuted: { color: colors.blush },
