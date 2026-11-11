@@ -59,9 +59,9 @@ export function panBreadSteps(): ProcessStep[] {
     }),
     step('Bakken met deksel', 30, 'hand', { workMinutes: 5, tip: 'Deeg in de hete gietijzeren pan, deksel erop.' }),
     step('Deksel eraf, verder bakken', 20, 'hand', { workMinutes: 1 }),
-    step('Brood uit de pan, nog 5 minuten op het rooster in de oven', 5, 'hand', {
+    step('Brood uit de pan, nog 5 minuten op het rooster', 5, 'hand', {
       workMinutes: 2,
-      check: 'Dit was kort beschreven ("nog 5 min uit de pan, op het rooster"). Kijk na of het brood hier in de oven blijft.',
+      check: 'Dit was kort beschreven ("nog 5 min uit de pan, op het rooster"). Kijk na of het brood hier in de oven blijft of op het aanrecht rust.',
     }),
     step('Afkoelen', 60, 'wacht', { tip: 'Het moeilijkste deel: laat het brood minstens een uur afkoelen voor je het snijdt.' }),
   ];

@@ -32,7 +32,7 @@ function StepRow({ bake, step, now, current }: { bake: Bake; step: PlannedStep; 
         <View style={p.flex}>
           <Txt v={step.kind === 'hand' ? 'bold' : 'body'} style={done ? p.doneText : step.kind === 'wacht' ? p.waitText : undefined}>{step.name}</Txt>
           <Txt v="note">{step.kind === 'hand' ? `${fmtDuration(workMinutes(step))} handwerk` : `wachten, ${fmtDuration(step.minutes)}`}</Txt>
-          {step.tip && !done ? <Txt v="note">{step.tip}</Txt> : null}
+          {step.tip && current && !done ? <Txt v="note">{step.tip}</Txt> : null}
         </View>
       </Pressable>
       {step.kind === 'hand' && !done ? <Bell on={step.alarm} onPress={() => setStepAlarm(bake.id, step.id, !step.alarm)} /> : null}
