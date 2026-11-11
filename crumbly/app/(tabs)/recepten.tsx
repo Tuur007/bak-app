@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { panBreadRecipe } from '../../src/domain/guide';
 import { formatPct, recipeRatios } from '../../src/domain/ratios';
 import { liveRecipes, useCrumbly } from '../../src/store/store';
 import { Button, Card, Screen, Txt } from '../../src/ui/kit';
@@ -8,6 +9,7 @@ import { colors, space } from '../../src/ui/theme';
 export default function Recepten() {
   const router = useRouter();
   const recipes = liveRecipes(useCrumbly((s) => s.recipes));
+  const saveRecipe = useCrumbly((s) => s.saveRecipe);
   return (
     <Screen folio="Mijn recepten" title="Recepten" sub="Je eigen recepten, op de gram. De verhoudingen rekenen vanzelf mee.">
       {recipes.map((r) => {
@@ -25,6 +27,7 @@ export default function Recepten() {
         );
       })}
       <Button label="Recept uit mijn boek omzetten" onPress={() => router.push('/recept/plakken')} />
+      <Button v="outline" label="Voorbeeld toevoegen: pannenbrood met nachtrust" onPress={() => { const r = panBreadRecipe(); saveRecipe(r); router.push(`/recept/${r.id}`); }} />
       <Button v="outline" label="Recept zelf invullen" onPress={() => router.push('/recept/nieuw')} />
     </Screen>
   );

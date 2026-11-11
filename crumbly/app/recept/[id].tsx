@@ -28,6 +28,7 @@ function StepEditor({ step, onChange, onMove, onDelete }: { step: ProcessStep; o
         <Field style={s.flex} label="Stap" value={step.name} onChange={(v) => onChange({ name: v })} />
         <Bell on={step.alarm} onPress={() => onChange({ alarm: !step.alarm })} />
       </Row>
+      <Field label="Uitleg bij de stap (mag leeg)" value={step.tip ?? ''} onChange={(v) => onChange({ tip: v.trim() === '' ? undefined : v })} multiline />
       <Row style={s.wrap}>
         <Chip label="Gevoelig voor temperatuur" on={!!step.tempSensitive} onPress={() => onChange({ tempSensitive: !step.tempSensitive })} />
       </Row>

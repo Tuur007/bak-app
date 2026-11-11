@@ -13,6 +13,7 @@ import { LocationControl, StarterLog, useFeedWithUndo } from '../../src/ui/Start
 import { DEFAULT_FRIDGE_FEED_DAYS, feedSummary } from '../../src/domain/location';
 import { colors, space } from '../../src/ui/theme';
 import { PeakQuestion } from '../../src/ui/PeakQuestion';
+import { StarterGuide } from '../../src/ui/StarterGuide';
 import { HhmmStepper, PeakChart, TimeStepper, useNow } from '../../src/ui/widgets';
 import { Toggle } from '../../src/ui/kit';
 
@@ -142,6 +143,8 @@ function MijnStarter({ top }: { top: ReactNode }) {
           <Txt style={st.mt}>De grafiek verschijnt na 3 metingen ({series.length} van 3). Ze toont of {starter.name} sneller verdubbelt, en dus sterker wordt.</Txt>
         )}
       </Card>
+
+      <StarterGuide />
 
       <Card>
         <Txt v="folio">Over {starter.name}</Txt>

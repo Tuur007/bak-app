@@ -121,6 +121,9 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
   `20261106150000_crumbly_wekkers_betrouwbaar.sql` (herkansing, controle van antwoorden, verlopen abonnementen wissen)
   staat in de databank (net als `20261106160000_crumbly_gezin_ketting.sql`, toegepast 6 november 2026); de proef met een
   echte melding op een iPhone moet nog. `refreshPushSubscription` herstelt een weggevallen abonnement bij het openen.
+- Uitleg uit bakstories (in eigen woorden, de foto's zelf staan niet in de app: ze zijn van iemand anders): `src/domain/guide.ts`
+  (startschema dag 1 tot 6, `panBreadRecipe` als voorbeeldrecept via de knop op Recepten) en `src/ui/StarterGuide.tsx` (tabblad
+  Starter). `ProcessStep.tip` is een korte uitleg per stap: op de stapkaart, in het bakplan en bewerkbaar in het recept.
 - Foutmeldingen in gewone taal: `src/domain/errors.ts` (netwerkfout, VPN).
 - Meldingen: `bak_push_subscriptions` + `private.bak_send_due()` (pg_cron elke minuut) ->
   `api/push/send.js` (Vercel, web-push). Zie `crumbly/docs/meldingen-instellen.md`.

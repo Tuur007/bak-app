@@ -77,6 +77,8 @@ export interface ProcessStep {
   /** Duurt langer als het koeler is (bv. bulk op de aanrecht). */
   tempSensitive?: boolean;
   alarm: boolean;
+  /** Korte uitleg bij de stap, getoond op de stapkaart en in het bakplan (optioneel). */
+  tip?: string;
   /** Uit een tekst afgeleid en onzeker: wat de gebruiker moet nakijken. Verdwijnt zodra hij de stap aanpast. */
   check?: string;
   /**
