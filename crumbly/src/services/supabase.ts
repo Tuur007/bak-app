@@ -2,6 +2,7 @@ import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { isNetworkError, NETWORK_TEXT } from '../domain/errors';
+import { fetchWithTimeout } from './runGuard';
 
 // Hetzelfde Supabase-project als de Recepten-app en de Tuin-app: een login voor alles.
 // Zonder de twee variabelen werkt Crumbly gewoon lokaal, zonder sync.
@@ -12,6 +13,8 @@ export const supabase: SupabaseClient | null =
   URL && KEY
     ? createClient(URL, KEY, {
         auth: { storage: AsyncStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false },
+        // Een verzoek dat nooit antwoordt (de iPhone pauzeerde de app) eindigt na 20 seconden met een netwerkfout.
+        global: { fetch: fetchWithTimeout((input, init) => fetch(input, init)) },
       })
     : null;
 

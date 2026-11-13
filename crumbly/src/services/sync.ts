@@ -9,6 +9,7 @@ import { itemForKey, useCrumbly } from '../store/store';
 import { resolveDataId, type HouseholdState } from '../domain/household';
 import { fetchHousehold } from './household';
 import { supabase } from './supabase';
+import { createRunGuard } from './runGuard';
 import { runSync } from './syncCore';
 
 export type SyncStatus =
@@ -17,7 +18,9 @@ export type SyncStatus =
   | { kind: 'ok'; at: string }
   | { kind: 'fout'; message: string };
 
-let running = false;
+// Eén ronde tegelijk; een ronde die blijft hangen (iPhone pauzeert de app midden in een verzoek) vervalt na een
+// tijd, anders synchroniseert het toestel nooit meer tot de app herlaadt.
+const guard = createRunGuard();
 let lastStatus: SyncStatus = { kind: 'uit', reason: 'Nog niet gesynchroniseerd.' };
 const listeners = new Set<(s: SyncStatus) => void>();
 
@@ -56,8 +59,8 @@ export async function syncNow(): Promise<SyncStatus> {
     emit({ kind: 'uit', reason: 'Meld je aan om je gegevens te bewaren in de cloud.' });
     return lastStatus;
   }
-  if (running) return lastStatus;
-  running = true;
+  const token = guard.begin();
+  if (token === null) return lastStatus;
   emit({ kind: 'bezig' });
   try {
     const userId = sess.session.user.id;
@@ -88,17 +91,18 @@ export async function syncNow(): Promise<SyncStatus> {
         return buildReminders({ bakes: s.bakes, feeds: s.feeds, starter: s.starter, settings: s.settings, away: s.away }, new Date());
       },
     }, dataId);
-    emit({ kind: 'ok', at: new Date().toISOString() });
+    if (guard.isCurrent(token)) emit({ kind: 'ok', at: new Date().toISOString() });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    emit({
+    // Een opgegeven ronde die later toch nog faalt, mag de uitkomst van de nieuwe ronde niet overschrijven.
+    if (guard.isCurrent(token)) emit({
       kind: 'fout',
       message: isMissingTable(message)
         ? 'De tabellen voor Crumbly staan nog niet in de databank. Je gegevens blijven op dit toestel.'
         : friendlyError(message) === message ? `Synchroniseren mislukt: ${message}` : friendlyError(message),
     });
   } finally {
-    running = false;
+    guard.end(token);
   }
   return lastStatus;
 }
