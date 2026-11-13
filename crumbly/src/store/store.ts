@@ -7,7 +7,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { defaultSettings, defaultStarter, exampleRecipe } from '../domain/defaults';
-import { newId } from '../domain/ids';
+import { autoFeedId, newId } from '../domain/ids';
 import type { PeerData } from '../domain/peers';
 import { feederName, type HouseholdState } from '../domain/household';
 import { computeRatios } from '../domain/ratios';
@@ -211,7 +211,11 @@ export const useCrumbly = create<CrumblyState>()(
           if (due.length === 0) return 0;
           set((s) => {
             for (const at of due) {
-              const f: Feed = { id: newId(), fedAt: at, ratio: s.starter?.defaultRatio ?? '1:5:5', auto: true, updatedAt: nowIso() };
+              // Vast id en de voedingstijd als wijzigingstijd: een tweede toestel van het gezin maakt exact dezelfde rij,
+              // en wat iemand er later aan toevoegt (verdubbeld, notitie) is altijd nieuwer en blijft dus staan.
+              const id = autoFeedId(at);
+              if (s.feeds.some((x) => x.id === id)) continue;
+              const f: Feed = { id, fedAt: at, ratio: s.starter?.defaultRatio ?? '1:5:5', auto: true, updatedAt: at };
               s.feeds.push(f);
               touch(s, 'feed', f.id);
             }

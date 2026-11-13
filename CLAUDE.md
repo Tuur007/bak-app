@@ -78,7 +78,7 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
   zouden de eigen starter overschrijven). Tabblad Starter heeft een keuze tussen eigen en gekoppelde starter
   (`PeerView`); het startscherm toont bovenaan wie welke starter heeft (`StarterOverview`, met naam kiezen en weg naar
   `app/koppelen.tsx`); de koppelcode staat in `src/ui/Koppelen.tsx` (ook in Instellingen). Een geldige code blijft bestaan (migratie
-  `20261106130000_crumbly_koppelcode_blijft.sql`, nog niet toegepast zolang de status in `docs/databank-status.md` dat zegt):
+  `20261106130000_crumbly_koppelcode_blijft.sql`, toegepast):
   `bak_create_link_code()` geeft je bestaande code terug, enkel `p_new => true` maakt een nieuwe; `bak_my_link_code()` toont
   ze op elk toestel. `Starter.splitFrom/splitOn` noteert waarvan je gesplitst bent.
 - Koelkast of kamertemperatuur (`src/domain/location.ts`, getest): elke verplaatsing in `starter.locationLog`
@@ -121,6 +121,11 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
   `20261106150000_crumbly_wekkers_betrouwbaar.sql` (herkansing, controle van antwoorden, verlopen abonnementen wissen)
   staat in de databank (net als `20261106160000_crumbly_gezin_ketting.sql`, toegepast 6 november 2026); de proef met een
   echte melding op een iPhone moet nog. `refreshPushSubscription` herstelt een weggevallen abonnement bij het openen.
+- Vastgelopen synchronisatie (13 november 2026, "ik zie de voeding van Louise niet"): `src/services/runGuard.ts` (getest).
+  Elk verzoek naar Supabase krijgt 20 seconden (`fetchWithTimeout`, in `supabase.ts`), en een ronde die langer dan 90
+  seconden "bezig" is vervalt (`createRunGuard`, in `sync.ts`). Vroeger bleef één hangend verzoek (de iPhone pauzeert de
+  app) alle volgende rondes blokkeren tot de app herlaadde. Een automatische voeding heeft een vast id per moment
+  (`autoFeedId`) en de voedingstijd als wijzigingstijd, zodat twee toestellen van één gezin ze niet dubbel noteren.
 - Foutmeldingen in gewone taal: `src/domain/errors.ts` (netwerkfout, VPN).
 - Meldingen: `bak_push_subscriptions` + `private.bak_send_due()` (pg_cron elke minuut) ->
   `api/push/send.js` (Vercel, web-push). Zie `crumbly/docs/meldingen-instellen.md`.
