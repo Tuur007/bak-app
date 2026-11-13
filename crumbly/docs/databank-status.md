@@ -13,8 +13,9 @@ De SQL-bestanden in `supabase/migrations/` zijn wat we *willen*. Of de databank 
 | `20261106130000_crumbly_koppelcode_blijft.sql` | blijvende koppelcode, `bak_my_link_code` | toegepast (vastgesteld op 13 november 2026: `bak_my_link_code()` en `bak_create_link_code(p_new boolean)` staan in de databank) |
 | `20261106150000_crumbly_wekkers_betrouwbaar.sql` | herkansing en controle van wekkers, verlopen abonnementen wissen | toegepast (6 november 2026; kolommen, functies en pg_cron-taak `crumbly-wekkers-controle` staan er, beide taken lopen zonder fout). De proef met een echte melding op een toestel moet nog. |
 | `20261106160000_crumbly_gezin_ketting.sql` | `bak_join_household` weigert een code van iemand die zelf al in een gezin zit (geen ketting) | toegepast (6 november 2026) |
+| `20261113120000_crumbly_revoke_anon.sql` | rechten voor `anon` op `bak_items`, `bak_reminders` en `bak_push_subscriptions` ingetrokken | toegepast (13 november 2026, vastgesteld: `anon` heeft geen rechten meer, `authenticated` ongewijzigd) |
 
-De migraties van Supabase zelf (`list_migrations`) tonen deze niet: ze zijn via de SQL-editor uitgevoerd. Vergelijk daarom
+De migraties van Supabase zelf (`list_migrations`) tonen de eerste zes niet: ze zijn via de SQL-editor uitgevoerd. Vergelijk daarom
 de objecten, niet de lijst.
 
 ## Zelf controleren (alleen lezen)
@@ -36,17 +37,11 @@ where n.nspname in ('public','private') and p.proname like 'bak\_%' order by 1,2
 select jobname, schedule, active from cron.job where jobname like 'crumbly%';
 select name from vault.secrets where name like 'bak\_%';
 ```
-Verwacht na de eerste vier migraties: 7 tabellen met RLS aan (`bak_items`, `bak_reminders`, `bak_push_subscriptions`,
+Verwacht na de eerste vier migraties (en geen enkel recht meer voor `anon` op de drie `bak_`-tabellen met gegevens): 7 tabellen met RLS aan (`bak_items`, `bak_reminders`, `bak_push_subscriptions`,
 `bak_links`, `bak_link_codes`, `bak_household_members`, `bak_household_codes`), geen enkele functie uitvoerbaar voor `anon`,
 en `bak_items` met 4 regels (je eigen rijen plus 3 voor het gezin).
 
 ## Bekende aandachtspunten (nog niet aangepast in de databank)
-- **Tabelrechten voor `anon`.** `bak_items`, `bak_reminders` en `bak_push_subscriptions` hebben door de standaardrechten van
-  Supabase alle tabelrechten voor `anon`. De RLS laat `anon` niets zien of doen (alle regels gelden enkel voor
-  `authenticated`), dus er is geen lek, maar de rechten zelf zijn overbodig. Netter:
-  ```sql
-  revoke all on public.bak_items, public.bak_reminders, public.bak_push_subscriptions from anon;
-  ```
 - **`bak_items_guard` en `now()`.** `server_updated_at` is de starttijd van de transactie, dus alle rijen van één bulk-upsert
   hebben dezelfde waarde. De app houdt daar rekening mee (cursor op servertijd en id, overlappend venster), dus de trigger
   hoeft niet te veranderen.
