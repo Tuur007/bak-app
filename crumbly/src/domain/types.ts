@@ -109,6 +109,8 @@ export interface Recipe {
 export interface PlannedStep extends ProcessStep {
   startAt: string;
   doneAt?: string;
+  /** Zoveel minuten schoof het schema vroeger toen je deze stap afvinkte voor de geplande tijd (voor ongedaan maken). */
+  shiftedEarlier?: number;
 }
 
 export type CrumbKind = 'dicht' | 'gelijkmatig' | 'open';

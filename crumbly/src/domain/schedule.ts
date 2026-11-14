@@ -69,12 +69,44 @@ export function markDone(steps: PlannedStep[], id: string, at: Date): PlannedSte
   return steps.map((s) => (s.id === id ? { ...s, doneAt: at.toISOString() } : s));
 }
 
-export function undoDone(steps: PlannedStep[], id: string): PlannedStep[] {
-  return steps.map((s) => {
-    if (s.id !== id) return s;
-    const { doneAt: _drop, ...rest } = s;
+/**
+ * Afvinken. Vink je de eerstvolgende stap af vóór de volgende stap gepland staat, dan begint die volgende nu en schuift
+ * de rest evenveel vroeger mee (zoals bij "deeg is klaar"): zo klopt de timer ook als je vroeger begon dan gepland.
+ * Vink je later af, dan blijft het schema zoals het was (ook als je achteraf alles afvinkt om het brood te noteren).
+ * Een stap die niet de eerstvolgende is, wordt enkel afgevinkt.
+ */
+export function completeStep(steps: PlannedStep[], id: string, now: Date): PlannedStep[] {
+  const i = steps.findIndex((s) => s.id === id);
+  if (i < 0 || steps[i].doneAt) return steps;
+  const plain = markDone(steps, id, now);
+  if (i !== firstOpenIndex(steps)) return plain;
+  const next = steps[i + 1];
+  if (!next || next.doneAt) return plain;
+  const delta = Math.round((now.getTime() - new Date(next.startAt).getTime()) / MIN);
+  if (delta >= 0) return plain;
+  // Eerst schuiven (de stap zelf staat nog open en schuift mee, zodat ze niet na haar eigen afvinkmoment begint), dan afvinken.
+  return markDone(shiftFrom(steps, i, delta), id, now).map((s) => (s.id === id ? { ...s, shiftedEarlier: -delta } : s));
+}
+
+/** Een afgevinkte stap weer openzetten. Was het schema bij het afvinken vroeger geschoven, dan schuift het terug. */
+export function reopenStep(steps: PlannedStep[], id: string): PlannedStep[] {
+  const i = steps.findIndex((s) => s.id === id);
+  if (i < 0) return steps;
+  const back = steps[i].shiftedEarlier ?? 0;
+  const reopened = steps.map((s, j) => {
+    if (j !== i) return s;
+    const { doneAt: _d, shiftedEarlier: _s, ...rest } = s;
     return rest;
   });
+  return back > 0 ? shiftFrom(reopened, i, back) : reopened;
+}
+
+/** "Nu beginnen": de eerste open stap begint nu en alles erna schuift mee. Doet niets als ze al aan de beurt is. */
+export function startNow(steps: PlannedStep[], now: Date): PlannedStep[] {
+  const i = firstOpenIndex(steps);
+  if (i < 0) return steps;
+  const delta = Math.round((now.getTime() - new Date(steps[i].startAt).getTime()) / MIN);
+  return delta >= 0 ? steps : shiftFrom(steps, i, delta);
 }
 
 /** "Deeg nog niet klaar": alle open stappen schuiven `minutes` op. */

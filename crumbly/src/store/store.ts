@@ -11,7 +11,7 @@ import { autoFeedId, newId } from '../domain/ids';
 import type { PeerData } from '../domain/peers';
 import { feederName, type HouseholdState } from '../domain/household';
 import { computeRatios } from '../domain/ratios';
-import { delayOpen, endOf, finishWaitNow, markDone, planBackward, shiftForReturn, undoDone } from '../domain/schedule';
+import { completeStep, delayOpen, endOf, finishWaitNow, planBackward, reopenStep, shiftForReturn, startNow } from '../domain/schedule';
 import { adjustForTemperature } from '../domain/temperature';
 import { dueAutoFeeds, liveFeeds } from '../domain/starter';
 import { awayFridgeMove, bakeProcess, moveStarter } from '../domain/location';
@@ -59,6 +59,8 @@ export interface CrumblyState {
   deleteRecipe: (id: string) => void;
   /** `refreshDays`: zoveel dagen opfrissen ervoor (enkel als de starter in de koelkast staat). */
   planBake: (recipeId: string, end: Date, kitchenTempC?: number, refreshDays?: number) => string | null;
+  /** De eerste open stap begint nu (vroeger dan gepland) en alles erna schuift mee. */
+  startBakeNow: (bakeId: string) => void;
   finishWait: (bakeId: string, stepId: string) => void;
   setStepDone: (bakeId: string, stepId: string, done: boolean) => void;
   setStepAlarm: (bakeId: string, stepId: string, alarm: boolean) => void;
@@ -283,7 +285,7 @@ export const useCrumbly = create<CrumblyState>()(
           const step = get().bakes.find((b) => b.id === bakeId)?.steps.find((x) => x.id === stepId);
           const wasDone = !!step?.doneAt;
           withBake(bakeId, (b) => {
-            b.steps = done ? markDone(b.steps, stepId, new Date()) : undoDone(b.steps, stepId);
+            b.steps = done ? completeStep(b.steps, stepId, new Date()) : reopenStep(b.steps, stepId);
           });
           // Een stap met de starter (uit of in de koelkast, voeden) noteert dat meteen: niet nog eens apart tikken.
           // Ongedaan maken draait het niet terug: dat doe je bij de starter zelf (de voeding verwijderen of verplaatsen).
@@ -294,6 +296,8 @@ export const useCrumbly = create<CrumblyState>()(
             else if (step.starterAction === 'voeden') get().feedNow(now, step.feedRatio);
           }
         },
+
+        startBakeNow: (bakeId) => withBake(bakeId, (b) => { b.steps = startNow(b.steps, new Date()); }),
 
         finishWait: (bakeId, stepId) => withBake(bakeId, (b) => { b.steps = finishWaitNow(b.steps, stepId, new Date()); }),
 

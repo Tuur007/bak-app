@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { bakesHitByAway, delayOpen, endOf, findFittingEnd, fitsHome, homeConflicts, markDone, planBackward, shiftForReturn, stepState, totalMinutes } from '../src/domain/schedule.ts';
+import { bakesHitByAway, completeStep, delayOpen, endOf, findFittingEnd, fitsHome, homeConflicts, markDone, planBackward, reopenStep, shiftForReturn, startNow, stepHeadline, stepState, totalMinutes } from '../src/domain/schedule.ts';
 import { buildReminders } from '../src/domain/reminders.ts';
 import type { AwayPeriod, Bake, HomeWindow, ProcessStep, Settings, Starter } from '../src/domain/types.ts';
 
@@ -101,4 +101,66 @@ test('wekkers: enkel wat verandert gaat naar de server', async () => {
   assert.deepEqual(d.upsert.map((x) => x.id), ['b']);
   // Is het uur van 'c' voorbij, dan is hij van de server (verzenden of herkansen) en wist de planning hem niet.
   assert.deepEqual(diffReminders(existing, w, new Date('2026-11-05T12:30:00Z')).remove, []);
+});
+
+// ---- vroeger beginnen dan gepland (de timer moet meeschuiven)
+
+const min = (n: number) => n * 60000;
+const at = (s: { startAt: string }) => new Date(s.startAt).getTime();
+
+test('vroeger afvinken: de volgende stap begint nu en de rest schuift evenveel mee', () => {
+  const steps = planBackward(process, t('2026-11-07T20:00:00'));
+  const s0 = at(steps[0]);
+  const now = new Date(s0 - min(120)); // twee uur vroeger dan gepland aan de slag
+  const done = completeStep(steps, 'Mengen', now);
+  const bulk = done.find((s) => s.id === 'Bulk')!;
+  assert.equal(at(bulk), now.getTime(), 'bulk begint nu');
+  assert.equal(endOf(done).getTime(), endOf(steps).getTime() - (s0 + min(60) - now.getTime()), 'het brood is evenveel vroeger klaar');
+  assert.ok(at(done[0]) <= now.getTime(), 'de afgevinkte stap begint niet na haar eigen afvinkmoment');
+  assert.equal(done[0].doneAt, now.toISOString());
+});
+
+test('na vroeger afvinken telt de timer af naar het einde van het wachten, niet naar de oude tijd', () => {
+  const steps = planBackward(process, t('2026-11-07T20:00:00'));
+  const now = new Date(at(steps[0]) - min(120));
+  const h = stepHeadline(completeStep(steps, 'Mengen', now), now)!;
+  assert.equal(h.label, 'Wachten');
+  assert.equal(h.msUntil, min(240), 'bulk duurt 4 uur vanaf nu');
+});
+
+test('later afvinken verandert het schema niet (ook niet als je achteraf alles afvinkt)', () => {
+  const steps = planBackward(process, t('2026-11-07T20:00:00'));
+  const late = new Date(at(steps[0]) + min(500));
+  const done = completeStep(steps, 'Mengen', late);
+  assert.deepEqual(done.map(at), steps.map(at));
+  assert.equal(done[0].shiftedEarlier, undefined);
+});
+
+test('een stap afvinken die niet de eerstvolgende is, schuift niets', () => {
+  const steps = planBackward(process, t('2026-11-07T20:00:00'));
+  const done = completeStep(steps, 'Vormen', new Date(at(steps[0]) - min(300)));
+  assert.deepEqual(done.map(at), steps.map(at));
+  assert.ok(done.find((s) => s.id === 'Vormen')!.doneAt);
+});
+
+test('ongedaan maken zet het schema terug zoals het was', () => {
+  const steps = planBackward(process, t('2026-11-07T20:00:00'));
+  const now = new Date(at(steps[0]) - min(120));
+  const back = reopenStep(completeStep(steps, 'Mengen', now), 'Mengen');
+  assert.deepEqual(back.map(at), steps.map(at));
+  assert.equal(back[0].doneAt, undefined);
+  assert.equal(back[0].shiftedEarlier, undefined);
+});
+
+test('nu beginnen: de eerste open stap begint nu, alles schuift mee; is ze al aan de beurt dan verandert er niets', () => {
+  const steps = planBackward(process, t('2026-11-07T20:00:00'));
+  const now = new Date(at(steps[0]) - min(90));
+  const started = startNow(steps, now);
+  assert.equal(at(started[0]), now.getTime());
+  assert.equal(endOf(started).getTime(), endOf(steps).getTime() - min(90));
+  assert.deepEqual(startNow(steps, new Date(at(steps[0]) + min(5))).map(at), steps.map(at));
+  // ook als de eerste stap al af is: de eerstvolgende open stap begint nu
+  const half = completeStep(steps, 'Mengen', new Date(at(steps[0]) + min(60)));
+  const t2 = new Date(at(half[1]) - min(30));
+  assert.equal(at(startNow(half, t2)[1]), t2.getTime());
 });
