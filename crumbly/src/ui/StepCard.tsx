@@ -12,6 +12,7 @@ export function StepCard({ bake, now, showName, showPlanLink }: { bake: Bake; no
   const router = useRouter();
   const setStepDone = useCrumbly((s) => s.setStepDone);
   const finishWait = useCrumbly((s) => s.finishWait);
+  const startBakeNow = useCrumbly((s) => s.startBakeNow);
   const delayBake = useCrumbly((s) => s.delayBake);
   const h = stepHeadline(bake.steps, now);
   if (!h) return null;
@@ -40,6 +41,13 @@ export function StepCard({ bake, now, showName, showPlanLink }: { bake: Bake; no
             <Button small v="outline" label="+30 min" onPress={() => delayBake(bake.id, 30)} light style={c.lightBtn} />
             <Button small v="outline" label="+1 u" onPress={() => delayBake(bake.id, 60)} light style={c.lightBtn} />
           </Row>
+        </>
+      ) : null}
+
+      {h.label === 'Volgende stap' ? (
+        <>
+          <Button small v="outline" label="Nu beginnen" onPress={() => startBakeNow(bake.id)} />
+          <Txt v="note" style={c.mt}>Begin je vroeger dan gepland? Alles schuift mee.</Txt>
         </>
       ) : null}
 

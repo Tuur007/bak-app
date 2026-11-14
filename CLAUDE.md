@@ -59,7 +59,10 @@ gradients of harde schaduwen. Icoon: tarwe-aar met boog (`crumbly/public/icons/i
   beginscherm). Het bakplan toont anders een uitleg. Instellingen heeft "Stuur mij een testmelding".
 - Stapkaart (`src/ui/StepCard.tsx`, logica in `stepHeadline`): "Nu", "Wachten" (telt af tot het einde van het
   wachten, met de controle "is het deeg klaar?") en "Volgende stap". "Deeg is klaar" laat de volgende stap nu
-  beginnen en schuift de rest mee (`finishWaitNow`).
+  beginnen en schuift de rest mee (`finishWaitNow`). Vroeger beginnen (14 november 2026): een stap afvinken vóór de volgende
+  gepland staat laat die volgende nu beginnen en schuift de rest vroeger mee (`completeStep`; `PlannedStep.shiftedEarlier`
+  laat ongedaan maken het terugzetten, `reopenStep`); later afvinken verandert niets, anders verschuift het brood als je
+  achteraf alles afvinkt. "Nu beginnen" op de kaart "Volgende stap" doet hetzelfde voor de hele bak (`startNow`).
 - Keukentemperatuur (`src/domain/temperature.ts`): enkel als een recept `refTempC` heeft, en enkel voor
   stappen met `tempSensitive`. Grove vuistregel (per 10 graden koeler `tempDoubling` keer langer, standaard 2),
   geen gemeten tabel; aanpasbaar in Instellingen. Een gebruiker die zelf andere waarden ziet, wint.
